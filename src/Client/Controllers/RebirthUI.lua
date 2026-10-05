@@ -37,7 +37,10 @@ local function refresh()
 	nextLabel.Text = string.format("Next: <font color='#AF69FF'>x%.2f</font> coins forever  +%d Gems", 1 + (rebirths + 1) * per, Config.Rebirth.GemsReward)
 	costLabel.Text = string.format("Cost: <font color='#FFC400'>%s</font> coins   (you have %s)", Util.FormatNumber(cost), Util.FormatNumber(coins))
 
-	if coins >= cost then
+	local zonesNeeded = Config.Rebirth.RequireAllZones and State.Get("ZonesUnlocked", 1) < #Config.Zones
+	if zonesNeeded then
+		UIKit.SetButtonEnabled(rebirthButton, false, "UNLOCK " .. string.upper(Config.Zones[#Config.Zones].Name) .. " FIRST")
+	elseif coins >= cost then
 		UIKit.SetButtonEnabled(rebirthButton, true)
 		rebirthButton.Text = "REBIRTH NOW"
 	else
@@ -51,7 +54,8 @@ function RebirthUI.Init()
 
 	UIKit.Label({
 		Size = UDim2.new(1, 0, 0, 60),
-		Text = "Reset your coins and zones for a PERMANENT coin multiplier.\nYou keep all pets, gems and gamepasses.",
+		Text = "Reset your coins and zones for a PERMANENT coin multiplier.\nYou keep all pets, gems and gamepasses."
+			.. (if Config.Rebirth.RequireAllZones then "\nRequires the final zone." else ""),
 		TextSize = 16,
 		Font = UIKit.Fonts.Body,
 		TextWrapped = true,
@@ -99,7 +103,7 @@ function RebirthUI.Init()
 
 	window.OnOpen = refresh
 	State.Changed:Connect(function(patch)
-		if patch.Coins ~= nil or patch.Rebirths ~= nil then
+		if patch.Coins ~= nil or patch.Rebirths ~= nil or patch.ZonesUnlocked ~= nil then
 			refresh()
 		end
 	end)

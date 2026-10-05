@@ -4,6 +4,7 @@
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared.Config)
 local Signal = require(Shared.Signal)
 
 local State = {}
@@ -66,7 +67,7 @@ end
 function State.GetLuck(): number
 	local luck = 1
 	if State.Owns("Lucky") then
-		luck *= 2
+		luck *= Config.Gamepasses.Lucky.LuckMultiplier -- must match EconomyService
 	end
 	local boosts = State.Data.Boosts
 	if boosts and boosts.Luck and (boosts.Luck.ExpiresAt or 0) > State.Now() then

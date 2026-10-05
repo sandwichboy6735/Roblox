@@ -22,10 +22,12 @@ You can open it in Roblox Studio and press Play right away.
 | **Promo codes** | Hand out codes on social media and YouTube to bring players in. |
 | **Group bonus** | +10% coins and free gems for joining your Roblox group. |
 | **Global leaderboards** | Top coins, rebirths and hatchers on 3D boards at spawn. |
+| **Pet Index** | A collection book with "???" slots for undiscovered pets, plus a NEW! badge on first hatches. |
 | **Pets follow you** | Every player's pets float behind them, visible to everyone. |
 | **Goal bar** | Always shows the next zone or rebirth and your progress toward it. |
 | **Safe saving** | DataStore saving with session locking, retries, autosave and shutdown saves. |
-| **Anti-exploit** | The server checks every request: distance, zone, cost, rate and ownership. |
+| **Fair multiplayer** | Zones add orbs for each extra player, so full servers earn as well as solo play. |
+| **Anti-exploit** | The server checks every request: distance, movement, zone, cost, rate and ownership. |
 
 ### How the game makes money
 
@@ -83,7 +85,8 @@ Follow [docs/MONETIZATION_SETUP.md](docs/MONETIZATION_SETUP.md) for the step-by-
 5. **Turn off free Studio passes** if you want to test buying. `Config.Debug.FreeGamepassesInStudio` gives you every gamepass in Studio so you can test them. It never affects live servers.
 6. **Change the promo codes** in `src/Server/Codes.lua`. The defaults are `RELEASE`, `HATCH` and `LUCKY`. That file is server-only, so players can't read upcoming codes.
 7. **Fill out the Maturity & Compliance questionnaire** on the Creator Hub. Roblox requires it before an experience can be public.
-8. **Add an icon and thumbnails.** They matter more than anything else for getting clicks. See the launch guide.
+8. **Set the server size.** In **Game Settings > Places**, set **Max Players** to about 12. Simulators feel best with a busy but not crowded server.
+9. **Add an icon and thumbnails.** They matter more than anything else for getting clicks. See the launch guide.
 
 ---
 

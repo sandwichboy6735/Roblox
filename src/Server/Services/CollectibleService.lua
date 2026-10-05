@@ -27,10 +27,13 @@ local BUCKET_SIZE = 12
 local PICKUP_RATE = 6
 -- Movement sanity check between accepted pickups (the client owns its
 -- character, so a teleporting exploiter could otherwise farm every orb).
-local SPEED_TOLERANCE = 1.6
-local MOVE_SLACK = 6
+local SPEED_TOLERANCE = 1.5
+local MOVE_SLACK = 4 -- studs, for network jitter / bunched position updates
 
 local records: { [BasePart]: any } = {}
+local liveCount: { [number]: number } = {} -- live orbs per zone
+local targetCount: { [number]: number } = {} -- desired orbs per zone
+local pendingRespawns: { [number]: number } = {} -- collected orbs waiting to respawn
 local lastPickup: { [Player]: { Position: Vector3, Time: number } } = {}
 local rng = Random.new()
 
@@ -105,11 +108,45 @@ local function spawnOrb(zoneIndex: number)
 	CollectionService:AddTag(orb, ORB_TAG)
 
 	records[orb] = { Zone = zoneIndex, Value = value, Kind = kind }
+	liveCount[zoneIndex] = (liveCount[zoneIndex] or 0) + 1
 	orb.Parent = folder
 end
 
 local function respawnLater(zoneIndex: number)
-	task.delay(rng:NextNumber(Config.Orbs.RespawnMin, Config.Orbs.RespawnMax), spawnOrb, zoneIndex)
+	pendingRespawns[zoneIndex] = (pendingRespawns[zoneIndex] or 0) + 1
+	task.delay(rng:NextNumber(Config.Orbs.RespawnMin, Config.Orbs.RespawnMax), function()
+		pendingRespawns[zoneIndex] -= 1
+		-- Only refill up to the zone's current target (it shrinks when players leave).
+		if (liveCount[zoneIndex] or 0) < (targetCount[zoneIndex] or 0) then
+			spawnOrb(zoneIndex)
+		end
+	end)
+end
+
+-- Recomputes each zone's orb target from the players standing in it, and tops
+-- zones up gradually when more players arrive.
+local function rebalance()
+	local playersIn: { [number]: number } = {}
+	for _, player in ipairs(Players:GetPlayers()) do
+		local character = player.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		if root then
+			local zoneIndex = MapBuilder.GetZoneAt(root.Position)
+			if zoneIndex then
+				playersIn[zoneIndex] = (playersIn[zoneIndex] or 0) + 1
+			end
+		end
+	end
+	for zoneIndex, zone in ipairs(Config.Zones) do
+		local extraPlayers = math.max(0, (playersIn[zoneIndex] or 0) - 1)
+		local target = math.min(zone.OrbCount + extraPlayers * Config.Orbs.ExtraPerPlayer, Config.Orbs.MaxPerZone)
+		targetCount[zoneIndex] = target
+		-- Orbs already waiting to respawn will refill themselves on schedule.
+		local missing = target - (liveCount[zoneIndex] or 0) - (pendingRespawns[zoneIndex] or 0)
+		for _ = 1, math.min(missing, 6) do
+			spawnOrb(zoneIndex)
+		end
+	end
 end
 
 -- Forget the last pickup position (server teleports, respawns).
@@ -117,16 +154,18 @@ function CollectibleService.NoteTeleport(player: Player)
 	lastPickup[player] = nil
 end
 
-local function movedPlausibly(player: Player, root: BasePart, humanoid: Humanoid?, reach: number): boolean
+local function movedPlausibly(player: Player, root: BasePart, humanoid: Humanoid?): boolean
 	local last = lastPickup[player]
 	if not last then
 		return true
 	end
 	local elapsed = os.clock() - last.Time
 	local walkSpeed = humanoid and humanoid.WalkSpeed or 16
-	-- Between two pickups the player can walk, plus reach out to both orbs.
-	local allowed = walkSpeed * SPEED_TOLERANCE * elapsed + reach * 2 + MOVE_SLACK
-	return (root.Position - last.Position).Magnitude <= allowed
+	-- Both points are the player's own position, so they can only have walked
+	-- between them. Horizontal distance only, so jumps never count against them.
+	local allowed = walkSpeed * SPEED_TOLERANCE * elapsed + walkSpeed * 0.5 + MOVE_SLACK
+	local moved = (root.Position - last.Position) * Vector3.new(1, 0, 1)
+	return moved.Magnitude <= allowed
 end
 
 local function onCollect(player: Player, orbArg: any)
@@ -159,7 +198,7 @@ local function onCollect(player: Player, orbArg: any)
 	if (root.Position - orb.Position).Magnitude > maxDistance then
 		return
 	end
-	if not movedPlausibly(player, root, humanoid, maxDistance) then
+	if not movedPlausibly(player, root, humanoid) then
 		return
 	end
 	if not RateLimiter.Allow(player, "CollectOrb", BUCKET_SIZE, PICKUP_RATE) then
@@ -169,6 +208,7 @@ local function onCollect(player: Player, orbArg: any)
 
 	-- Claim it first so two fast requests can't double-collect.
 	records[orb] = nil
+	liveCount[record.Zone] = math.max(0, (liveCount[record.Zone] or 1) - 1)
 	orb:Destroy()
 
 	if record.Kind == "Gem" then
@@ -183,10 +223,18 @@ end
 
 function CollectibleService.Init()
 	for zoneIndex, zone in ipairs(Config.Zones) do
+		targetCount[zoneIndex] = zone.OrbCount
 		for _ = 1, zone.OrbCount do
 			spawnOrb(zoneIndex)
 		end
 	end
+
+	task.spawn(function()
+		while true do
+			task.wait(2)
+			rebalance()
+		end
+	end)
 
 	Remotes.Get("CollectOrb").OnServerEvent:Connect(onCollect)
 

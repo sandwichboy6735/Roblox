@@ -252,7 +252,7 @@ Config.Eggs = {
 	Candy = {
 		Name = "Candy Egg",
 		Zone = 2,
-		Cost = 2500,
+		Cost = 4000,
 		Currency = "Coins",
 		Color = Color3.fromRGB(255, 150, 200),
 		Pets = {
@@ -267,7 +267,7 @@ Config.Eggs = {
 	Frost = {
 		Name = "Frost Egg",
 		Zone = 3,
-		Cost = 50000,
+		Cost = 150000,
 		Currency = "Coins",
 		Color = Color3.fromRGB(170, 220, 255),
 		Pets = {
@@ -282,7 +282,7 @@ Config.Eggs = {
 	Lava = {
 		Name = "Lava Egg",
 		Zone = 4,
-		Cost = 1000000,
+		Cost = 4000000,
 		Currency = "Coins",
 		Color = Color3.fromRGB(255, 90, 40),
 		Pets = {
@@ -297,7 +297,7 @@ Config.Eggs = {
 	Cosmic = {
 		Name = "Cosmic Egg",
 		Zone = 5,
-		Cost = 25000000,
+		Cost = 100000000,
 		Currency = "Coins",
 		Color = Color3.fromRGB(90, 60, 160),
 		Pets = {
@@ -326,12 +326,19 @@ Config.Eggs = {
 
 --------------------------------------------------------------------------------
 -- ZONES (in order). Zone 1 is the spawn. Cost = coins to unlock.
+-- RewardScale multiplies coin rewards (daily, playtime, codes, coin packs) for
+-- players whose furthest zone is this one, so rewards stay meaningful late.
+--
+-- Pacing target (solo, ~1.5 orbs/s, simulated): zone 2 ~3 min, zone 3 ~7 min,
+-- zone 4 ~16 min, zone 5 ~30 min, first rebirth ~45 min. Real players are less
+-- efficient, so expect roughly 1.5x these times.
 --------------------------------------------------------------------------------
 
 Config.Zones = {
 	{
 		Name = "Grassy Meadow",
 		Cost = 0,
+		RewardScale = 1,
 		OrbValue = 5,
 		OrbCount = 28,
 		Eggs = { "Basic" },
@@ -347,6 +354,7 @@ Config.Zones = {
 	{
 		Name = "Candy Land",
 		Cost = 2500,
+		RewardScale = 20,
 		OrbValue = 40,
 		OrbCount = 26,
 		Eggs = { "Candy" },
@@ -361,7 +369,8 @@ Config.Zones = {
 	},
 	{
 		Name = "Frozen Peaks",
-		Cost = 50000,
+		Cost = 200000,
+		RewardScale = 1000,
 		OrbValue = 400,
 		OrbCount = 26,
 		Eggs = { "Frost" },
@@ -376,7 +385,8 @@ Config.Zones = {
 	},
 	{
 		Name = "Volcano",
-		Cost = 1000000,
+		Cost = 10000000,
+		RewardScale = 45000,
 		OrbValue = 5000,
 		OrbCount = 24,
 		Eggs = { "Lava" },
@@ -391,7 +401,8 @@ Config.Zones = {
 	},
 	{
 		Name = "Space Station",
-		Cost = 25000000,
+		Cost = 450000000,
+		RewardScale = 600000,
 		OrbValue = 75000,
 		OrbCount = 24,
 		Eggs = { "Cosmic" },
@@ -411,6 +422,10 @@ Config.Orbs = {
 	RespawnMax = 4,
 	BigOrbChance = 0.06, -- 6% of orbs are "big" (5x value)
 	BigOrbMultiplier = 5,
+	-- Orbs are shared, so each zone adds orbs for every extra player standing in
+	-- it. Without this, a full server would earn far less per player than solo.
+	ExtraPerPlayer = 10,
+	MaxPerZone = 110,
 	GemOrbChance = 0.02, -- 2% of orbs are gem orbs (1-3 gems)
 	CollectRadius = 7, -- studs, walk-over pickup
 	MaxCollectDistance = 24, -- server validation (pickup rate limits: CollectibleService)
@@ -421,11 +436,11 @@ Config.Orbs = {
 --------------------------------------------------------------------------------
 
 Config.Rebirth = {
-	BaseCost = 250000,
-	CostGrowth = 2.2, -- cost = BaseCost * CostGrowth ^ rebirths
+	BaseCost = 12000000000, -- 12B: reached in the last zone
+	CostGrowth = 2.5, -- cost = BaseCost * CostGrowth ^ rebirths
 	MultiplierPerRebirth = 0.5, -- +50% coins per rebirth (permanent)
 	GemsReward = 25,
-	RequireAllZones = false,
+	RequireAllZones = true, -- must have unlocked the last zone to rebirth
 }
 
 --------------------------------------------------------------------------------
@@ -509,7 +524,7 @@ Config.DataTemplate = {
 -- stay meaningful in late zones. Shared so the client can preview amounts.
 function Config.ScaleCoins(baseAmount: number, zonesUnlocked: number, rebirths: number): number
 	local zone = Config.Zones[math.clamp(zonesUnlocked or 1, 1, #Config.Zones)]
-	local zoneScale = zone.OrbValue / Config.Zones[1].OrbValue
+	local zoneScale = zone.RewardScale or (zone.OrbValue / Config.Zones[1].OrbValue)
 	local rebirthScale = 1 + (rebirths or 0) * Config.Rebirth.MultiplierPerRebirth
 	return math.floor(baseAmount * zoneScale * rebirthScale)
 end
@@ -542,10 +557,13 @@ function Config.GetEggsSortedByZone()
 		table.insert(list, { Key = key, Egg = egg })
 	end
 	table.sort(list, function(a, b)
-		if a.Egg.Zone == b.Egg.Zone then
-			return a.Egg.Cost < b.Egg.Cost
+		if a.Egg.Zone ~= b.Egg.Zone then
+			return a.Egg.Zone < b.Egg.Zone
 		end
-		return a.Egg.Zone < b.Egg.Zone
+		if a.Egg.Currency ~= b.Egg.Currency then
+			return a.Egg.Currency == "Coins" -- coin eggs first (nearest to spawn)
+		end
+		return a.Egg.Cost < b.Egg.Cost
 	end)
 	return list
 end

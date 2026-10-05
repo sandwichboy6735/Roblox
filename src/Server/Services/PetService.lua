@@ -343,7 +343,15 @@ function PetService.Init()
 			sync(player)
 		end
 	end)
-	GamepassService.Refreshed:Connect(function(player)
+	GamepassService.Refreshed:Connect(function(player, failedKeys)
+		-- If a slot pass couldn't be checked, don't unequip a paying player's
+		-- pets; the multiplier is already capped to their known slots.
+		for _, key in ipairs(failedKeys or {}) do
+			if key == "ExtraPetSlots" or key == "VIP" then
+				sync(player)
+				return
+			end
+		end
 		PetService.EnforceSlots(player)
 	end)
 

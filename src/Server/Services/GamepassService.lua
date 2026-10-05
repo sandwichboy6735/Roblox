@@ -16,7 +16,7 @@ local DataService = require(script.Parent.DataService)
 
 local GamepassService = {}
 GamepassService.Changed = Signal.new() -- (player, passKey)
-GamepassService.Refreshed = Signal.new() -- (player) after the join-time ownership check
+GamepassService.Refreshed = Signal.new() -- (player, failedKeys) after the join-time ownership check
 
 local CHECK_ATTEMPTS = 3
 local RECHECK_DELAY = 45
@@ -93,7 +93,7 @@ function GamepassService.Refresh(player: Player)
 		end
 	end
 	replicate(player)
-	GamepassService.Refreshed:Fire(player)
+	GamepassService.Refreshed:Fire(player, failed)
 
 	-- Roblox web lookups fail now and then: re-check failures later instead of
 	-- leaving a paying player without their perks for the whole session.
@@ -125,9 +125,31 @@ function GamepassService.Init()
 			return
 		end
 		-- Exploiters can fake this event, so confirm the purchase with Roblox.
+		-- Ownership lookups can lag a real purchase briefly, so poll with backoff.
 		-- (Studio test purchases don't create real ownership, so trust them there.)
-		if not RunService:IsStudio() and checkOwnership(player, passId) ~= true then
-			return
+		if not RunService:IsStudio() then
+			local confirmed = false
+			for _, waitSeconds in ipairs({ 0, 1, 2, 4, 8 }) do
+				if waitSeconds > 0 then
+					task.wait(waitSeconds)
+				end
+				if not player:IsDescendantOf(Players) then
+					return
+				end
+				if checkOwnership(player, passId) == true then
+					confirmed = true
+					break
+				end
+			end
+			if not confirmed then
+				Remotes.Get("Notify"):FireClient(player, "Purchase received! If your " .. pass.Name .. " perk doesn't appear soon, rejoin the game.", "info")
+				task.delay(RECHECK_DELAY, function()
+					if player:IsDescendantOf(Players) and checkOwnership(player, passId) == true then
+						GamepassService.Grant(player, key)
+					end
+				end)
+				return
+			end
 		end
 		if GamepassService.Grant(player, key) then
 			local profile = DataService:GetProfile(player)

@@ -20,7 +20,7 @@ local window
 local dailyCells: { Frame } = {}
 local dailyButton: TextButton
 local dailyStatus: TextLabel
-local playtimeCells: { { Frame: Frame, Button: TextButton, Status: TextLabel } } = {}
+local playtimeCells: { { Frame: Frame, Button: TextButton, Status: TextLabel, Reward: TextLabel } } = {}
 local groupButton: TextButton?
 local codeBox: TextBox
 local redeeming = false
@@ -119,6 +119,7 @@ local function refreshPlaytime()
 	local elapsed = sessionElapsed()
 	for index, entry in ipairs(playtimeCells) do
 		local reward = Config.PlaytimeRewards[index]
+		entry.Reward.Text = describe(reward) -- coin amounts scale with progress
 		local needed = reward.Minutes * 60
 		if claimed[tostring(index)] then
 			UIKit.SetButtonEnabled(entry.Button, false, "CLAIMED")
@@ -271,7 +272,8 @@ local function buildPlaytime(list: ScrollingFrame)
 			TextXAlignment = Enum.TextXAlignment.Center,
 			Parent = cell,
 		})
-		UIKit.Label({
+		local rewardLabel = UIKit.Label({
+			Name = "Reward",
 			Position = UDim2.fromOffset(4, 26),
 			Size = UDim2.new(1, -8, 0, 68),
 			Text = describe(reward),
@@ -291,7 +293,7 @@ local function buildPlaytime(list: ScrollingFrame)
 			Remotes.Get("ClaimPlaytime"):FireServer(index)
 		end)
 		button.Parent = cell
-		playtimeCells[index] = { Frame = cell, Button = button, Status = status }
+		playtimeCells[index] = { Frame = cell, Button = button, Status = status, Reward = rewardLabel }
 	end
 end
 

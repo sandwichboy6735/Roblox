@@ -88,7 +88,7 @@ local function showPopup(position: Vector3, text: string, color: Color3)
 	end)
 end
 
-local function pickupFeedback(orb: BasePart)
+local function popupFor(orb: BasePart)
 	local kind = orb:GetAttribute("Kind")
 	local value = orb:GetAttribute("Value") or 0
 	if kind == "Gem" then
@@ -98,8 +98,10 @@ local function pickupFeedback(orb: BasePart)
 		showPopup(orb.Position, "+" .. Util.FormatNumber(amount), Color3.fromRGB(255, 220, 60))
 	end
 	UIController.PlaySound("Collect", 0.35)
+end
 
-	-- Shrink locally; the server destroys the real part.
+local function hide(orb: BasePart)
+	-- Hide locally; the server destroys the real part.
 	orb.Transparency = 1
 	for _, child in ipairs(orb:GetChildren()) do
 		if child:IsA("Light") then
@@ -151,19 +153,32 @@ local function step()
 			if zone <= unlocked and (orb.Position - rootPosition).Magnitude <= radius then
 				info.Queued = true
 				table.insert(queue, orb)
-				pickupFeedback(orb)
+				hide(orb)
 			end
 		end
 	end
 
-	-- Drain the queue at a steady rate; skip orbs the server already removed.
+	-- Drain the queue at a steady rate, nearest orb first. Orbs we've walked too
+	-- far from for the server to accept are shown again instead of sent.
+	local serverReach = if State.Owns("AutoCollect") then Config.Gamepasses.AutoCollect.Radius + 16 else Config.Orbs.MaxCollectDistance
+	if #queue > 1 then
+		table.sort(queue, function(a, b)
+			return (a.Position - rootPosition).Magnitude < (b.Position - rootPosition).Magnitude
+		end)
+	end
 	while #queue > 0 and now - lastSend >= SEND_INTERVAL do
 		local orb = table.remove(queue, 1)
 		local info = orb and orbs[orb]
 		if info and orb.Parent then
-			lastSend = now
-			info.SentAt = now
-			Remotes.Get("CollectOrb"):FireServer(orb)
+			if (orb.Position - rootPosition).Magnitude > serverReach - 6 then
+				info.Queued = false
+				restore(orb)
+			else
+				lastSend = now
+				info.SentAt = now
+				popupFor(orb)
+				Remotes.Get("CollectOrb"):FireServer(orb)
+			end
 		end
 	end
 end

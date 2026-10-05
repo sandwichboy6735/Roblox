@@ -396,7 +396,17 @@ local function buildEggStand(parent: Instance, eggKey: string, egg, position: Ve
 		Position = position + Vector3.new(0, 1.5 + 3.25, 0),
 		Color = egg.Color,
 		Material = Enum.Material.SmoothPlastic,
+		CanCollide = false, -- the mesh is round but a block would collide square
 	}, model)
+	local collider = part({
+		Name = "Collider",
+		Shape = Enum.PartType.Cylinder,
+		Size = Vector3.new(6.5, 4.6, 4.6),
+		CFrame = CFrame.new(eggPart.Position) * CFrame.Angles(0, 0, math.rad(90)),
+		Transparency = 1,
+		CastShadow = false,
+	}, model)
+	collider.CanQuery = false
 	local eggMesh = Instance.new("SpecialMesh")
 	eggMesh.MeshType = Enum.MeshType.Sphere
 	eggMesh.Parent = eggPart
@@ -769,6 +779,16 @@ end
 
 function MapBuilder.GetZoneBounds(index: number)
 	return zoneBounds[index]
+end
+
+-- Zone index containing this world position (nil on bridges / outside).
+function MapBuilder.GetZoneAt(position: Vector3): number?
+	for index, bounds in pairs(zoneBounds) do
+		if position.X >= bounds.MinX - 8 and position.X <= bounds.MaxX + 8 and position.Z >= bounds.MinZ - 8 and position.Z <= bounds.MaxZ + 8 then
+			return index
+		end
+	end
+	return nil
 end
 
 -- True if an orb at this position would sit inside an egg stand or portal.

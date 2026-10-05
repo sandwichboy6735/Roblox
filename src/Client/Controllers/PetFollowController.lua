@@ -163,7 +163,8 @@ local function createPet(petName: string): PetVisual?
 	end
 
 	local _, size = model:GetBoundingBox()
-	model.Parent = petFolder
+	-- Parented by update() once the owner's character exists, so pets never
+	-- appear at the world origin while an avatar is still loading.
 	return { Model = model, Current = model:GetPivot(), Phase = math.random() * math.pi * 2, Height = size.Y }
 end
 
@@ -254,7 +255,13 @@ local function update(dt: number)
 	for player, owner in pairs(owners) do
 		local character = player.Character
 		local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
-		if root and #owner.Pets > 0 then
+		if not root then
+			for _, pet in ipairs(owner.Pets) do
+				if pet.Model.Parent then
+					pet.Model.Parent = nil
+				end
+			end
+		elseif #owner.Pets > 0 then
 			local far = (root.Position - cameraPosition).Magnitude > RENDER_DISTANCE
 			local flat = CFrame.lookAlong(root.Position, root.CFrame.LookVector * Vector3.new(1, 0, 1) + Vector3.new(0, 0, 1e-4))
 			local count = #owner.Pets

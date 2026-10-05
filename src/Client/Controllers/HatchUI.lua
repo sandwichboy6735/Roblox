@@ -489,7 +489,17 @@ local function hatch(count: number): boolean
 		local settings = State.Get("Settings", {})
 		if settings.SkipHatchAnimation then
 			UIController.PlaySound("Hatch")
-			UIController.Notify(summarize(response.results), "reward")
+			-- During auto hatch only announce exciting results, so toasts don't
+			-- bury the egg panel.
+			local exciting = bestRarityOrder(response.results) >= Config.Rarities.Legendary.Order
+			for _, result in ipairs(response.results) do
+				if result.New then
+					exciting = true
+				end
+			end
+			if exciting or not autoHatching then
+				UIController.Notify(summarize(response.results), "reward")
+			end
 		else
 			local wasOpen = window.IsOpen()
 			window.Close()

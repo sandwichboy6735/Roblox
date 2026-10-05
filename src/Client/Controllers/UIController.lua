@@ -34,6 +34,9 @@ local breakdownLabel: TextLabel
 local boostsLabel: TextLabel
 local sideList: Frame
 
+local MAX_TOASTS = 4
+local toastCounter = 0
+
 local KIND_COLORS = {
 	info = UIKit.Colors.Info,
 	success = UIKit.Colors.Success,
@@ -74,8 +77,13 @@ local function updateScale()
 		return
 	end
 	local viewport = camera.ViewportSize
-	local scale = math.min(viewport.X / 1280, viewport.Y / 720)
-	uiScale.Scale = math.clamp(scale, 0.55, 1.15)
+	local scale = math.clamp(math.min(viewport.X / 1280, viewport.Y / 720), 0.55, 1.15)
+	uiScale.Scale = scale
+	-- UIScale also scales Root itself, so size Root at 1/scale (centred) to keep
+	-- it exactly covering the screen after scaling.
+	root.AnchorPoint = Vector2.new(0.5, 0.5)
+	root.Position = UDim2.fromScale(0.5, 0.5)
+	root.Size = UDim2.fromScale(1 / scale, 1 / scale)
 end
 
 --------------------------------------------------------------------------------
@@ -358,12 +366,28 @@ end
 --------------------------------------------------------------------------------
 
 function UIController.Notify(text: string, kind: string?)
+	-- Keep at most MAX_TOASTS on screen: drop the oldest first.
+	local existing = {}
+	for _, child in ipairs(toastContainer:GetChildren()) do
+		if child:IsA("GuiObject") then
+			table.insert(existing, child)
+		end
+	end
+	table.sort(existing, function(a, b)
+		return a.LayoutOrder < b.LayoutOrder
+	end)
+	for index = 1, #existing - MAX_TOASTS + 1 do
+		existing[index]:Destroy()
+	end
+	toastCounter += 1
+
 	local color = KIND_COLORS[kind or "info"] or UIKit.Colors.Info
 	local toast = UIKit.Frame({
 		Size = UDim2.fromOffset(420, 44),
 		BackgroundColor3 = UIKit.Colors.Background,
 		BackgroundTransparency = 0.1,
 		AutomaticSize = Enum.AutomaticSize.Y,
+		LayoutOrder = toastCounter,
 		ZIndex = 50,
 		Parent = toastContainer,
 	})
@@ -393,6 +417,9 @@ function UIController.Notify(text: string, kind: string?)
 	end
 
 	task.delay(4, function()
+		if not toast.Parent then
+			return -- already pushed out by newer toasts
+		end
 		UIKit.Tween(toast, { BackgroundTransparency = 1 }, 0.3)
 		UIKit.Tween(label, { TextTransparency = 1 }, 0.3)
 		task.wait(0.3)

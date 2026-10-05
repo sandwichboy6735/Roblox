@@ -1,0 +1,15 @@
+# Built place files
+*.rbxl
+*.rbxlx
+*.rbxm
+*.rbxmx
+
+# Rojo / editor
+/sourcemap.json
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

@@ -188,7 +188,7 @@ check(Config.GetZoneAtPosition(v3(#Config.Zones * spacing, 3, 0) :: any) == nil,
 check(Config.GetZoneAtPosition(v3(0, 3, Config.Map.ZoneSize) :: any) == nil, "Outside zone on Z")
 
 -- Pacing guard rails: costs rise faster than orb values; first egg is quick.
-check(Config.Eggs.Basic.Cost <= Config.Zones[1].OrbValue * 40, "First egg affordable within ~40 orbs")
+check(Config.Eggs.Basic.Cost <= Config.Zones[1].OrbValue * 60, "First egg affordable within ~60 orbs")
 -- Each coin egg costs far less than the next goal, so players hatch many eggs.
 for _, egg in pairs(Config.Eggs) do
 	if egg.Currency == "Coins" then

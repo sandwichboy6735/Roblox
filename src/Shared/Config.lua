@@ -258,7 +258,7 @@ Config.Eggs = {
 	Basic = {
 		Name = "Basic Egg",
 		Zone = 1,
-		Cost = 100,
+		Cost = 250,
 		Currency = "Coins",
 		Color = Color3.fromRGB(230, 230, 210),
 		Pets = {
@@ -273,7 +273,7 @@ Config.Eggs = {
 	Candy = {
 		Name = "Candy Egg",
 		Zone = 2,
-		Cost = 4000,
+		Cost = 8000,
 		Currency = "Coins",
 		Color = Color3.fromRGB(255, 150, 200),
 		Pets = {
@@ -288,7 +288,7 @@ Config.Eggs = {
 	Frost = {
 		Name = "Frost Egg",
 		Zone = 3,
-		Cost = 150000,
+		Cost = 320000,
 		Currency = "Coins",
 		Color = Color3.fromRGB(170, 220, 255),
 		Pets = {
@@ -303,7 +303,7 @@ Config.Eggs = {
 	Lava = {
 		Name = "Lava Egg",
 		Zone = 4,
-		Cost = 4000000,
+		Cost = 9000000,
 		Currency = "Coins",
 		Color = Color3.fromRGB(255, 90, 40),
 		Pets = {
@@ -318,7 +318,7 @@ Config.Eggs = {
 	Cosmic = {
 		Name = "Cosmic Egg",
 		Zone = 5,
-		Cost = 100000000,
+		Cost = 250000000,
 		Currency = "Coins",
 		Color = Color3.fromRGB(90, 60, 160),
 		Pets = {
@@ -348,9 +348,10 @@ Config.Eggs = {
 --------------------------------------------------------------------------------
 -- ZONES (in order). Zone 1 is the spawn. Cost = coins to unlock.
 --
--- Pacing (simulated solo player, ~1 orb/s, ~15 hatches per zone, no gifts):
--- zone 2 ~4 min, zone 3 ~11 min, zone 4 ~24 min, zone 5 ~45 min,
--- first rebirth ~65 min. Later rebirths take progressively longer.
+-- Pacing (simulated solo player collecting ~0.85 orbs/s while their pets break
+-- coin piles and chests, hatching when a pet pays for itself, no gifts):
+-- first egg ~40 s, zone 2 ~8 min, zone 3 ~18 min, zone 4 ~35 min,
+-- zone 5 ~80 min, first rebirth ~2.5 h. Later rebirths take longer.
 --------------------------------------------------------------------------------
 
 Config.Zones = {
@@ -372,7 +373,7 @@ Config.Zones = {
 	},
 	{
 		Name = "Candy Land",
-		Cost = 2500,
+		Cost = 10000,
 		OrbValue = 40,
 		OrbCount = 50,
 		BreakableHP = 2.2,
@@ -388,7 +389,7 @@ Config.Zones = {
 	},
 	{
 		Name = "Frozen Peaks",
-		Cost = 200000,
+		Cost = 700000,
 		OrbValue = 400,
 		OrbCount = 50,
 		BreakableHP = 4,
@@ -404,7 +405,7 @@ Config.Zones = {
 	},
 	{
 		Name = "Volcano",
-		Cost = 10000000,
+		Cost = 35000000,
 		OrbValue = 5000,
 		OrbCount = 50,
 		BreakableHP = 7,
@@ -420,7 +421,7 @@ Config.Zones = {
 	},
 	{
 		Name = "Space Station",
-		Cost = 450000000,
+		Cost = 1300000000,
 		OrbValue = 75000,
 		OrbCount = 50,
 		BreakableHP = 12,
@@ -521,7 +522,7 @@ end
 --------------------------------------------------------------------------------
 
 Config.Rebirth = {
-	BaseCost = 12000000000, -- 12B: reached in the last zone
+	BaseCost = 32000000000, -- 32B: reached in the last zone
 	CostGrowth = 1.8, -- cost = BaseCost * CostGrowth ^ (rebirths earned by playing)
 	MaxCost = 1e15, -- keeps costs below the 2^53 coin cap
 	MultiplierPerRebirth = 0.5, -- +50% coins per rebirth (permanent)
@@ -664,7 +665,8 @@ Config.DataTemplate = {
 
 -- Orbs a player is assumed to collect per second when pricing coin rewards.
 Config.Economy = {
-	ReferenceOrbsPerSecond = 1,
+	-- About 0.85 orbs/s walking plus what pets earn from breakables.
+	ReferenceOrbsPerSecond = 1.5,
 }
 
 -- Average coins per orb relative to a zone's OrbValue (normal, big, gem orbs).

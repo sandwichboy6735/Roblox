@@ -38,13 +38,13 @@ Seven **gamepasses** (one-time purchases) and ten **developer products** (repeat
 | 2x Coins | R$249 | Doubles all coin income |
 | VIP | R$399 | +25% coins, +1 pet slot, 2x daily rewards, [VIP] chat tag |
 | Auto Collect | R$199 | Orb magnet with a 32-stud radius |
-| Lucky | R$299 | 2x chance for Legendary and Mythic pets |
+| Lucky | R$299 | Doubles the odds weight of Legendary and Mythic pets |
 | +3 Pet Slots | R$199 | Equip 3 more pets |
 | Triple Hatch | R$249 | Hatch 3 eggs at once |
-| Auto Hatch | R$349 | Hatch automatically |
+| Auto Hatch | R$349 | Keeps hatching anywhere in the egg's zone, waiting for coins when short |
 
 Developer products cover four coin packs, three gem packs, a luck potion, a coin potion, and an instant rebirth.
-Coin packs grow with the player's progress, so they stay worth buying in late zones.
+Coin packs and coin rewards pay a set number of minutes of the player's current income. A R$49 pouch is always worth 10 minutes of play, from the first zone to the last.
 
 Upsells appear where players feel the need. Locked "x3" and "AUTO" buttons sit right in the egg menu.
 A green **+** next to coins and gems opens the shop.
@@ -97,12 +97,20 @@ Almost everything lives in **`src/Shared/Config.lua`**.
 - **Add a pet:** add a line to `Config.Pets`, then put it in an egg's `Pets` list.
 - **Add an egg:** add an entry to `Config.Eggs` with a `Zone`. The stand appears automatically in that zone.
 - **Add a zone:** append to `Config.Zones`. The map, bridge, gate and orbs are generated for it.
-- **Tune the economy:** change orb values, egg costs, zone costs and rebirth settings.
+- **Tune the economy:** change orb values, egg costs, zone costs and rebirth settings. The comment above `Config.Zones` lists the simulated pacing. Run the tests after changes to catch broken data.
 - **Real pet models:** put a Model named exactly like a pet (for example `Dog`) inside `ReplicatedStorage > PetModels`. It replaces the placeholder shape automatically.
 - **Sounds:** paste sound asset Ids you own or that are free to use into `Config.Sounds`.
 - **Wipe all player data:** change `Config.DataStoreName`. Do this only before launch.
 
 Odds in each egg are percentages and must add up to 100.
+
+### Checking your changes
+
+Run the offline tests after editing `Config.lua`. They check egg odds, pet references, purchase rules and save-data format. You need the [Luau CLI](https://github.com/luau-lang/luau/releases) on your PATH.
+
+```bash
+./scripts/test.sh
+```
 
 ### Fair-play rules built in
 

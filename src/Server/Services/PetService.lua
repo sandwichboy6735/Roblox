@@ -269,16 +269,17 @@ function PetService.Hatch(player: Player, eggKey: string, count: number)
 		return { ok = false, reason = "Unlock " .. Config.Zones[egg.Zone].Name .. " first" }
 	end
 
-	-- Must be standing near the egg stand
+	-- Must be standing near the egg stand (Auto Hatch owners: anywhere in its zone)
 	local standPosition = MapBuilder.GetEggStandPosition(eggKey)
 	local character = player.Character
-	local root = character and character:FindFirstChild("HumanoidRootPart")
-	if standPosition and root then
-		if (root.Position - standPosition).Magnitude > MAX_HATCH_DISTANCE then
-			return { ok = false, reason = "Walk closer to the egg" }
-		end
-	elseif not root then
+	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+	if not root then
 		return { ok = false, reason = "No character" }
+	end
+	local nearStand = standPosition ~= nil and (root.Position - standPosition).Magnitude <= MAX_HATCH_DISTANCE
+	local inEggZone = GamepassService.Owns(player, "AutoHatch") and MapBuilder.GetZoneAt(root.Position) == egg.Zone
+	if standPosition and not nearStand and not inEggZone then
+		return { ok = false, reason = "Walk closer to the egg" }
 	end
 
 	if #data.Pets + count > Config.PetStorageLimit then

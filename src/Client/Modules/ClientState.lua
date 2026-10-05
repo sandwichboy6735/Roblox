@@ -64,6 +64,24 @@ function State.GetMultiplier(): number
 	return info and info.Total or 1
 end
 
+-- Pets x rebirth x gamepasses x group (no timed boosts) - prices coin rewards.
+function State.GetPermanentMultiplier(): number
+	local info = State.Data.Multiplier
+	if not info then
+		return 1
+	end
+	return (info.Pets or 1) * (info.Rebirth or 1) * (info.Gamepass or 1) * (info.Group or 1)
+end
+
+-- Coins worth `minutes` of this player's income (matches the server).
+function State.CoinsForMinutes(minutes: number): number
+	return Config.CoinsForMinutes(minutes, State.Get("ZonesUnlocked", 1), State.GetPermanentMultiplier())
+end
+
+function State.GetRebirthCost(): number
+	return Config.GetRebirthCost(State.Get("Rebirths", 0) - State.Get("PurchasedRebirths", 0))
+end
+
 function State.GetLuck(): number
 	local luck = 1
 	if State.Owns("Lucky") then

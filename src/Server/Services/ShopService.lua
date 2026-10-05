@@ -29,8 +29,8 @@ local function grantProduct(player: Player, productKey: string, product)
 	local grantInfo = product.Grant
 	local summary = {}
 
-	if grantInfo.Coins then
-		local amount = EconomyService.AddCoins(player, EconomyService.ScaleCoins(player, grantInfo.Coins), false)
+	if grantInfo.CoinMinutes then
+		local amount = EconomyService.AddCoins(player, EconomyService.CoinsForMinutes(player, grantInfo.CoinMinutes), false)
 		table.insert(summary, Util.FormatNumber(amount) .. " Coins")
 	end
 	if grantInfo.Gems then

@@ -26,6 +26,7 @@ local SEND_INTERVAL = 1 / 6 -- matches the server's sustained pickup rate
 local RETRY_AFTER = 2.5 -- un-hide an orb if the server didn't take it after sending
 local ANIMATE_DISTANCE = 140
 local MAX_POPUPS = 10
+local MAX_QUEUE = 6 -- keeps popups within ~1s of the actual pickup
 
 -- Queued: hidden locally and waiting to be sent. SentAt: when the request went out.
 type OrbInfo = { Base: CFrame, Phase: number, Queued: boolean, SentAt: number? }
@@ -148,7 +149,7 @@ local function step()
 				info.SentAt = nil
 				restore(orb)
 			end
-		else
+		elseif #queue < MAX_QUEUE then
 			local zone = orb:GetAttribute("Zone") or 1
 			if zone <= unlocked and (orb.Position - rootPosition).Magnitude <= radius then
 				info.Queued = true
@@ -158,9 +159,21 @@ local function step()
 		end
 	end
 
-	-- Drain the queue at a steady rate, nearest orb first. Orbs we've walked too
-	-- far from for the server to accept are shown again instead of sent.
+	-- Orbs we've walked too far from for the server to accept reappear at once.
 	local serverReach = if State.Owns("AutoCollect") then Config.Gamepasses.AutoCollect.Radius + 16 else Config.Orbs.MaxCollectDistance
+	for index = #queue, 1, -1 do
+		local orb = queue[index]
+		if (orb.Position - rootPosition).Magnitude > serverReach - 6 then
+			table.remove(queue, index)
+			local info = orbs[orb]
+			if info then
+				info.Queued = false
+				restore(orb)
+			end
+		end
+	end
+
+	-- Drain the queue at a steady rate, nearest orb first.
 	if #queue > 1 then
 		table.sort(queue, function(a, b)
 			return (a.Position - rootPosition).Magnitude < (b.Position - rootPosition).Magnitude
@@ -170,15 +183,10 @@ local function step()
 		local orb = table.remove(queue, 1)
 		local info = orb and orbs[orb]
 		if info and orb.Parent then
-			if (orb.Position - rootPosition).Magnitude > serverReach - 6 then
-				info.Queued = false
-				restore(orb)
-			else
-				lastSend = now
-				info.SentAt = now
-				popupFor(orb)
-				Remotes.Get("CollectOrb"):FireServer(orb)
-			end
+			lastSend = now
+			info.SentAt = now
+			popupFor(orb)
+			Remotes.Get("CollectOrb"):FireServer(orb)
 		end
 	end
 end

@@ -19,8 +19,9 @@ local function notify(player: Player, message: string, kind: string?)
 	Remotes.Get("Notify"):FireClient(player, message, kind or "info")
 end
 
-function RebirthService.GetCost(rebirths: number): number
-	return Config.GetRebirthCost(rebirths)
+-- Cost of this player's next rebirth (purchased rebirths don't raise it).
+function RebirthService.GetCost(data): number
+	return Config.GetRebirthCost(data.Rebirths - (data.PurchasedRebirths or 0))
 end
 
 function RebirthService.Rebirth(player: Player)
@@ -29,7 +30,7 @@ function RebirthService.Rebirth(player: Player)
 		return
 	end
 	local data = profile.Data
-	local cost = RebirthService.GetCost(data.Rebirths)
+	local cost = RebirthService.GetCost(data)
 
 	if Config.Rebirth.RequireAllZones and data.ZonesUnlocked < #Config.Zones then
 		notify(player, "Unlock every zone before rebirthing!", "error")
@@ -67,9 +68,12 @@ function RebirthService.GrantRebirths(player: Player, amount: number)
 	if not profile then
 		return
 	end
-	profile.Data.Rebirths += amount
-	DataService:Replicate(player, { Rebirths = profile.Data.Rebirths })
-	EconomyService.UpdateLeaderstats(player, profile.Data)
+	local data = profile.Data
+	data.Rebirths += amount
+	data.PurchasedRebirths = (data.PurchasedRebirths or 0) + amount
+	data.Gems += Config.Rebirth.GemsReward * amount -- never worse than a free rebirth
+	DataService:Replicate(player, { Rebirths = data.Rebirths, PurchasedRebirths = data.PurchasedRebirths, Gems = data.Gems })
+	EconomyService.UpdateLeaderstats(player, data)
 	EconomyService.RefreshMultiplier(player)
 end
 

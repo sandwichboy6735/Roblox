@@ -36,6 +36,8 @@ Create one pass for each entry: `DoubleCoins`, `VIP`, `AutoCollect`, `Lucky`, `E
 
 Create one product for each entry: `Coins_Small`, `Coins_Medium`, `Coins_Large`, `Coins_Mega`, `Gems_Small`, `Gems_Medium`, `Gems_Large`, `LuckPotion`, `CoinPotion`, `RebirthToken`.
 
+Coin packs use `CoinMinutes`: the player gets coins worth that many minutes of their current income. The shop shows the exact amount before buying. This keeps every pack equally useful early and late in the game.
+
 The `Price` field in Config only controls the label in the in-game shop. Roblox always charges the price set on the Creator Hub, so keep them equal.
 
 ## 4. Test it

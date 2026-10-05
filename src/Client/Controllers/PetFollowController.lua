@@ -271,13 +271,15 @@ local function update(dt: number)
 						pet.Model.Parent = nil
 					end
 				else
-					if not pet.Model.Parent then
-						pet.Model.Parent = petFolder
-					end
 					local offset = slotOffset(index, count)
 					local bob = math.sin(t * 3 + pet.Phase) * 0.35
 					-- Hover just above the ground (root is ~3 studs above the floor).
 					local target = flat * CFrame.new(offset.X, -3 + pet.Height / 2 + 0.6 + bob, offset.Z)
+					if not pet.Model.Parent then
+						-- Appearing (new, or back in range): start in the slot.
+						pet.Model.Parent = petFolder
+						pet.Current = target
+					end
 					local distance = (pet.Current.Position - target.Position).Magnitude
 					if distance > 60 then
 						pet.Current = target -- teleported: snap

@@ -17,8 +17,8 @@ local Util = require(Shared.Util)
 
 local MapBuilder = {}
 
-local ZONE_SIZE = 180
-local ZONE_SPACING = 200
+local ZONE_SIZE = Config.Map.ZoneSize
+local ZONE_SPACING = Config.Map.ZoneSpacing
 local HALF = ZONE_SIZE / 2
 local BRIDGE_WIDTH = 30
 local WALL_HEIGHT = 40
@@ -398,11 +398,13 @@ local function buildEggStand(parent: Instance, eggKey: string, egg, position: Ve
 		Material = Enum.Material.SmoothPlastic,
 		CanCollide = false, -- the mesh is round but a block would collide square
 	}, model)
+	-- An invisible sphere that fits inside the visible egg blocks players without
+	-- invisible corners or a flat top to stand on.
 	local collider = part({
 		Name = "Collider",
-		Shape = Enum.PartType.Cylinder,
-		Size = Vector3.new(6.5, 4.6, 4.6),
-		CFrame = CFrame.new(eggPart.Position) * CFrame.Angles(0, 0, math.rad(90)),
+		Shape = Enum.PartType.Ball,
+		Size = Vector3.new(5, 5, 5),
+		Position = eggPart.Position,
 		Transparency = 1,
 		CastShadow = false,
 	}, model)
@@ -783,12 +785,7 @@ end
 
 -- Zone index containing this world position (nil on bridges / outside).
 function MapBuilder.GetZoneAt(position: Vector3): number?
-	for index, bounds in pairs(zoneBounds) do
-		if position.X >= bounds.MinX - 8 and position.X <= bounds.MaxX + 8 and position.Z >= bounds.MinZ - 8 and position.Z <= bounds.MaxZ + 8 then
-			return index
-		end
-	end
-	return nil
+	return Config.GetZoneAtPosition(position)
 end
 
 -- True if an orb at this position would sit inside an egg stand or portal.

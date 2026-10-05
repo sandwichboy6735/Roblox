@@ -28,8 +28,8 @@ local redeeming = false
 local function describe(reward, multiplier: number?): string
 	local mult = multiplier or 1
 	local parts = {}
-	if reward.Coins then
-		local amount = Config.ScaleCoins(reward.Coins, State.Get("ZonesUnlocked", 1), State.Get("Rebirths", 0)) * mult
+	if reward.CoinMinutes then
+		local amount = State.CoinsForMinutes(reward.CoinMinutes) * mult
 		table.insert(parts, "<font color='#FFC400'>" .. Util.FormatNumber(amount) .. " Coins</font>")
 	end
 	if reward.Gems then
@@ -428,7 +428,7 @@ function RewardsUI.Init()
 
 	window.OnOpen = refreshAll
 	State.Changed:Connect(function(patch)
-		if patch.Daily ~= nil or patch.PlaytimeClaimed ~= nil or patch.GroupClaimed ~= nil or patch.Gamepasses ~= nil or patch.ZonesUnlocked ~= nil or patch.Rebirths ~= nil then
+		if patch.Daily ~= nil or patch.PlaytimeClaimed ~= nil or patch.GroupClaimed ~= nil or patch.Gamepasses ~= nil or patch.ZonesUnlocked ~= nil or patch.Multiplier ~= nil then
 			refreshAll()
 		end
 	end)

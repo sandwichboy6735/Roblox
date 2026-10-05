@@ -144,14 +144,19 @@ function EconomyService.GetLuckMultiplier(player: Player): number
 	return luck
 end
 
--- Scales a base coin amount to the player's progress so rewards and coin packs
--- remain meaningful in late zones.
-function EconomyService.ScaleCoins(player: Player, baseAmount: number): number
+-- Pets x rebirth x gamepasses x group (timed boosts excluded).
+function EconomyService.GetPermanentMultiplier(player: Player): number
+	local info = EconomyService.GetMultiplierInfo(player)
+	return info.Pets * info.Rebirth * info.Gamepass * info.Group
+end
+
+-- Coins worth `minutes` of this player's current income (rewards, coin packs).
+function EconomyService.CoinsForMinutes(player: Player, minutes: number): number
 	local profile = DataService:GetProfile(player)
 	if not profile then
-		return baseAmount
+		return 0
 	end
-	return Config.ScaleCoins(baseAmount, profile.Data.ZonesUnlocked, profile.Data.Rebirths)
+	return Config.CoinsForMinutes(minutes, profile.Data.ZonesUnlocked, EconomyService.GetPermanentMultiplier(player))
 end
 
 --------------------------------------------------------------------------------

@@ -22,7 +22,6 @@ local nextLabel: TextLabel
 local costLabel: TextLabel
 local rebirthButton: TextButton
 
-local getCost = Config.GetRebirthCost
 
 local function refresh()
 	if not window or not window.IsOpen() then
@@ -30,7 +29,7 @@ local function refresh()
 	end
 	local rebirths = State.Get("Rebirths", 0)
 	local coins = State.Get("Coins", 0)
-	local cost = getCost(rebirths)
+	local cost = State.GetRebirthCost()
 	local per = Config.Rebirth.MultiplierPerRebirth
 
 	currentLabel.Text = string.format("Rebirths: <font color='#FFC400'>%d</font>   Multiplier: <font color='#AF69FF'>x%.2f</font>", rebirths, 1 + rebirths * per)
@@ -103,7 +102,7 @@ function RebirthUI.Init()
 
 	window.OnOpen = refresh
 	State.Changed:Connect(function(patch)
-		if patch.Coins ~= nil or patch.Rebirths ~= nil or patch.ZonesUnlocked ~= nil then
+		if patch.Coins ~= nil or patch.Rebirths ~= nil or patch.ZonesUnlocked ~= nil or patch.PurchasedRebirths ~= nil then
 			refresh()
 		end
 	end)

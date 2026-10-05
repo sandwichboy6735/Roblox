@@ -35,8 +35,13 @@ local function sortedEntries(map)
 	return entries
 end
 
+local function isBlocked(key: string): boolean
+	-- Restricted until the server confirms this player's region allows it.
+	return Config.RestrictedPurchases[key] == true and State.Get("PaidRandomRestricted", true) == true
+end
+
 local function promptGamepass(key, pass)
-	if Config.RestrictedPurchases[key] and State.Get("PaidRandomRestricted", false) then
+	if isBlocked(key) then
 		UIController.Notify("Sorry, this item is unavailable in your region.", "error")
 		return
 	end
@@ -48,7 +53,7 @@ local function promptGamepass(key, pass)
 end
 
 local function promptProduct(key, product)
-	if Config.RestrictedPurchases[key] and State.Get("PaidRandomRestricted", false) then
+	if isBlocked(key) then
 		UIController.Notify("Sorry, this item is unavailable in your region.", "error")
 		return
 	end
@@ -60,8 +65,8 @@ local function promptProduct(key, product)
 end
 
 local function describeGrant(grant): string
-	if grant.Coins then
-		return Util.FormatNumber(grant.Coins) .. "+ Coins (scales with zone)"
+	if grant.CoinMinutes then
+		return string.format("%s Coins\n(%d min of your current income)", Util.FormatNumber(State.CoinsForMinutes(grant.CoinMinutes)), grant.CoinMinutes)
 	elseif grant.Gems then
 		return "+" .. Util.FormatNumber(grant.Gems) .. " Gems"
 	elseif grant.Boost then
@@ -99,10 +104,6 @@ local function gridContainer(count: number, order: number): Frame
 		Parent = holder,
 	})
 	return holder
-end
-
-local function isBlocked(key: string): boolean
-	return Config.RestrictedPurchases[key] == true and State.Get("PaidRandomRestricted", false) == true
 end
 
 local function card(parent: Instance, order: number, color: Color3, title: string, body: string, buttonText: string, onClick: () -> (), owned: boolean?, blocked: boolean?)
@@ -184,7 +185,7 @@ local function rebuild()
 	for index, entry in ipairs(products) do
 		local product = entry.Item
 		local color = UIKit.Colors.Info
-		if product.Grant.Coins then
+		if product.Grant.CoinMinutes then
 			color = UIKit.Colors.Accent
 		elseif product.Grant.Gems then
 			color = UIKit.Colors.Gems
@@ -214,7 +215,7 @@ function ShopUI.Init()
 
 	window.OnOpen = rebuild
 	State.Changed:Connect(function(patch)
-		if patch.Gamepasses ~= nil or patch.PaidRandomRestricted ~= nil then
+		if patch.Gamepasses ~= nil or patch.PaidRandomRestricted ~= nil or patch.Multiplier ~= nil or patch.ZonesUnlocked ~= nil then
 			rebuild()
 		end
 	end)

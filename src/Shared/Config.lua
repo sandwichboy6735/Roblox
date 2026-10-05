@@ -69,7 +69,7 @@ Config.Gamepasses = {
 		Id = 0,
 		Name = "Lucky",
 		Price = 299,
-		Description = "2x chance to hatch LEGENDARY and MYTHIC pets!",
+		Description = "Doubles the weight of Legendary & Mythic pets in every egg. Exact odds are shown on each egg.",
 		Color = Color3.fromRGB(120, 255, 120),
 		Order = 4,
 		LuckMultiplier = 2,
@@ -102,13 +102,14 @@ Config.Gamepasses = {
 }
 
 -- Developer Products: repeatable purchases. Set Id from Creator Hub.
--- Coin packs scale with the player's progress (see EconomyService.ScaleCoins)
--- so they stay valuable in late zones.
+-- CoinMinutes = coins worth that many minutes of the player's current income
+-- (best zone x permanent multiplier), so packs are equally valuable at every
+-- stage of the game. See Config.CoinsForMinutes.
 Config.Products = {
-	Coins_Small = { Id = 0, Name = "Coin Pouch", Price = 49, Order = 1, Grant = { Coins = 2000 } },
-	Coins_Medium = { Id = 0, Name = "Coin Bag", Price = 129, Order = 2, Grant = { Coins = 7500 } },
-	Coins_Large = { Id = 0, Name = "Coin Chest", Price = 349, Order = 3, Grant = { Coins = 25000 } },
-	Coins_Mega = { Id = 0, Name = "Coin Vault", Price = 999, Order = 4, Grant = { Coins = 100000 } },
+	Coins_Small = { Id = 0, Name = "Coin Pouch", Price = 49, Order = 1, Grant = { CoinMinutes = 10 } },
+	Coins_Medium = { Id = 0, Name = "Coin Bag", Price = 129, Order = 2, Grant = { CoinMinutes = 40 } },
+	Coins_Large = { Id = 0, Name = "Coin Chest", Price = 349, Order = 3, Grant = { CoinMinutes = 120 } },
+	Coins_Mega = { Id = 0, Name = "Coin Vault", Price = 999, Order = 4, Grant = { CoinMinutes = 480 } },
 
 	Gems_Small = { Id = 0, Name = "100 Gems", Price = 99, Order = 5, Grant = { Gems = 100 } },
 	Gems_Medium = { Id = 0, Name = "350 Gems", Price = 299, Order = 6, Grant = { Gems = 350 } },
@@ -217,13 +218,15 @@ Config.Pets = {
 	["Supernova Capybara"] = pet("Supernova Capybara", "Mythic", 250, Color3.fromRGB(255, 150, 60), "Block"),
 
 	-- Premium (Gem egg)
-	["Golden Dog"] = pet("Golden Dog", "Rare", 5, Color3.fromRGB(255, 215, 0), "Block"),
-	["Diamond Cat"] = pet("Diamond Cat", "Epic", 12, Color3.fromRGB(180, 240, 255), "Block"),
-	["Crystal Dragon"] = pet("Crystal Dragon", "Legendary", 35, Color3.fromRGB(200, 255, 250)),
-	["Celestial Capybara"] = pet("Celestial Capybara", "Mythic", 150, Color3.fromRGB(255, 255, 200), "Block"),
+	-- Strong early boosts, but below the zone 4-5 egg pets so zone eggs stay the goal.
+	["Golden Dog"] = pet("Golden Dog", "Rare", 3, Color3.fromRGB(255, 215, 0), "Block"),
+	["Diamond Cat"] = pet("Diamond Cat", "Epic", 6, Color3.fromRGB(180, 240, 255), "Block"),
+	["Crystal Dragon"] = pet("Crystal Dragon", "Legendary", 15, Color3.fromRGB(200, 255, 250)),
+	["Celestial Capybara"] = pet("Celestial Capybara", "Mythic", 50, Color3.fromRGB(255, 255, 200), "Block"),
 
 	-- Exclusive rewards (not in any egg)
-	["Golden Capybara"] = pet("Golden Capybara", "Legendary", 20, Color3.fromRGB(255, 200, 40), "Block"),
+	-- Day-7 streak reward: strong enough to equip until the late zone-5 pets.
+	["Golden Capybara"] = pet("Golden Capybara", "Legendary", 75, Color3.fromRGB(255, 200, 40), "Block"),
 }
 
 Config.PetStorageLimit = 150 -- total pets a player can hold
@@ -326,21 +329,18 @@ Config.Eggs = {
 
 --------------------------------------------------------------------------------
 -- ZONES (in order). Zone 1 is the spawn. Cost = coins to unlock.
--- RewardScale multiplies coin rewards (daily, playtime, codes, coin packs) for
--- players whose furthest zone is this one, so rewards stay meaningful late.
 --
--- Pacing target (solo, ~1.5 orbs/s, simulated): zone 2 ~3 min, zone 3 ~7 min,
--- zone 4 ~16 min, zone 5 ~30 min, first rebirth ~45 min. Real players are less
--- efficient, so expect roughly 1.5x these times.
+-- Pacing (simulated solo player, ~1 orb/s, ~15 hatches per zone, no gifts):
+-- zone 2 ~4 min, zone 3 ~11 min, zone 4 ~24 min, zone 5 ~45 min,
+-- first rebirth ~65 min. Later rebirths take progressively longer.
 --------------------------------------------------------------------------------
 
 Config.Zones = {
 	{
 		Name = "Grassy Meadow",
 		Cost = 0,
-		RewardScale = 1,
 		OrbValue = 5,
-		OrbCount = 28,
+		OrbCount = 50,
 		Eggs = { "Basic" },
 		Theme = {
 			Ground = Color3.fromRGB(96, 170, 70),
@@ -354,9 +354,8 @@ Config.Zones = {
 	{
 		Name = "Candy Land",
 		Cost = 2500,
-		RewardScale = 20,
 		OrbValue = 40,
-		OrbCount = 26,
+		OrbCount = 50,
 		Eggs = { "Candy" },
 		Theme = {
 			Ground = Color3.fromRGB(255, 170, 210),
@@ -370,9 +369,8 @@ Config.Zones = {
 	{
 		Name = "Frozen Peaks",
 		Cost = 200000,
-		RewardScale = 1000,
 		OrbValue = 400,
-		OrbCount = 26,
+		OrbCount = 50,
 		Eggs = { "Frost" },
 		Theme = {
 			Ground = Color3.fromRGB(225, 240, 255),
@@ -386,9 +384,8 @@ Config.Zones = {
 	{
 		Name = "Volcano",
 		Cost = 10000000,
-		RewardScale = 45000,
 		OrbValue = 5000,
-		OrbCount = 24,
+		OrbCount = 50,
 		Eggs = { "Lava" },
 		Theme = {
 			Ground = Color3.fromRGB(60, 50, 50),
@@ -402,9 +399,8 @@ Config.Zones = {
 	{
 		Name = "Space Station",
 		Cost = 450000000,
-		RewardScale = 600000,
 		OrbValue = 75000,
-		OrbCount = 24,
+		OrbCount = 50,
 		Eggs = { "Cosmic" },
 		Theme = {
 			Ground = Color3.fromRGB(45, 40, 70),
@@ -417,6 +413,12 @@ Config.Zones = {
 	},
 }
 
+-- World layout (MapBuilder builds zones in a row along +X).
+Config.Map = {
+	ZoneSize = 180,
+	ZoneSpacing = 200,
+}
+
 Config.Orbs = {
 	RespawnMin = 2, -- seconds
 	RespawnMax = 4,
@@ -424,8 +426,8 @@ Config.Orbs = {
 	BigOrbMultiplier = 5,
 	-- Orbs are shared, so each zone adds orbs for every extra player standing in
 	-- it. Without this, a full server would earn far less per player than solo.
-	ExtraPerPlayer = 10,
-	MaxPerZone = 110,
+	ExtraPerPlayer = 12,
+	MaxPerZone = 140,
 	GemOrbChance = 0.02, -- 2% of orbs are gem orbs (1-3 gems)
 	CollectRadius = 7, -- studs, walk-over pickup
 	MaxCollectDistance = 24, -- server validation (pickup rate limits: CollectibleService)
@@ -437,7 +439,8 @@ Config.Orbs = {
 
 Config.Rebirth = {
 	BaseCost = 12000000000, -- 12B: reached in the last zone
-	CostGrowth = 2.5, -- cost = BaseCost * CostGrowth ^ rebirths
+	CostGrowth = 1.8, -- cost = BaseCost * CostGrowth ^ (rebirths earned by playing)
+	MaxCost = 1e15, -- keeps costs below the 2^53 coin cap
 	MultiplierPerRebirth = 0.5, -- +50% coins per rebirth (permanent)
 	GemsReward = 25,
 	RequireAllZones = true, -- must have unlocked the last zone to rebirth
@@ -447,23 +450,26 @@ Config.Rebirth = {
 -- REWARDS (coins are scaled to the player's current zone/rebirths)
 --------------------------------------------------------------------------------
 
+-- CoinMinutes = minutes of the player's current income (see Config.CoinsForMinutes).
 Config.DailyRewards = {
-	{ Coins = 1000 },
+	{ CoinMinutes = 5 },
 	{ Gems = 5 },
-	{ Coins = 2500 },
+	{ CoinMinutes = 10 },
 	{ Gems = 10 },
-	{ Coins = 5000 },
+	{ CoinMinutes = 20 },
 	{ Gems = 20 },
 	{ Gems = 50, Pet = "Golden Capybara" },
 }
 
+-- Session gifts (reset each visit). Kept small so gameplay, not timers, drives
+-- progress: about +30% coins over a full hour.
 Config.PlaytimeRewards = {
-	{ Minutes = 3, Coins = 500 },
+	{ Minutes = 3, CoinMinutes = 1 },
 	{ Minutes = 10, Gems = 5 },
-	{ Minutes = 20, Coins = 2500 },
+	{ Minutes = 20, CoinMinutes = 3 },
 	{ Minutes = 30, Gems = 10 },
-	{ Minutes = 45, Coins = 10000 },
-	{ Minutes = 60, Gems = 25, Coins = 15000 },
+	{ Minutes = 45, CoinMinutes = 6 },
+	{ Minutes = 60, Gems = 25, CoinMinutes = 8 },
 }
 
 Config.GroupReward = {
@@ -496,6 +502,7 @@ Config.DataTemplate = {
 	Coins = 0,
 	Gems = 0,
 	Rebirths = 0,
+	PurchasedRebirths = 0, -- from the Instant Rebirth product (don't raise the cost)
 	ZonesUnlocked = 1,
 	Pets = {}, -- { {Id, Type, Equipped, Hatched} }
 	Discovered = {}, -- { [PetName] = true } for the pet Index
@@ -520,17 +527,46 @@ Config.DataTemplate = {
 -- Helpers
 --------------------------------------------------------------------------------
 
--- Scales a base coin amount to the player's progress so rewards and coin packs
--- stay meaningful in late zones. Shared so the client can preview amounts.
-function Config.ScaleCoins(baseAmount: number, zonesUnlocked: number, rebirths: number): number
-	local zone = Config.Zones[math.clamp(zonesUnlocked or 1, 1, #Config.Zones)]
-	local zoneScale = zone.RewardScale or (zone.OrbValue / Config.Zones[1].OrbValue)
-	local rebirthScale = 1 + (rebirths or 0) * Config.Rebirth.MultiplierPerRebirth
-	return math.floor(baseAmount * zoneScale * rebirthScale)
+-- Orbs a player is assumed to collect per second when pricing coin rewards.
+Config.Economy = {
+	ReferenceOrbsPerSecond = 1,
+}
+
+-- Average coins per orb relative to a zone's OrbValue (normal, big, gem orbs).
+function Config.ExpectedOrbFactor(): number
+	local orbs = Config.Orbs
+	local normal = 1 - orbs.BigOrbChance - orbs.GemOrbChance
+	return normal * 1.025 + orbs.BigOrbChance * orbs.BigOrbMultiplier
 end
 
-function Config.GetRebirthCost(rebirths: number): number
-	return math.floor(Config.Rebirth.BaseCost * Config.Rebirth.CostGrowth ^ rebirths)
+-- Coins worth `minutes` of a player's income in their best zone, using their
+-- permanent multiplier (pets x rebirth x gamepasses x group; not timed boosts).
+-- Shared so the client can preview exact amounts.
+function Config.CoinsForMinutes(minutes: number, zonesUnlocked: number, permanentMultiplier: number): number
+	local zone = Config.Zones[math.clamp(zonesUnlocked or 1, 1, #Config.Zones)]
+	local perSecond = Config.Economy.ReferenceOrbsPerSecond * zone.OrbValue * Config.ExpectedOrbFactor() * math.max(permanentMultiplier or 1, 1)
+	return math.max(1, math.floor(minutes * 60 * perSecond))
+end
+
+-- `naturalRebirths` = rebirths earned by playing (Rebirths - PurchasedRebirths).
+function Config.GetRebirthCost(naturalRebirths: number): number
+	local cost = Config.Rebirth.BaseCost * Config.Rebirth.CostGrowth ^ math.max(naturalRebirths, 0)
+	return math.floor(math.min(cost, Config.Rebirth.MaxCost))
+end
+
+-- Zone index containing a world position, or nil (bridges / outside).
+function Config.GetZoneAtPosition(position: Vector3): number?
+	local spacing = Config.Map.ZoneSpacing
+	local half = Config.Map.ZoneSize / 2
+	local index = math.floor(position.X / spacing + 0.5) + 1
+	if index < 1 or index > #Config.Zones then
+		return nil
+	end
+	local centerX = (index - 1) * spacing
+	if math.abs(position.X - centerX) > half or math.abs(position.Z) > half then
+		return nil
+	end
+	return index
 end
 
 function Config.GetGamepassByProductId(id: number)

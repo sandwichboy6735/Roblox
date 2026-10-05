@@ -111,7 +111,7 @@ local function refreshGoal()
 		target = nextZone.Cost
 		goalText = "Next zone: " .. nextZone.Name
 	else
-		target = Config.GetRebirthCost(State.Get("Rebirths", 0))
+		target = State.GetRebirthCost()
 		goalText = "Next: REBIRTH"
 	end
 	local progress = math.clamp(coins / math.max(target, 1), 0, 1)
@@ -182,7 +182,7 @@ function WorldController.Init()
 		if patch.ZonesUnlocked ~= nil then
 			refreshGates()
 		end
-		if patch.Coins ~= nil or patch.ZonesUnlocked ~= nil or patch.Rebirths ~= nil then
+		if patch.Coins ~= nil or patch.ZonesUnlocked ~= nil or patch.Rebirths ~= nil or patch.PurchasedRebirths ~= nil then
 			refreshGoal()
 		end
 	end)

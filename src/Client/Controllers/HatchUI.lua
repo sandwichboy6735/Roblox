@@ -25,6 +25,7 @@ local HatchUI = {}
 
 local CLOSE_DISTANCE = 22
 local MIN_AUTO_INTERVAL = 0.45
+local AUTO_WAIT_FOR_FUNDS = 0.5
 
 local window
 local oddsGrid: ScrollingFrame
@@ -41,6 +42,8 @@ local autoHatching = false
 
 local overlay: Frame
 local stage: Frame
+local autoChip: Frame
+local autoChipLabel: TextLabel
 
 --------------------------------------------------------------------------------
 -- Helpers
@@ -103,7 +106,7 @@ local function refreshButtons()
 	local luck = State.GetLuck()
 	if luck > 1 then
 		luckLabel.Text = string.format("<font color='#50DC78'>LUCK x%s ACTIVE: odds below include your boost</font>", tostring(luck))
-	elseif State.Get("PaidRandomRestricted", false) then
+	elseif State.Get("PaidRandomRestricted", true) then
 		luckLabel.Text = "Odds for each pet are shown below."
 	else
 		luckLabel.Text = "Odds shown below. The Lucky pass doubles Legendary & Mythic weights."
@@ -462,15 +465,18 @@ end
 -- Hatching
 --------------------------------------------------------------------------------
 
-local function hatch(count: number): boolean
+-- Returns (success, shortOfFunds).
+local function hatch(count: number): (boolean, boolean)
 	if busy or not currentEgg then
-		return false
+		return false, false
 	end
 	local eggKey = currentEgg
 	local egg = Config.Eggs[eggKey]
 	if currencyAmount(egg) < egg.Cost * count then
-		UIController.Notify("Not enough " .. egg.Currency .. "! Collect orbs or visit the shop.", "error")
-		return false
+		if not autoHatching then
+			UIController.Notify("Not enough " .. egg.Currency .. "! Collect orbs or visit the shop.", "error")
+		end
+		return false, true
 	end
 
 	busy = true
@@ -512,10 +518,22 @@ local function hatch(count: number): boolean
 
 	busy = false
 	refreshButtons()
-	return success
+	return success, false
+end
+
+local function refreshAutoChip()
+	if not autoChip then
+		return
+	end
+	local showChip = autoHatching and not window.IsOpen()
+	autoChip.Visible = showChip
+	if showChip and currentEgg then
+		autoChipLabel.Text = "AUTO HATCHING: " .. string.upper(Config.Eggs[currentEgg].Name)
+	end
 end
 
 local function autoLoop()
+	refreshAutoChip()
 	while autoHatching do
 		local started = os.clock()
 		local count = State.Owns("TripleHatch") and 3 or 1
@@ -523,7 +541,11 @@ local function autoLoop()
 		if egg and count == 3 and currencyAmount(egg) < egg.Cost * 3 then
 			count = 1
 		end
-		if not hatch(count) then
+		local ok, shortOfFunds = hatch(count)
+		if not ok and shortOfFunds then
+			-- Keep running and hatch again as soon as there are enough coins.
+			task.wait(AUTO_WAIT_FOR_FUNDS)
+		elseif not ok then
 			autoHatching = false
 			refreshButtons()
 			break
@@ -533,12 +555,14 @@ local function autoLoop()
 			task.wait(MIN_AUTO_INTERVAL - elapsed)
 		end
 	end
+	refreshAutoChip()
 end
 
 local function stopAuto()
 	if autoHatching then
 		autoHatching = false
 		refreshButtons()
+		refreshAutoChip()
 	end
 end
 
@@ -625,12 +649,42 @@ function HatchUI.Init()
 	autoButton.Parent = buttonRow
 
 	window.OnClose = function()
-		-- Auto hatch keeps running while the reveal temporarily hides the window,
-		-- but stops when the player closes it while idle.
-		if not busy then
-			stopAuto()
-		end
+		-- Auto Hatch keeps running in the background (with a STOP chip on screen).
+		refreshAutoChip()
 	end
+	window.OnOpen = refreshAutoChip
+
+	-- "Auto hatching" chip, shown while auto hatch runs with the panel closed.
+	autoChip = UIKit.Frame({
+		Name = "AutoHatchChip",
+		AnchorPoint = Vector2.new(0.5, 1),
+		Position = UDim2.new(0.5, 0, 1, -54),
+		Size = UDim2.fromOffset(330, 40),
+		BackgroundColor3 = UIKit.Colors.Background,
+		BackgroundTransparency = 0.1,
+		Visible = false,
+		Parent = UIController.Root,
+	})
+	UIKit.Corner(autoChip, 20)
+	UIKit.Stroke(autoChip, UIKit.Colors.Pink, 2)
+	autoChipLabel = UIKit.Label({
+		Position = UDim2.fromOffset(16, 0),
+		Size = UDim2.new(1, -110, 1, 0),
+		Font = UIKit.Fonts.Black,
+		TextSize = 14,
+		TextTruncate = Enum.TextTruncate.AtEnd,
+		Parent = autoChip,
+	})
+	local stopButton = UIKit.Button({
+		AnchorPoint = Vector2.new(1, 0.5),
+		Position = UDim2.new(1, -6, 0.5, 0),
+		Size = UDim2.fromOffset(84, 30),
+		Color = UIKit.Colors.Danger,
+		Text = "STOP",
+		TextSize = 15,
+		Radius = 15,
+	}, stopAuto)
+	stopButton.Parent = autoChip
 
 	-- Reveal overlay (above windows)
 	overlay = UIKit.Frame({
@@ -676,17 +730,26 @@ function HatchUI.Init()
 		end
 	end)
 
-	-- Close the panel (and stop auto hatch) when walking away from the stand.
+	-- Walking away closes the panel. Auto Hatch keeps going anywhere in the
+	-- egg's zone (the server allows that for pass owners) and stops on leaving it.
 	RunService.Heartbeat:Connect(function()
 		if not currentStand or (not window.IsOpen() and not autoHatching) then
 			return
 		end
 		local character = player.Character
 		local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
-		if root and (root.Position - currentStand.Position).Magnitude > CLOSE_DISTANCE then
-			stopAuto()
-			if not busy then
+		if not root then
+			return
+		end
+		if (root.Position - currentStand.Position).Magnitude > CLOSE_DISTANCE then
+			if not busy and window.IsOpen() then
 				window.Close()
+			end
+			local egg = currentEgg and Config.Eggs[currentEgg]
+			local inEggZone = egg ~= nil and State.Owns("AutoHatch") and Config.GetZoneAtPosition(root.Position) == egg.Zone
+			if autoHatching and not inEggZone then
+				stopAuto()
+				UIController.Notify("Auto Hatch stopped: you left the egg's zone.", "info")
 			end
 		end
 	end)

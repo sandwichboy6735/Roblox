@@ -24,11 +24,11 @@ local function notify(player: Player, message: string, kind: string?)
 	Remotes.Get("Notify"):FireClient(player, message, kind or "info")
 end
 
--- Grants a reward table { Coins?, Gems?, Pet? } and returns a description.
+-- Grants a reward table { CoinMinutes?, Gems?, Pet?, Boost? } and returns a description.
 local function grant(player: Player, reward, multiplier: number): string
 	local parts = {}
-	if reward.Coins then
-		local amount = EconomyService.AddCoins(player, EconomyService.ScaleCoins(player, reward.Coins) * multiplier, false)
+	if reward.CoinMinutes then
+		local amount = EconomyService.AddCoins(player, EconomyService.CoinsForMinutes(player, reward.CoinMinutes) * multiplier, false)
 		table.insert(parts, Util.FormatNumber(amount) .. " Coins")
 	end
 	if reward.Gems then

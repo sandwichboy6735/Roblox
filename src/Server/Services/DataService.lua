@@ -210,7 +210,7 @@ local function loadProfile(player: Player)
 			PlaytimeClaimed = {},
 			InGroup = false,
 			PetSlots = Config.BasePetSlots,
-			PaidRandomRestricted = false,
+			PaidRandomRestricted = true, -- until PolicyService confirms otherwise
 			Multiplier = nil,
 		},
 		Loaded = true,

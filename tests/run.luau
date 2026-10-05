@@ -118,7 +118,7 @@ end
 -- Everything that sells currency or luck must be restricted for paid-random-item regions.
 for key, product in pairs(Config.Products) do
 	local grant = product.Grant
-	local feedsEggs = grant.Coins or grant.Gems or (grant.Boost and grant.Boost.Type == "Luck")
+	local feedsEggs = grant.CoinMinutes or grant.Coins or grant.Gems or (grant.Boost and grant.Boost.Type == "Luck")
 	if feedsEggs then
 		check(Config.RestrictedPurchases[key] == true, "Currency/luck product is restricted: " .. key)
 	end
@@ -156,11 +156,47 @@ local function checkSerializable(value: any, path: string)
 end
 checkSerializable(Config.DataTemplate, "DataTemplate")
 
--- Coin scaling grows with zone and rebirth
-check(Config.ScaleCoins(1000, 1, 0) == 1000, "ScaleCoins base")
-check(Config.ScaleCoins(1000, 2, 0) > 1000, "ScaleCoins grows with zone")
-check(Config.ScaleCoins(1000, 1, 2) == 2000, "ScaleCoins rebirth scaling")
+-- Income-based coin rewards
+local factor = Config.ExpectedOrbFactor()
+check(factor > 1 and factor < 2, "Expected orb factor sane: " .. factor)
+local tenMin = Config.CoinsForMinutes(10, 1, 1)
+local expected = 10 * 60 * Config.Economy.ReferenceOrbsPerSecond * Config.Zones[1].OrbValue * factor
+check(math.abs(tenMin - expected) <= 1, "CoinsForMinutes formula (" .. tenMin .. " vs " .. expected .. ")")
+check(Config.CoinsForMinutes(10, 2, 1) > tenMin, "CoinsForMinutes grows with zone")
+check(math.abs(Config.CoinsForMinutes(10, 1, 3) - tenMin * 3) <= 3, "CoinsForMinutes scales with multiplier")
+check(Config.CoinsForMinutes(20, 1, 1) > Config.CoinsForMinutes(10, 1, 1), "CoinsForMinutes grows with minutes")
+check(Config.CoinsForMinutes(10, 99, 1) == Config.CoinsForMinutes(10, #Config.Zones, 1), "CoinsForMinutes clamps zone")
+check(Config.CoinsForMinutes(10, 1, 0) == tenMin, "CoinsForMinutes floors multiplier at 1")
+
+-- Rebirth cost uses natural rebirths and is capped
 check(Config.GetRebirthCost(0) == Config.Rebirth.BaseCost, "Rebirth base cost")
+check(Config.GetRebirthCost(1) > Config.GetRebirthCost(0), "Rebirth cost grows")
+check(Config.GetRebirthCost(500) == Config.Rebirth.MaxCost, "Rebirth cost capped")
+check(Config.Rebirth.MaxCost < 2 ^ 53, "Rebirth cap below the coin cap")
+check(Config.GetRebirthCost(-3) == Config.Rebirth.BaseCost, "Rebirth cost never below base")
+
+-- Zone lookup by world position
+local function v3(x, y, z)
+	return { X = x, Y = y, Z = z }
+end
+local spacing = Config.Map.ZoneSpacing
+check(Config.GetZoneAtPosition(v3(0, 3, 0) :: any) == 1, "Zone at origin is 1")
+check(Config.GetZoneAtPosition(v3(spacing, 3, 40) :: any) == 2, "Zone 2 centre")
+check(Config.GetZoneAtPosition(v3(spacing / 2, 3, 0) :: any) == nil, "Bridge is in no zone")
+check(Config.GetZoneAtPosition(v3((#Config.Zones - 1) * spacing, 3, 0) :: any) == #Config.Zones, "Last zone")
+check(Config.GetZoneAtPosition(v3(#Config.Zones * spacing, 3, 0) :: any) == nil, "Past last zone")
+check(Config.GetZoneAtPosition(v3(0, 3, Config.Map.ZoneSize) :: any) == nil, "Outside zone on Z")
+
+-- Pacing guard rails: costs rise faster than orb values; first egg is quick.
+check(Config.Eggs.Basic.Cost <= Config.Zones[1].OrbValue * 40, "First egg affordable within ~40 orbs")
+-- Each coin egg costs far less than the next goal, so players hatch many eggs.
+for _, egg in pairs(Config.Eggs) do
+	if egg.Currency == "Coins" then
+		local nextZone = Config.Zones[egg.Zone + 1]
+		local nextGoal = if nextZone then nextZone.Cost else Config.GetRebirthCost(0)
+		check(egg.Cost * 20 <= nextGoal, egg.Name .. " costs at most 1/20 of the next goal")
+	end
+end
 
 print(string.format("\n%d passed, %d failed", passed, failed))
 if failed > 0 then

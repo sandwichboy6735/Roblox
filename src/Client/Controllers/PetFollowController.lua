@@ -15,6 +15,7 @@ local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared.Config)
 local PetStyles = require(Shared.PetStyles)
 
 local Modules = script.Parent.Parent:WaitForChild("Modules")
@@ -26,8 +27,9 @@ local RENDER_DISTANCE = 160
 local ANIMATE_DISTANCE = 70
 local FOLLOW_SPEED = 9
 local ROW_SIZE = 4
-local SPACING = 4.2
-local WORLD_SCALE = 0.75
+local SPACING = 5
+local WORLD_SCALE = 0.95
+local OUTLINE_COLOR = Color3.fromRGB(30, 22, 40)
 local FLYING = { Owl = true, Phoenix = true, Dragon = true }
 local SNAP_DISTANCE = 120 -- teleport pets instead of running further than this
 local ATTACK_REACH = 85 -- pets only attack breakables this close to their owner
@@ -41,7 +43,9 @@ type PetVisual = {
 type Owner = { Pets: { PetVisual }, Connection: RBXScriptConnection? }
 
 local owners: { [Player]: Owner } = {}
-local petFolder: Folder
+-- A Model (not a Folder) so one Highlight outlines every pet: Roblox only
+-- draws 31 Highlights at once, so one per pet would not scale.
+local petFolder: Model
 local rayParams = RaycastParams.new()
 rayParams.FilterType = Enum.RaycastFilterType.Exclude
 
@@ -91,6 +95,46 @@ local function decode(raw: any): { { Name: string, Tier: number } }
 	return result
 end
 
+-- Name, rarity and coin bonus over the local player's own pets.
+local function addTag(built: PetBuilder.Built, petName: string, tier: number)
+	local def = Config.Pets[petName]
+	if not def then
+		return
+	end
+	local gui = Instance.new("BillboardGui")
+	gui.Name = "Tag"
+	gui.Size = UDim2.new(4.5, 0, 1.3, 0) -- in studs, so it shrinks with distance
+	gui.StudsOffset = Vector3.new(0, built.Height + 0.9, 0)
+	gui.MaxDistance = 40
+	gui.LightInfluence = 0
+	gui.Adornee = built.Root
+
+	local name = Instance.new("TextLabel")
+	name.BackgroundTransparency = 1
+	name.Size = UDim2.fromScale(1, 0.58)
+	name.Font = Enum.Font.FredokaOne
+	name.TextScaled = true
+	name.Text = PetBuilder.DisplayName(petName, tier)
+	name.TextColor3 = if tier >= 1 then Color3.fromRGB(255, 215, 80) else Config.Rarities[def.Rarity].Color:Lerp(Color3.new(1, 1, 1), 0.35)
+	name.TextStrokeTransparency = 0
+	name.TextStrokeColor3 = OUTLINE_COLOR
+	name.Parent = gui
+
+	local bonus = Instance.new("TextLabel")
+	bonus.BackgroundTransparency = 1
+	bonus.Position = UDim2.fromScale(0, 0.58)
+	bonus.Size = UDim2.fromScale(1, 0.42)
+	bonus.Font = Enum.Font.LuckiestGuy
+	bonus.TextScaled = true
+	bonus.Text = string.format("x%.2f", Config.GetPetMultiplier(petName, tier))
+	bonus.TextColor3 = Color3.fromRGB(110, 235, 120)
+	bonus.TextStrokeTransparency = 0
+	bonus.TextStrokeColor3 = OUTLINE_COLOR
+	bonus.Parent = gui
+
+	gui.Parent = built.Root
+end
+
 local function rebuild(player: Player)
 	local owner = owners[player]
 	if not owner then
@@ -100,6 +144,9 @@ local function rebuild(player: Player)
 	for _, entry in ipairs(decode(player:GetAttribute("EquippedPets"))) do
 		local ok, built = pcall(PetBuilder.Build, entry.Name, entry.Tier, { Effects = true, Weld = true, Scale = WORLD_SCALE })
 		if ok and built then
+			if player == Players.LocalPlayer then
+				addTag(built, entry.Name, entry.Tier)
+			end
 			table.insert(owner.Pets, {
 				Built = built,
 				Current = CFrame.new(),
@@ -268,9 +315,18 @@ local function update(dt: number)
 end
 
 function PetFollowController.Init()
-	petFolder = Instance.new("Folder")
+	petFolder = Instance.new("Model")
 	petFolder.Name = "ClientPets"
 	petFolder.Parent = Workspace
+
+	-- Cartoon outline around every pet.
+	local outline = Instance.new("Highlight")
+	outline.Name = "Outline"
+	outline.FillTransparency = 1
+	outline.OutlineColor = OUTLINE_COLOR
+	outline.OutlineTransparency = 0.15
+	outline.DepthMode = Enum.HighlightDepthMode.Occluded
+	outline.Parent = petFolder
 
 	for _, player in ipairs(Players:GetPlayers()) do
 		addOwner(player)

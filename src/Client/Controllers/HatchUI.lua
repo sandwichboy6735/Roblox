@@ -351,17 +351,23 @@ local function petCard(parent: Instance, result, xScale: number): (Frame, Model,
 		ZIndex = 204,
 		Parent = card,
 	})
-	UIKit.Label({
-		Position = UDim2.fromOffset(8, 206),
-		Size = UDim2.new(1, -16, 0, 26),
+	local shine = UIKit.ShineFor(def.Rarity, 0)
+	local rarityLabel = UIKit.Label({
+		Position = UDim2.fromOffset(8, 204),
+		Size = UDim2.new(1, -16, 0, 30),
 		Text = string.upper(def.Rarity),
-		Font = UIKit.Fonts.Black,
-		TextSize = 20,
-		TextColor3 = rarityColor,
+		Font = UIKit.Fonts.Display,
+		TextSize = 26,
+		TextColor3 = if shine then Color3.new(1, 1, 1) else rarityColor,
+		TextStrokeColor3 = UIKit.Ink,
+		TextStrokeTransparency = 0,
 		TextXAlignment = Enum.TextXAlignment.Center,
 		ZIndex = 204,
 		Parent = card,
 	})
+	if shine then
+		UIKit.Shine(rarityLabel, shine)
+	end
 	if result.New then
 		local badge = UIKit.Frame({
 			AnchorPoint = Vector2.new(1, 0),

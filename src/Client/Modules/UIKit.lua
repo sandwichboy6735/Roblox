@@ -2,6 +2,7 @@
 -- UIKit - tiny helper library for building consistent, animated UI in code.
 --------------------------------------------------------------------------------
 
+local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
 local UIKit = {}
@@ -32,6 +33,12 @@ UIKit.Fonts = {
 }
 
 local FAST = TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local INK = Color3.fromRGB(28, 22, 40) -- outline colour for the cartoon look
+UIKit.Ink = INK
+
+local function darker(color: Color3, amount: number): Color3
+	return color:Lerp(Color3.new(0, 0, 0), amount)
+end
 
 function UIKit.Create(className: string, props: { [string]: any }?, children: { Instance }?): any
 	local instance = Instance.new(className)
@@ -121,15 +128,43 @@ function UIKit.Label(props: { [string]: any }?): TextLabel
 	return UIKit.Create("TextLabel", defaults)
 end
 
--- A rounded, animated button. `props.Color` sets the base color.
+-- Solid "3D lip" under a button or panel (UIShadow with no blur).
+function UIKit.Lip(parent: GuiObject, color: Color3, depth: number?)
+	pcall(function()
+		local shadow = Instance.new("UIShadow" :: any)
+		shadow.Name = "Lip"
+		shadow.BlurRadius = UDim.new(0, 0)
+		shadow.Offset = UDim2.fromOffset(0, depth or 4)
+		shadow.Color = color
+		shadow.Transparency = 0
+		shadow.Parent = parent
+	end)
+end
+
+-- Colours the outline and lip to match a button's base colour.
+local function paintButton(button: GuiButton, color: Color3)
+	button.BackgroundColor3 = color
+	local stroke = button:FindFirstChild("Outline")
+	if stroke and stroke:IsA("UIStroke") then
+		stroke.Color = darker(color, 0.6)
+	end
+	local lip = button:FindFirstChild("Lip") :: any
+	if lip then
+		lip.Color = darker(color, 0.45)
+	end
+end
+
+-- A chunky, glossy cartoon button. `props.Color` sets the base color.
 function UIKit.Button(props: { [string]: any }, onClick: (() -> ())?): TextButton
 	local color = props.Color or UIKit.Colors.Accent
 	local defaults = {
 		BackgroundColor3 = color,
 		BorderSizePixel = 0,
 		AutoButtonColor = false,
-		Font = UIKit.Fonts.Bold,
+		Font = UIKit.Fonts.Title,
 		TextColor3 = props.TextColor3 or Color3.new(1, 1, 1),
+		TextStrokeColor3 = INK,
+		TextStrokeTransparency = 0.25,
 		TextSize = 18,
 		Text = "",
 		Size = UDim2.fromOffset(140, 42),
@@ -140,8 +175,20 @@ function UIKit.Button(props: { [string]: any }, onClick: (() -> ())?): TextButto
 		end
 	end
 	local button = UIKit.Create("TextButton", defaults) :: TextButton
-	UIKit.Corner(button, props.Radius or 10)
-	UIKit.Stroke(button, Color3.new(0, 0, 0), 1.5, 0.75)
+	UIKit.Corner(button, props.Radius or 12)
+	local outline = UIKit.Stroke(button, darker(color, 0.6), 2.5)
+	outline.Name = "Outline"
+	-- Glossy: bright on top, a little darker at the bottom.
+	UIKit.Create("UIGradient", {
+		Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(240, 240, 240)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 200, 200)),
+		}),
+		Rotation = 90,
+		Parent = button,
+	})
+	UIKit.Lip(button, darker(color, 0.45), 4)
 
 	local scale = UIKit.Create("UIScale", { Scale = 1, Parent = button })
 	button:SetAttribute("BaseColor", color)
@@ -180,10 +227,10 @@ function UIKit.SetButtonEnabled(button: TextButton, enabled: boolean, disabledTe
 	button:SetAttribute("Disabled", not enabled)
 	local baseColor = button:GetAttribute("BaseColor") :: Color3?
 	if enabled then
-		button.BackgroundColor3 = baseColor or UIKit.Colors.Accent
+		paintButton(button, baseColor or UIKit.Colors.Accent)
 		button.TextColor3 = Color3.new(1, 1, 1)
 	else
-		button.BackgroundColor3 = UIKit.Colors.PanelLight
+		paintButton(button, UIKit.Colors.PanelLight)
 		button.TextColor3 = UIKit.Colors.Muted
 		if disabledText then
 			button.Text = disabledText
@@ -194,7 +241,7 @@ end
 function UIKit.SetButtonColor(button: TextButton, color: Color3)
 	button:SetAttribute("BaseColor", color)
 	if not button:GetAttribute("Disabled") then
-		button.BackgroundColor3 = color
+		paintButton(button, color)
 	end
 end
 
@@ -273,8 +320,10 @@ function UIKit.Window(parent: Instance, title: string, size: UDim2, accent: Colo
 		ZIndex = 10,
 		Parent = parent,
 	})
-	UIKit.Corner(frame, 16)
-	UIKit.Stroke(frame, accent or UIKit.Colors.Stroke, 2)
+	UIKit.Corner(frame, 18)
+	UIKit.Stroke(frame, INK, 4)
+	UIKit.Lip(frame, darker(accent or UIKit.Colors.Stroke, 0.5), 6)
+	UIKit.Gradient(frame, Color3.new(1, 1, 1), Color3.fromRGB(205, 205, 215), 90)
 
 	local scale = UIKit.Create("UIScale", { Scale = 1, Parent = frame })
 
@@ -286,23 +335,27 @@ function UIKit.Window(parent: Instance, title: string, size: UDim2, accent: Colo
 		Parent = frame,
 	})
 	UIKit.Corner(header, 16)
-	-- square off the bottom corners of the header
-	UIKit.Frame({
+	UIKit.Gradient(header, Color3.new(1, 1, 1), Color3.fromRGB(190, 190, 190), 90)
+	-- square off the bottom corners of the header (and continue its gloss,
+	-- since this strip covers the bottom 30% of it)
+	local strip = UIKit.Frame({
 		Size = UDim2.new(1, 0, 0, 16),
 		Position = UDim2.new(0, 0, 1, -16),
 		BackgroundColor3 = header.BackgroundColor3,
 		ZIndex = 11,
 		Parent = header,
 	})
+	UIKit.Gradient(strip, Color3.fromRGB(210, 210, 210), Color3.fromRGB(190, 190, 190), 90)
 
 	local titleLabel = UIKit.Label({
 		Name = "Title",
 		Size = UDim2.new(1, -120, 1, 0),
-		Position = UDim2.fromOffset(20, 0),
-		Font = UIKit.Fonts.Title,
-		TextSize = 28,
+		Position = UDim2.fromOffset(20, 2),
+		Font = UIKit.Fonts.Display,
+		TextSize = 32,
 		Text = title,
-		TextStrokeTransparency = 0.6,
+		TextStrokeColor3 = INK,
+		TextStrokeTransparency = 0,
 		ZIndex = 12,
 		Parent = header,
 	})
@@ -372,6 +425,68 @@ function UIKit.Pop(instance: GuiObject, amount: number?)
 	local scale = instance:FindFirstChildOfClass("UIScale") or UIKit.Create("UIScale", { Parent = instance })
 	scale.Scale = amount or 1.15
 	TweenService:Create(scale, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+end
+
+--------------------------------------------------------------------------------
+-- Animated shine for the best stuff: a gold sweep (Legendary, Golden) and a
+-- rolling rainbow (Mythic, Rainbow). Put it on white text or frames.
+--------------------------------------------------------------------------------
+
+local GOLD_SHINE = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 180, 30)),
+	ColorSequenceKeypoint.new(0.42, Color3.fromRGB(255, 225, 90)),
+	ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 235)),
+	ColorSequenceKeypoint.new(0.58, Color3.fromRGB(255, 225, 90)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 180, 30)),
+})
+
+local shines: { [UIGradient]: string } = setmetatable({}, { __mode = "k" }) :: any
+local shineLoop: RBXScriptConnection? = nil
+
+local function rainbowAt(t: number): ColorSequence
+	local keys = {}
+	for i = 0, 6 do
+		keys[i + 1] = ColorSequenceKeypoint.new(i / 6, Color3.fromHSV((t * 0.25 + i / 6) % 1, 0.65, 1))
+	end
+	return ColorSequence.new(keys)
+end
+
+local function animateShines()
+	local t = os.clock()
+	local rainbow = rainbowAt(t)
+	local sweep = Vector2.new(((t * 0.6) % 2.4) - 1.2, 0)
+	for gradient, style in pairs(shines) do
+		if gradient.Parent then
+			if style == "Rainbow" then
+				gradient.Color = rainbow
+			else
+				gradient.Offset = sweep
+			end
+		end
+	end
+end
+
+-- style: "Gold" | "Rainbow". Returns the UIGradient.
+function UIKit.Shine(target: GuiObject, style: string): UIGradient
+	local gradient = Instance.new("UIGradient")
+	gradient.Color = if style == "Rainbow" then rainbowAt(0) else GOLD_SHINE
+	gradient.Rotation = if style == "Rainbow" then 0 else 15
+	gradient.Parent = target
+	shines[gradient] = style
+	if not shineLoop then
+		shineLoop = RunService.Heartbeat:Connect(animateShines)
+	end
+	return gradient
+end
+
+-- Which shine (if any) a pet deserves: tier 2 / Mythic rainbow, tier 1 / Legendary gold.
+function UIKit.ShineFor(rarity: string?, tier: number?): string?
+	if (tier or 0) >= 2 or rarity == "Mythic" then
+		return "Rainbow"
+	elseif (tier or 0) == 1 or rarity == "Legendary" then
+		return "Gold"
+	end
+	return nil
 end
 
 function UIKit.RarityGradient(parent: Instance, color: Color3)

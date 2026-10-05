@@ -650,6 +650,57 @@ local function addExtras(c, extras: { string })
 	end
 end
 
+-- Cute "chibi" proportions: grow the head (and everything on it) and lift it a
+-- little. Only for body plans with a separate head; owls, penguins and crabs
+-- are already one round shape.
+local CHIBI = {
+	Dog = true,
+	Wolf = true,
+	Cat = true,
+	Fox = true,
+	Bunny = true,
+	Bear = true,
+	Lamb = true,
+	Deer = true,
+	Unicorn = true,
+	Dragon = true,
+	Phoenix = true,
+	Seal = true,
+	Lizard = true,
+	Capybara = true,
+}
+local HEAD_SCALE = 1.3
+local EYE_SCALE = 1.12
+
+local function chibify(c, archetype: string)
+	if not CHIBI[archetype] then
+		return
+	end
+	local s = c.S
+	local center = c.HeadCenter * s
+	local radius = c.HeadSize * 0.85 * s
+	local top = (c.HeadCenter.Y + 0.3) * s
+	local lift = V(0, (HEAD_SCALE - 1) * c.HeadSize * 0.4 * s, 0)
+	local flapping = {}
+	for _, flapper in ipairs(c.Flappers) do
+		flapping[flapper.Part] = true
+	end
+	for _, part in ipairs(c.Model:GetChildren()) do
+		if part:IsA("BasePart") and part ~= c.Root and part ~= c.BodyPart and not flapping[part] then
+			local position = part.Position
+			local near = (position - center).Magnitude < radius
+			local above = position.Y > top and math.abs(position.Z - center.Z) < c.HeadSize * 0.9 * s
+			if near or above then
+				local k = if part:GetAttribute("Role") == "Eye" then HEAD_SCALE * EYE_SCALE else HEAD_SCALE
+				part.Size *= k
+				part.CFrame = CFrame.new(center + (position - center) * HEAD_SCALE + lift) * part.CFrame.Rotation
+			end
+		end
+	end
+	c.HeadCenter += lift / s
+	c.HeadTop = c.HeadCenter + (c.HeadTop - c.HeadCenter) * HEAD_SCALE
+end
+
 local function addEffects(c, def, extras: { string })
 	local body = c.BodyPart
 	if not body then
@@ -821,6 +872,7 @@ function PetBuilder.Build(petName: string, tier: number?, opts: { [string]: any 
 	archetype(c)
 	local extras = resolvedStyle.Extras or {}
 	addExtras(c, extras)
+	chibify(c, resolvedStyle.Archetype)
 	if o.Effects then
 		addEffects(c, def or { Rarity = "Common" }, extras)
 	end

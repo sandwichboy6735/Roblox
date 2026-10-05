@@ -101,33 +101,44 @@ local function currencyPill(parent: Instance, name: string, color: Color3, order
 		Parent = parent,
 	})
 	UIKit.Corner(pill, 23)
-	UIKit.Stroke(pill, color, 2)
+	UIKit.Stroke(pill, UIKit.Ink, 3)
+	UIKit.Lip(pill, color:Lerp(Color3.new(0, 0, 0), 0.4), 3)
 
 	local icon = UIKit.Frame({
 		Name = "Icon",
-		Size = UDim2.fromOffset(30, 30),
-		Position = UDim2.fromOffset(8, 8),
+		Size = UDim2.fromOffset(32, 32),
+		Position = UDim2.fromOffset(7, 7),
 		BackgroundColor3 = color,
 		Parent = pill,
 	})
+	UIKit.Stroke(icon, UIKit.Ink, 2.5)
 	if iconShape == "diamond" then
 		icon.Rotation = 45
-		icon.Size = UDim2.fromOffset(24, 24)
-		icon.Position = UDim2.fromOffset(11, 11)
-		UIKit.Corner(icon, 4)
+		icon.Size = UDim2.fromOffset(25, 25)
+		icon.Position = UDim2.fromOffset(10, 10)
+		UIKit.Corner(icon, 5)
+		UIKit.Gradient(icon, Color3.new(1, 1, 1), Color3.fromRGB(150, 190, 190), 45)
+		local shine = UIKit.Frame({ Position = UDim2.fromScale(0.18, 0.18), Size = UDim2.fromScale(0.3, 0.3), BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0.25, Parent = icon })
+		UIKit.Corner(shine, 3)
 	else
-		UIKit.Corner(icon, 15)
-		UIKit.Stroke(icon, color:Lerp(Color3.new(0, 0, 0), 0.3), 3)
+		UIKit.Corner(icon, 16)
+		UIKit.Gradient(icon, Color3.new(1, 1, 1), Color3.fromRGB(215, 175, 120), 90)
+		local inner = UIKit.Frame({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromScale(0.66, 0.66), BackgroundTransparency = 1, Parent = icon })
+		UIKit.Corner(inner, 11)
+		UIKit.Stroke(inner, color:Lerp(Color3.new(0.5, 0.3, 0), 0.45), 2)
+		UIKit.Label({ Size = UDim2.fromScale(1, 1), Text = "$", Font = UIKit.Fonts.Display, TextSize = 16, TextColor3 = color:Lerp(Color3.new(0.5, 0.3, 0), 0.55), TextXAlignment = Enum.TextXAlignment.Center, Parent = inner })
 	end
 
 	local label = UIKit.Label({
 		Name = "Value",
-		Position = UDim2.fromOffset(48, 0),
+		Position = UDim2.fromOffset(48, 2),
 		Size = UDim2.new(1, -100, 1, 0),
-		Font = UIKit.Fonts.Black,
-		TextSize = 22,
+		Font = UIKit.Fonts.Display,
+		TextSize = 26,
 		Text = "0",
 		TextColor3 = Color3.new(1, 1, 1),
+		TextStrokeColor3 = UIKit.Ink,
+		TextStrokeTransparency = 0,
 		Parent = pill,
 	})
 
@@ -171,11 +182,14 @@ local function buildHUD()
 		Parent = root,
 	})
 	UIKit.Corner(multPill, 23)
-	UIKit.Stroke(multPill, UIKit.Colors.Purple, 2)
+	UIKit.Stroke(multPill, UIKit.Ink, 3)
+	UIKit.Lip(multPill, UIKit.Colors.Purple:Lerp(Color3.new(0, 0, 0), 0.4), 3)
 	multLabel = UIKit.Label({
 		Size = UDim2.fromScale(1, 1),
-		Font = UIKit.Fonts.Black,
-		TextSize = 20,
+		Font = UIKit.Fonts.Display,
+		TextStrokeColor3 = UIKit.Ink,
+		TextStrokeTransparency = 0,
+		TextSize = 22,
 		Text = "x1.00 Coins",
 		TextXAlignment = Enum.TextXAlignment.Center,
 		TextColor3 = UIKit.Colors.Purple,
@@ -265,20 +279,53 @@ end
 -- Side buttons
 --------------------------------------------------------------------------------
 
+-- Emoji icons render on every platform without uploading images.
+local SIDE_ICONS = {
+	Pets = "🐾",
+	Shop = "🛒",
+	Rewards = "🎁",
+	Quests = "📜",
+	Upgrades = "⚡",
+	Index = "📖",
+	Zones = "🗺️",
+	Rebirth = "🌀",
+	Settings = "⚙️",
+}
+
 function UIController.AddSideButton(name: string, label: string, color: Color3, order: number, onClick: () -> ())
 	local button = UIKit.Button({
 		Name = name,
-		Size = UDim2.fromOffset(104, 52),
+		Size = UDim2.fromOffset(104, 64),
 		Color = color,
-		Text = label,
-		TextSize = 17,
-		Font = UIKit.Fonts.Title,
+		Text = "",
 		LayoutOrder = order,
-		Radius = 14,
+		Radius = 16,
 	}, function()
 		UIController.PlaySound("Click")
 		onClick()
 	end)
+	UIKit.Label({
+		Name = "Icon",
+		Position = UDim2.fromOffset(0, 4),
+		Size = UDim2.new(1, 0, 0, 32),
+		Text = SIDE_ICONS[name] or "",
+		TextSize = 28,
+		RichText = false,
+		TextXAlignment = Enum.TextXAlignment.Center,
+		Parent = button,
+	})
+	UIKit.Label({
+		Name = "Caption",
+		Position = UDim2.new(0, 0, 1, -26),
+		Size = UDim2.new(1, 0, 0, 22),
+		Text = label,
+		Font = UIKit.Fonts.Title,
+		TextSize = 15,
+		TextStrokeColor3 = UIKit.Ink,
+		TextStrokeTransparency = 0,
+		TextXAlignment = Enum.TextXAlignment.Center,
+		Parent = button,
+	})
 	button.Parent = sideList
 
 	local badge = UIKit.Frame({
@@ -604,13 +651,13 @@ function UIController.Init()
 		Name = "SideButtons",
 		AnchorPoint = Vector2.new(0, 0.5),
 		Position = UDim2.new(0, 16, 0.55, 0),
-		Size = UDim2.fromOffset(216, 300),
+		Size = UDim2.fromOffset(216, 368),
 		BackgroundTransparency = 1,
 		Parent = root,
 	})
 	UIKit.Create("UIGridLayout", {
-		CellSize = UDim2.fromOffset(104, 52),
-		CellPadding = UDim2.fromOffset(8, 8),
+		CellSize = UDim2.fromOffset(104, 64),
+		CellPadding = UDim2.fromOffset(8, 10),
 		SortOrder = Enum.SortOrder.LayoutOrder,
 		VerticalAlignment = Enum.VerticalAlignment.Center,
 		Parent = sideList,

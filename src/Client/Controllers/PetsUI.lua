@@ -110,7 +110,15 @@ local function refreshDetail()
 	end
 
 	detailName.Text = PetBuilder.DisplayName(petData.Type, tier)
-	detailName.TextColor3 = TIER_COLORS[tier] or rarityColor
+	local shine = UIKit.ShineFor(def.Rarity, tier)
+	local oldShine = detailName:FindFirstChildOfClass("UIGradient")
+	if oldShine then
+		oldShine:Destroy()
+	end
+	detailName.TextColor3 = if shine then Color3.new(1, 1, 1) else TIER_COLORS[tier] or rarityColor
+	if shine then
+		UIKit.Shine(detailName, shine)
+	end
 	detailInfo.Text = string.format("<font color='#%s'>%s</font>\nx%.2f coins", rarityColor:ToHex(), string.upper(def.Rarity), multiplierOf(petData))
 
 	equipButton.Text = if petData.Equipped then "UNEQUIP" else "EQUIP"
@@ -142,7 +150,7 @@ local function buildDetail(parent: Instance)
 	})
 	UIKit.Corner(detail, 12)
 	UIKit.Padding(detail, 10)
-	detailName = UIKit.Label({ Position = UDim2.fromOffset(0, 172), Size = UDim2.new(1, 0, 0, 26), Font = UIKit.Fonts.Title, TextSize = 20, TextXAlignment = Enum.TextXAlignment.Center, TextWrapped = true, Parent = detail })
+	detailName = UIKit.Label({ Position = UDim2.fromOffset(0, 172), Size = UDim2.new(1, 0, 0, 26), Font = UIKit.Fonts.Title, TextSize = 20, TextStrokeColor3 = UIKit.Ink, TextStrokeTransparency = 0, TextXAlignment = Enum.TextXAlignment.Center, TextWrapped = true, Parent = detail })
 	detailInfo = UIKit.Label({ Position = UDim2.fromOffset(0, 200), Size = UDim2.new(1, 0, 0, 40), TextSize = 15, TextXAlignment = Enum.TextXAlignment.Center, Parent = detail })
 
 	local buttons = UIKit.Frame({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, 0), Size = UDim2.new(1, 0, 0, 132), BackgroundTransparency = 1, Parent = detail })

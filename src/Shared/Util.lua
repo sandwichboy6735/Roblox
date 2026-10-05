@@ -124,6 +124,42 @@ function Util.DayNumber(unixTime: number): number
 	return math.floor(unixTime / 86400)
 end
 
+-- Converts weights into percentages rounded to `decimals` places that always
+-- sum to EXACTLY 100 (largest-remainder method). Required by Roblox's paid
+-- random items policy for displayed odds.
+function Util.ExactPercentages(weights: { number }, decimals: number): { number }
+	local scale = 10 ^ decimals
+	local totalUnits = 100 * scale
+	local totalWeight = 0
+	for _, weight in ipairs(weights) do
+		totalWeight += weight
+	end
+	local result, remainders = {}, {}
+	local assigned = 0
+	for index, weight in ipairs(weights) do
+		local exact = if totalWeight > 0 then weight / totalWeight * totalUnits else 0
+		local floored = math.floor(exact)
+		result[index] = floored
+		remainders[index] = { Index = index, Remainder = exact - floored }
+		assigned += floored
+	end
+	table.sort(remainders, function(a, b)
+		return a.Remainder > b.Remainder
+	end)
+	local leftover = totalUnits - assigned
+	local i = 1
+	while leftover > 0 and #remainders > 0 do
+		local entry = remainders[((i - 1) % #remainders) + 1]
+		result[entry.Index] += 1
+		leftover -= 1
+		i += 1
+	end
+	for index, units in ipairs(result) do
+		result[index] = units / scale
+	end
+	return result
+end
+
 -- Daily reward state shared by server and client.
 -- daily = { LastClaim = unix, Streak = n }
 function Util.ComputeDaily(daily: { LastClaim: number, Streak: number }, now: number, cycleLength: number)

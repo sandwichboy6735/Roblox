@@ -26,7 +26,11 @@ DataService.UsingMock = false
 
 local LOCK_TIMEOUT = 120 -- seconds before a stale lock can be stolen
 local RETRY_ATTEMPTS = 4
+local LOCK_WAIT_ATTEMPTS = 8 -- when another server still holds the lock (~45s)
+local LOCK_WAIT_SECONDS = 6 -- DataStores allow one write per key every 6s
 local store: any = nil
+local activeSaves = 0 -- every in-flight save, so shutdown can wait for all of them
+local releasing: { [number]: boolean } = {} -- userIds whose release save is running here
 
 local function log(...)
 	if Config.Debug.VerboseData then
@@ -90,10 +94,16 @@ local function initStore()
 
 	if ok then
 		store = result
-	else
+	elseif RunService:IsStudio() then
+		-- Studio without "Enable Studio Access to API Services".
 		DataService.UsingMock = true
 		store = MockStore.new()
-		warn("[DataService] DataStores unavailable (" .. tostring(result) .. "). Using in-memory store; progress will NOT persist.")
+		warn("[DataService] DataStores unavailable in Studio (" .. tostring(result) .. "). Using an in-memory store; progress will NOT persist.")
+	else
+		-- Live server: never fall back to a fake store. A failed probe is usually
+		-- transient; per-player loads retry and kick if DataStores stay down.
+		warn("[DataService] DataStore probe failed (" .. tostring(result) .. "). Continuing with the real store.")
+		store = DataStoreService:GetDataStore(Config.DataStoreName)
 	end
 end
 
@@ -130,20 +140,31 @@ local function loadProfile(player: Player)
 	local lockedElsewhere = false
 	local saved = nil
 
-	local ok, err = retry(function()
-		lockedElsewhere = false
-		saved = store:UpdateAsync(key, function(current)
-			if current == nil then
-				current = { Data = Util.DeepCopy(Config.DataTemplate) }
-			end
-			if lockedByOther(current.Lock) then
-				lockedElsewhere = true
-				return nil
-			end
-			current.Lock = newLock()
-			return current
+	local ok, err
+	-- A player who just left another server may still be saving there. Wait a
+	-- little for that server to release the lock instead of kicking at once.
+	for attempt = 1, LOCK_WAIT_ATTEMPTS do
+		ok, err = retry(function()
+			saved = store:UpdateAsync(key, function(current)
+				lockedElsewhere = false
+				if current == nil then
+					current = { Data = Util.DeepCopy(Config.DataTemplate) }
+				end
+				if lockedByOther(current.Lock) then
+					lockedElsewhere = true
+					return nil
+				end
+				current.Lock = newLock()
+				return current
+			end)
 		end)
-	end)
+		if not ok or not lockedElsewhere or not player:IsDescendantOf(Players) then
+			break
+		end
+		if attempt < LOCK_WAIT_ATTEMPTS then
+			task.wait(LOCK_WAIT_SECONDS)
+		end
+	end
 
 	if not player:IsDescendantOf(Players) then
 		-- Player left while we were loading: release the lock we just took.
@@ -188,46 +209,82 @@ local function loadProfile(player: Player)
 			Gamepasses = {},
 			PlaytimeClaimed = {},
 			InGroup = false,
+			PetSlots = Config.BasePetSlots,
+			PaidRandomRestricted = false,
 			Multiplier = nil,
 		},
 		Loaded = true,
 		Saving = false,
+		Released = false,
+		UnsavedReceipts = {}, -- [PurchaseId] = true when granted but not yet saved
 	}
 
 	log("Loaded", player.Name)
 	return profile
 end
 
+-- Returns true only if the data was actually written.
 local function saveProfile(profile, release: boolean): boolean
-	if profile.Saving then
-		-- Wait for the in-flight save so a release never races an autosave.
-		repeat
+	activeSaves += 1
+	local success = false
+	local ok, problem = pcall(function()
+		while profile.Saving do
+			-- One save at a time per profile, so a release never races an autosave.
 			task.wait(0.1)
-		until not profile.Saving
-	end
-	profile.Saving = true
+		end
+		if profile.Released then
+			-- The final save already ran; never re-lock after it. Report failure so
+			-- a receipt is retried next session, where the dedupe list decides.
+			return
+		end
+		profile.Saving = true
+		if release then
+			profile.Released = true
+		end
 
-	local data = profile.Data
-	local ok, err = retry(function()
-		store:UpdateAsync(profile.Key, function(current)
-			if current and lockedByOther(current.Lock) then
-				return nil -- another live server owns this profile now
-			end
-			return {
-				Data = data,
-				Lock = if release then nil else newLock(),
-				SavedAt = os.time(),
-			}
+		local data = profile.Data
+		-- Receipts granted before this point are inside `data` and get written now.
+		local includedReceipts = table.clone(profile.UnsavedReceipts)
+		local cancelled = false
+		local saved, err = retry(function()
+			cancelled = false
+			store:UpdateAsync(profile.Key, function(current)
+				if current and lockedByOther(current.Lock) then
+					cancelled = true
+					return nil -- another live server owns this profile now
+				end
+				cancelled = false
+				return {
+					Data = data,
+					Lock = if release then nil else newLock(),
+					SavedAt = os.time(),
+				}
+			end)
 		end)
-	end)
+		profile.Saving = false
 
-	profile.Saving = false
-	if ok then
-		log(release and "Released" or "Saved", profile.Player.Name)
-	else
-		warn("[DataService] Failed to save " .. profile.Player.Name .. ": " .. tostring(err))
+		if saved and not cancelled then
+			success = true
+			for purchaseId in pairs(includedReceipts) do
+				profile.UnsavedReceipts[purchaseId] = nil
+			end
+			log(release and "Released" or "Saved", profile.Player.Name)
+		elseif cancelled then
+			warn("[DataService] " .. profile.Player.Name .. "'s data is owned by another server; not saving here.")
+			local player = profile.Player
+			if not release and player and player:IsDescendantOf(Players) then
+				player:Kick("Your data was opened in another server. Please rejoin.")
+			end
+		else
+			warn("[DataService] Failed to save " .. profile.Player.Name .. ": " .. tostring(err))
+		end
+	end)
+	activeSaves -= 1
+	if not ok then
+		profile.Saving = false
+		warn("[DataService] Save error: " .. tostring(problem))
 	end
-	return ok
+	return success
 end
 
 --------------------------------------------------------------------------------
@@ -292,6 +349,11 @@ end
 --------------------------------------------------------------------------------
 
 local function onPlayerAdded(player: Player)
+	-- Rejoined the same server before their release save finished: wait for it.
+	local deadline = os.clock() + 30
+	while releasing[player.UserId] and os.clock() < deadline and player:IsDescendantOf(Players) do
+		task.wait(0.2)
+	end
 	local profile = loadProfile(player)
 	if not profile then
 		return
@@ -311,14 +373,19 @@ local function onPlayerAdded(player: Player)
 	end)
 end
 
-local function onPlayerRemoving(player: Player)
-	local profile = DataService.Profiles[player]
-	if not profile then
-		return
-	end
+local function releaseProfile(player: Player, profile)
 	DataService.ProfileReleasing:Fire(player, profile)
 	DataService.Profiles[player] = nil
+	releasing[player.UserId] = true
 	saveProfile(profile, true)
+	releasing[player.UserId] = nil
+end
+
+local function onPlayerRemoving(player: Player)
+	local profile = DataService.Profiles[player]
+	if profile then
+		releaseProfile(player, profile)
+	end
 end
 
 function DataService.Init()
@@ -332,17 +399,31 @@ function DataService.Init()
 	end
 	Players.PlayerRemoving:Connect(onPlayerRemoving)
 
+	local lastRequest: { [Player]: number } = {}
 	Remotes.Get("RequestData").OnServerEvent:Connect(function(player)
+		local now = os.clock()
+		if (lastRequest[player] or 0) + 1 > now then
+			return
+		end
+		lastRequest[player] = now
 		DataService:SendSnapshot(player)
 	end)
+	Players.PlayerRemoving:Connect(function(player)
+		lastRequest[player] = nil
+	end)
 
-	-- Autosave loop (staggered so we don't burst requests)
+	-- Autosave loop (staggered so we don't burst requests). The profile list is
+	-- copied first because the loop yields and players may join meanwhile.
 	task.spawn(function()
 		while true do
 			task.wait(Config.AutosaveInterval)
+			local queue = {}
 			for player, profile in pairs(DataService.Profiles) do
-				if player:IsDescendantOf(Players) then
-					task.spawn(saveProfile, profile, false)
+				table.insert(queue, { Player = player, Profile = profile })
+			end
+			for _, entry in ipairs(queue) do
+				if DataService.Profiles[entry.Player] == entry.Profile then
+					task.spawn(saveProfile, entry.Profile, false)
 					task.wait(0.5)
 				end
 			end
@@ -353,17 +434,18 @@ function DataService.Init()
 		if RunService:IsStudio() and DataService.UsingMock then
 			return
 		end
-		local pending = 0
+		local remaining = {}
 		for player, profile in pairs(DataService.Profiles) do
-			pending += 1
-			task.spawn(function()
-				DataService.Profiles[player] = nil
-				saveProfile(profile, true)
-				pending -= 1
-			end)
+			table.insert(remaining, { Player = player, Profile = profile })
 		end
-		local deadline = os.clock() + 25
-		while pending > 0 and os.clock() < deadline do
+		for _, entry in ipairs(remaining) do
+			task.spawn(releaseProfile, entry.Player, entry.Profile)
+		end
+		-- Wait for EVERY in-flight save (including ones started by PlayerRemoving
+		-- or purchases), within Roblox's 30 second shutdown window.
+		task.wait()
+		local deadline = os.clock() + 27
+		while activeSaves > 0 and os.clock() < deadline do
 			task.wait(0.1)
 		end
 	end)

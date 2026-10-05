@@ -36,6 +36,10 @@ local function sortedEntries(map)
 end
 
 local function promptGamepass(key, pass)
+	if Config.RestrictedPurchases[key] and State.Get("PaidRandomRestricted", false) then
+		UIController.Notify("Sorry, this item is unavailable in your region.", "error")
+		return
+	end
 	if not pass.Id or pass.Id == 0 then
 		UIController.Notify("This gamepass isn't configured yet. Set Config.Gamepasses." .. key .. ".Id", "error")
 		return
@@ -44,6 +48,10 @@ local function promptGamepass(key, pass)
 end
 
 local function promptProduct(key, product)
+	if Config.RestrictedPurchases[key] and State.Get("PaidRandomRestricted", false) then
+		UIController.Notify("Sorry, this item is unavailable in your region.", "error")
+		return
+	end
 	if not product.Id or product.Id == 0 then
 		UIController.Notify("This product isn't configured yet. Set Config.Products." .. key .. ".Id", "error")
 		return
@@ -93,7 +101,11 @@ local function gridContainer(count: number, order: number): Frame
 	return holder
 end
 
-local function card(parent: Instance, order: number, color: Color3, title: string, body: string, buttonText: string, onClick: () -> (), owned: boolean?)
+local function isBlocked(key: string): boolean
+	return Config.RestrictedPurchases[key] == true and State.Get("PaidRandomRestricted", false) == true
+end
+
+local function card(parent: Instance, order: number, color: Color3, title: string, body: string, buttonText: string, onClick: () -> (), owned: boolean?, blocked: boolean?)
 	local frame = UIKit.Frame({
 		BackgroundColor3 = UIKit.Colors.Panel,
 		LayoutOrder = order,
@@ -143,6 +155,8 @@ local function card(parent: Instance, order: number, color: Color3, title: strin
 	button.Parent = frame
 	if owned then
 		UIKit.SetButtonEnabled(button, false, "OWNED")
+	elseif blocked then
+		UIKit.SetButtonEnabled(button, false, "UNAVAILABLE")
 	end
 end
 
@@ -157,9 +171,11 @@ local function rebuild()
 	local passGrid = gridContainer(#passes, 2)
 	for index, entry in ipairs(passes) do
 		local pass = entry.Item
-		card(passGrid, index, pass.Color or UIKit.Colors.Accent, pass.Name, pass.Description, "R$ " .. pass.Price, function()
+		local blocked = isBlocked(entry.Key)
+		local description = if blocked then "Not available in your region." else pass.Description
+		card(passGrid, index, pass.Color or UIKit.Colors.Accent, pass.Name, description, "R$ " .. pass.Price, function()
 			promptGamepass(entry.Key, pass)
-		end, State.Owns(entry.Key))
+		end, State.Owns(entry.Key), blocked)
 	end
 
 	local products = sortedEntries(Config.Products)
@@ -177,9 +193,11 @@ local function rebuild()
 		elseif product.Grant.Rebirths then
 			color = UIKit.Colors.Pink
 		end
-		card(productGrid, index, color, product.Name, describeGrant(product.Grant), "R$ " .. product.Price, function()
+		local blocked = isBlocked(entry.Key)
+		local description = if blocked then "Not available in your region." else describeGrant(product.Grant)
+		card(productGrid, index, color, product.Name, description, "R$ " .. product.Price, function()
 			promptProduct(entry.Key, product)
-		end)
+		end, false, blocked)
 	end
 end
 
@@ -196,7 +214,7 @@ function ShopUI.Init()
 
 	window.OnOpen = rebuild
 	State.Changed:Connect(function(patch)
-		if patch.Gamepasses ~= nil then
+		if patch.Gamepasses ~= nil or patch.PaidRandomRestricted ~= nil then
 			rebuild()
 		end
 	end)

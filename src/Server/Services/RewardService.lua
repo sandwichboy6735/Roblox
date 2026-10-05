@@ -11,7 +11,9 @@ local Config = require(Shared.Config)
 local Util = require(Shared.Util)
 local Remotes = require(Shared.Remotes)
 
+local Codes = require(script.Parent.Parent:WaitForChild("Codes"))
 local DataService = require(script.Parent.DataService)
+local RateLimiter = require(script.Parent.RateLimiter)
 local GamepassService = require(script.Parent.GamepassService)
 local EconomyService = require(script.Parent.EconomyService)
 local PetService = require(script.Parent.PetService)
@@ -42,6 +44,10 @@ local function grant(player: Player, reward, multiplier: number): string
 			EconomyService.AddGems(player, 100)
 			table.insert(parts, "100 Gems (pet storage full)")
 		end
+	end
+	if reward.Boost then
+		EconomyService.ApplyBoost(player, reward.Boost.Type, reward.Boost.Mult, reward.Boost.Duration)
+		table.insert(parts, string.format("x%s %s boost (%s)", tostring(reward.Boost.Mult), reward.Boost.Type, Util.FormatTime(reward.Boost.Duration)))
 	end
 	return table.concat(parts, " + ")
 end
@@ -113,7 +119,15 @@ local function refreshGroup(player: Player)
 	end
 	local inGroup = false
 	if Config.GroupId and Config.GroupId > 0 then
-		local ok, result = pcall(player.IsInGroup, player, Config.GroupId)
+		local ok, result = pcall(function()
+			return (player :: any):IsInGroupAsync(Config.GroupId)
+		end)
+		if not ok then
+			-- Older engine builds: fall back to the legacy API.
+			ok, result = pcall(function()
+				return (player :: any):IsInGroup(Config.GroupId)
+			end)
+		end
 		inGroup = ok and result == true
 	end
 	profile.Runtime.InGroup = inGroup
@@ -121,15 +135,23 @@ local function refreshGroup(player: Player)
 	EconomyService.RefreshMultiplier(player)
 end
 
+local claimingGroup: { [Player]: boolean } = {}
+
 function RewardService.ClaimGroup(player: Player)
 	local profile = DataService:GetProfile(player)
-	if not profile then
+	if not profile or profile.Data.GroupClaimed or claimingGroup[player] then
 		return
 	end
-	if profile.Data.GroupClaimed then
+	if not RateLimiter.Allow(player, "ClaimGroup", 1, 0.2) then
 		return
 	end
+	-- refreshGroup yields on a web call; the flag stops parallel claims meanwhile.
+	claimingGroup[player] = true
 	refreshGroup(player)
+	claimingGroup[player] = nil
+	if DataService:GetProfile(player) ~= profile or profile.Data.GroupClaimed then
+		return
+	end
 	if not profile.Runtime.InGroup then
 		notify(player, "Join our Roblox group, then rejoin the game to claim!", "error")
 		return
@@ -138,6 +160,40 @@ function RewardService.ClaimGroup(player: Player)
 	EconomyService.AddGems(player, Config.GroupReward.Gems)
 	DataService:Replicate(player, { GroupClaimed = true })
 	notify(player, "Thanks for joining the group! +" .. Config.GroupReward.Gems .. " Gems and +10% coins forever", "reward")
+end
+
+--------------------------------------------------------------------------------
+-- Promo codes
+--------------------------------------------------------------------------------
+
+function RewardService.RedeemCode(player: Player, rawCode: string)
+	local profile = DataService:GetProfile(player)
+	if not profile then
+		return { ok = false, message = "Data not loaded yet" }
+	end
+	if not RateLimiter.Allow(player, "RedeemCode", 3, 0.5) then
+		return { ok = false, message = "Slow down!" }
+	end
+
+	local code = string.upper((rawCode:gsub("%s+", "")))
+	if #code == 0 or #code > 32 then
+		return { ok = false, message = "Invalid code" }
+	end
+	local reward = Codes[code]
+	if not reward then
+		return { ok = false, message = "Invalid code" }
+	end
+	if reward.Expires and os.time() > reward.Expires then
+		return { ok = false, message = "This code has expired" }
+	end
+	local redeemed = profile.Data.RedeemedCodes
+	if redeemed[code] then
+		return { ok = false, message = "You already redeemed this code" }
+	end
+
+	redeemed[code] = true
+	local summary = grant(player, reward, 1)
+	return { ok = true, message = "Code redeemed: " .. summary }
 end
 
 --------------------------------------------------------------------------------
@@ -161,13 +217,28 @@ function RewardService.Init()
 		end
 	end)
 
-	Remotes.Get("ClaimDaily").OnServerEvent:Connect(RewardService.ClaimDaily)
+	Remotes.Get("ClaimDaily").OnServerEvent:Connect(function(player)
+		if RateLimiter.Allow(player, "ClaimDaily", 2, 0.5) then
+			RewardService.ClaimDaily(player)
+		end
+	end)
 	Remotes.Get("ClaimPlaytime").OnServerEvent:Connect(function(player, index)
-		if type(index) == "number" then
+		if type(index) == "number" and RateLimiter.Allow(player, "ClaimPlaytime", 6, 2) then
 			RewardService.ClaimPlaytime(player, index)
 		end
 	end)
 	Remotes.Get("ClaimGroup").OnServerEvent:Connect(RewardService.ClaimGroup)
+
+	Remotes.Get("RedeemCode").OnServerInvoke = function(player, code)
+		if type(code) ~= "string" then
+			return { ok = false, message = "Invalid code" }
+		end
+		return RewardService.RedeemCode(player, code)
+	end
+
+	Players.PlayerRemoving:Connect(function(player)
+		claimingGroup[player] = nil
+	end)
 end
 
 return RewardService

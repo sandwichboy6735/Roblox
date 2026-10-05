@@ -12,6 +12,8 @@ local Remotes = require(Shared.Remotes)
 local DataService = require(script.Parent.DataService)
 local EconomyService = require(script.Parent.EconomyService)
 local MapBuilder = require(script.Parent.MapBuilder)
+local RateLimiter = require(script.Parent.RateLimiter)
+local CollectibleService = require(script.Parent.CollectibleService)
 
 local ZoneService = {}
 
@@ -28,6 +30,7 @@ function ZoneService.Teleport(player: Player, index: number)
 	end
 	local cframe = MapBuilder.GetZoneSpawn(index)
 	if cframe then
+		CollectibleService.NoteTeleport(player)
 		character:PivotTo(cframe + Vector3.new(0, 2, 0))
 	end
 end
@@ -69,7 +72,7 @@ function ZoneService.Init()
 	end)
 
 	Remotes.Get("TeleportZone").OnServerEvent:Connect(function(player, index)
-		if type(index) ~= "number" then
+		if type(index) ~= "number" or not RateLimiter.Allow(player, "TeleportZone", 2, 0.5) then
 			return
 		end
 		local profile = DataService:GetProfile(player)

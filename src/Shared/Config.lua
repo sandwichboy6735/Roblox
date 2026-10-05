@@ -137,6 +137,23 @@ Config.Products = {
 	},
 }
 
+-- Paid random items compliance:
+-- Players whose region restricts paid random items (PolicyService
+-- ArePaidRandomItemsRestricted) cannot buy anything that feeds eggs (currency)
+-- or changes egg odds (luck). Their eggs are paid for only with earned currency.
+-- Keys are Config.Gamepasses / Config.Products keys.
+Config.RestrictedPurchases = {
+	Coins_Small = true,
+	Coins_Medium = true,
+	Coins_Large = true,
+	Coins_Mega = true,
+	Gems_Small = true,
+	Gems_Medium = true,
+	Gems_Large = true,
+	LuckPotion = true,
+	Lucky = true,
+}
+
 --------------------------------------------------------------------------------
 -- PETS
 --------------------------------------------------------------------------------
@@ -396,8 +413,7 @@ Config.Orbs = {
 	BigOrbMultiplier = 5,
 	GemOrbChance = 0.02, -- 2% of orbs are gem orbs (1-3 gems)
 	CollectRadius = 7, -- studs, walk-over pickup
-	MaxCollectDistance = 24, -- server validation
-	MaxCollectsPerSecond = 20,
+	MaxCollectDistance = 24, -- server validation (pickup rate limits: CollectibleService)
 }
 
 --------------------------------------------------------------------------------
@@ -440,6 +456,8 @@ Config.GroupReward = {
 	Gems = 50, -- one-time claim
 }
 
+-- Promo codes live in src/Server/Codes.lua (server only, so they stay secret).
+
 --------------------------------------------------------------------------------
 -- SOUNDS (0 = disabled). Use ids you own or free-to-use Roblox library sounds.
 --------------------------------------------------------------------------------
@@ -465,6 +483,7 @@ Config.DataTemplate = {
 	Rebirths = 0,
 	ZonesUnlocked = 1,
 	Pets = {}, -- { {Id, Type, Equipped, Hatched} }
+	Discovered = {}, -- { [PetName] = true } for the pet Index
 	Stats = {
 		TotalCoins = 0,
 		PetsHatched = 0,
@@ -475,6 +494,7 @@ Config.DataTemplate = {
 	},
 	Daily = { LastClaim = 0, Streak = 0 },
 	GroupClaimed = false,
+	RedeemedCodes = {}, -- { [CODE] = true }
 	Purchases = {}, -- processed receipt ids (dedupe)
 	Boosts = {}, -- { Luck = {Mult, ExpiresAt}, Coins = {...} }
 	Settings = { Music = true, SkipHatchAnimation = false },
@@ -484,6 +504,19 @@ Config.DataTemplate = {
 --------------------------------------------------------------------------------
 -- Helpers
 --------------------------------------------------------------------------------
+
+-- Scales a base coin amount to the player's progress so rewards and coin packs
+-- stay meaningful in late zones. Shared so the client can preview amounts.
+function Config.ScaleCoins(baseAmount: number, zonesUnlocked: number, rebirths: number): number
+	local zone = Config.Zones[math.clamp(zonesUnlocked or 1, 1, #Config.Zones)]
+	local zoneScale = zone.OrbValue / Config.Zones[1].OrbValue
+	local rebirthScale = 1 + (rebirths or 0) * Config.Rebirth.MultiplierPerRebirth
+	return math.floor(baseAmount * zoneScale * rebirthScale)
+end
+
+function Config.GetRebirthCost(rebirths: number): number
+	return math.floor(Config.Rebirth.BaseCost * Config.Rebirth.CostGrowth ^ rebirths)
+end
 
 function Config.GetGamepassByProductId(id: number)
 	for key, pass in pairs(Config.Gamepasses) do

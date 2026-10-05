@@ -16,6 +16,10 @@ local DataService = require(script.Parent.DataService)
 
 local GamepassService = {}
 GamepassService.Changed = Signal.new() -- (player, passKey)
+GamepassService.Refreshed = Signal.new() -- (player) after the join-time ownership check
+
+local CHECK_ATTEMPTS = 3
+local RECHECK_DELAY = 45
 
 local function freeInStudio()
 	return RunService:IsStudio() and Config.Debug.FreeGamepassesInStudio
@@ -36,14 +40,33 @@ local function replicate(player)
 	end
 end
 
-function GamepassService.Grant(player: Player, passKey: string)
+-- Returns true if the pass was newly granted.
+function GamepassService.Grant(player: Player, passKey: string): boolean
 	local profile = DataService:GetProfile(player)
 	if not profile or profile.Runtime.Gamepasses[passKey] then
-		return
+		return false
 	end
 	profile.Runtime.Gamepasses[passKey] = true
+	if passKey == "VIP" then
+		player:SetAttribute("VIP", true)
+	end
 	replicate(player)
 	GamepassService.Changed:Fire(player, passKey)
+	return true
+end
+
+-- nil = the lookup failed (try again later), otherwise true/false.
+local function checkOwnership(player: Player, passId: number): boolean?
+	for attempt = 1, CHECK_ATTEMPTS do
+		local ok, result = pcall(MarketplaceService.UserOwnsGamePassAsync, MarketplaceService, player.UserId, passId)
+		if ok then
+			return result == true
+		end
+		if attempt < CHECK_ATTEMPTS then
+			task.wait(attempt)
+		end
+	end
+	return nil
 end
 
 function GamepassService.Refresh(player: Player)
@@ -52,25 +75,39 @@ function GamepassService.Refresh(player: Player)
 		return
 	end
 
-	local owned = {}
+	local failed = {}
 	for key, pass in pairs(Config.Gamepasses) do
 		if freeInStudio() then
-			owned[key] = true
+			GamepassService.Grant(player, key)
 		elseif pass.Id and pass.Id > 0 then
-			local ok, result = pcall(MarketplaceService.UserOwnsGamePassAsync, MarketplaceService, player.UserId, pass.Id)
-			if ok and result then
-				owned[key] = true
+			local owns = checkOwnership(player, pass.Id)
+			if DataService:GetProfile(player) ~= profile then
+				return -- left while we were checking
+			end
+			if owns then
+				-- Merge (never replace) so a pass bought during this check is kept.
+				GamepassService.Grant(player, key)
+			elseif owns == nil then
+				table.insert(failed, key)
 			end
 		end
 	end
-
-	profile.Runtime.Gamepasses = owned
-	if owned.VIP then
-		player:SetAttribute("VIP", true)
-	end
 	replicate(player)
-	for key in pairs(owned) do
-		GamepassService.Changed:Fire(player, key)
+	GamepassService.Refreshed:Fire(player)
+
+	-- Roblox web lookups fail now and then: re-check failures later instead of
+	-- leaving a paying player without their perks for the whole session.
+	if #failed > 0 then
+		task.delay(RECHECK_DELAY, function()
+			if DataService:GetProfile(player) ~= profile then
+				return
+			end
+			for _, key in ipairs(failed) do
+				if checkOwnership(player, Config.Gamepasses[key].Id) then
+					GamepassService.Grant(player, key)
+				end
+			end
+		end)
 	end
 end
 
@@ -84,18 +121,21 @@ function GamepassService.Init()
 			return
 		end
 		local key, pass = Config.GetGamepassByProductId(passId)
-		if not key then
+		if not key or not pass then
 			return
 		end
-		GamepassService.Grant(player, key)
-		if key == "VIP" then
-			player:SetAttribute("VIP", true)
+		-- Exploiters can fake this event, so confirm the purchase with Roblox.
+		-- (Studio test purchases don't create real ownership, so trust them there.)
+		if not RunService:IsStudio() and checkOwnership(player, passId) ~= true then
+			return
 		end
-		local profile = DataService:GetProfile(player)
-		if profile then
-			profile.Data.Stats.RobuxSpent += pass.Price or 0
+		if GamepassService.Grant(player, key) then
+			local profile = DataService:GetProfile(player)
+			if profile then
+				profile.Data.Stats.RobuxSpent += pass.Price or 0
+			end
+			Remotes.Get("Notify"):FireClient(player, "Thanks for buying " .. pass.Name .. "!", "success")
 		end
-		Remotes.Get("Notify"):FireClient(player, "Thanks for buying " .. pass.Name .. "!", "success")
 	end)
 
 	Players.PlayerRemoving:Connect(function(player)

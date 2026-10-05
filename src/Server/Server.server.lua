@@ -19,6 +19,7 @@ MapBuilder.Build()
 local START_ORDER = {
 	"DataService",
 	"GamepassService",
+	"ComplianceService",
 	"EconomyService",
 	"PetService",
 	"ZoneService",

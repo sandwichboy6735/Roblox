@@ -26,6 +26,7 @@ local DEFINITIONS: { [string]: string } = {
 	ClaimPlaytime = "RemoteEvent",
 	ClaimGroup = "RemoteEvent",
 	UpdateSetting = "RemoteEvent",
+	RedeemCode = "RemoteFunction",
 }
 
 local Remotes = {}

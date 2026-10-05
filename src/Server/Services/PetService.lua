@@ -13,6 +13,7 @@ local DataService = require(script.Parent.DataService)
 local GamepassService = require(script.Parent.GamepassService)
 local EconomyService = require(script.Parent.EconomyService)
 local MapBuilder = require(script.Parent.MapBuilder)
+local RateLimiter = require(script.Parent.RateLimiter)
 
 local PetService = {}
 
@@ -69,8 +70,14 @@ local function sync(player: Player)
 			table.insert(equipped, petData.Type)
 		end
 	end
-	player:SetAttribute("EquippedPets", HttpService:JSONEncode(equipped))
-	DataService:Replicate(player, { Pets = profile.Data.Pets, PetSlots = PetService.GetSlotCount(player) })
+	local encoded = HttpService:JSONEncode(equipped)
+	if player:GetAttribute("EquippedPets") ~= encoded then
+		-- Replicates to every client, which rebuilds this player's pet models.
+		player:SetAttribute("EquippedPets", encoded)
+	end
+	local slots = PetService.GetSlotCount(player)
+	profile.Runtime.PetSlots = slots
+	DataService:Replicate(player, { Pets = profile.Data.Pets, PetSlots = slots, Discovered = profile.Data.Discovered })
 	EconomyService.RefreshMultiplier(player)
 end
 PetService.Sync = sync
@@ -121,10 +128,39 @@ function PetService.AddPet(player: Player, petType: string, skipSync: boolean?)
 		Hatched = os.time(),
 	}
 	table.insert(data.Pets, petData)
+	data.Discovered[petType] = true
 	if not skipSync then
 		sync(player)
 	end
 	return petData
+end
+
+-- Unequips the weakest pets if more are equipped than the player has slots
+-- for (e.g. a pass that granted slots is no longer owned).
+function PetService.EnforceSlots(player: Player)
+	local profile = DataService:GetProfile(player)
+	if not profile then
+		return
+	end
+	local slots = PetService.GetSlotCount(player)
+	local equipped = {}
+	for _, petData in ipairs(profile.Data.Pets) do
+		if petData.Equipped then
+			table.insert(equipped, petData)
+		end
+	end
+	if #equipped <= slots then
+		sync(player)
+		return
+	end
+	table.sort(equipped, function(a, b)
+		local defA, defB = Config.Pets[a.Type], Config.Pets[b.Type]
+		return (defA and defA.Multiplier or 0) > (defB and defB.Multiplier or 0)
+	end)
+	for index = slots + 1, #equipped do
+		equipped[index].Equipped = false
+	end
+	sync(player)
 end
 
 function PetService.Equip(player: Player, petId: string)
@@ -263,6 +299,7 @@ function PetService.Hatch(player: Player, eggKey: string, count: number)
 	local results = {}
 	for _ = 1, count do
 		local petType = rollPet(player, egg)
+		local isNew = not data.Discovered[petType]
 		local petData = PetService.AddPet(player, petType, true)
 		if petData then
 			local def = Config.Pets[petType]
@@ -272,6 +309,7 @@ function PetService.Hatch(player: Player, eggKey: string, count: number)
 				Rarity = def.Rarity,
 				Multiplier = def.Multiplier,
 				Equipped = petData.Equipped,
+				New = isNew,
 			})
 		end
 	end
@@ -293,6 +331,8 @@ function PetService.Init()
 		for index = #pets, 1, -1 do
 			if not Config.Pets[pets[index].Type] then
 				table.remove(pets, index)
+			else
+				profile.Data.Discovered[pets[index].Type] = true
 			end
 		end
 		sync(player)
@@ -302,6 +342,9 @@ function PetService.Init()
 		if key == "ExtraPetSlots" or key == "VIP" then
 			sync(player)
 		end
+	end)
+	GamepassService.Refreshed:Connect(function(player)
+		PetService.EnforceSlots(player)
 	end)
 
 	game:GetService("Players").PlayerRemoving:Connect(function(player)
@@ -315,26 +358,33 @@ function PetService.Init()
 		return PetService.Hatch(player, eggKey, count)
 	end
 
+	local function petAction(player: Player): boolean
+		return RateLimiter.Allow(player, "PetAction", 10, 8)
+	end
 	Remotes.Get("EquipPet").OnServerEvent:Connect(function(player, petId)
-		if type(petId) == "string" then
+		if type(petId) == "string" and petAction(player) then
 			PetService.Equip(player, petId)
 		end
 	end)
 	Remotes.Get("UnequipPet").OnServerEvent:Connect(function(player, petId)
-		if type(petId) == "string" then
+		if type(petId) == "string" and petAction(player) then
 			PetService.Unequip(player, petId)
 		end
 	end)
 	Remotes.Get("DeletePet").OnServerEvent:Connect(function(player, petId)
-		if type(petId) == "string" then
+		if type(petId) == "string" and petAction(player) then
 			PetService.Delete(player, petId)
 		end
 	end)
 	Remotes.Get("EquipBest").OnServerEvent:Connect(function(player)
-		PetService.EquipBest(player)
+		if petAction(player) then
+			PetService.EquipBest(player)
+		end
 	end)
 	Remotes.Get("UnequipAll").OnServerEvent:Connect(function(player)
-		PetService.UnequipAll(player)
+		if petAction(player) then
+			PetService.UnequipAll(player)
+		end
 	end)
 end
 

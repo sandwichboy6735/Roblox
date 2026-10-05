@@ -17,7 +17,7 @@ local LeaderboardService = {}
 
 local PUSH_INTERVAL = 60
 local REFRESH_INTERVAL = 90
-local TOP_COUNT = 25
+local TOP_COUNT = 10 -- rows that fit on a board
 local MAX_ORDERED_VALUE = 9007199254740991
 
 local BOARDS = {
@@ -78,7 +78,13 @@ local function getName(userId: number): string
 end
 
 local function pushScores()
+	-- Copy first: SetAsync yields, and players may join while we iterate.
+	local entries = {}
 	for player, profile in pairs(DataService.Profiles) do
+		table.insert(entries, { Player = player, Profile = profile })
+	end
+	for _, entry in ipairs(entries) do
+		local player, profile = entry.Player, entry.Profile
 		for _, board in ipairs(BOARDS) do
 			local value = math.clamp(math.floor(board.Get(profile.Data)), 0, MAX_ORDERED_VALUE)
 			if value > 0 then
@@ -118,7 +124,7 @@ local function renderBoard(boardPart: Part, entries)
 		local row = Instance.new("Frame")
 		row.Name = "Row" .. rank
 		row.LayoutOrder = rank
-		row.Size = UDim2.new(1, 0, 0, 36)
+		row.Size = UDim2.new(1, 0, 0, 43)
 		row.BackgroundColor3 = rank % 2 == 0 and Color3.fromRGB(40, 42, 58) or Color3.fromRGB(48, 50, 68)
 		row.BorderSizePixel = 0
 		local corner = Instance.new("UICorner")

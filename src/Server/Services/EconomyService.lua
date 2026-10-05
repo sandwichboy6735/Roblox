@@ -86,14 +86,23 @@ function EconomyService.GetMultiplierInfo(player: Player)
 	end
 	local data = profile.Data
 
-	local petMult = 1
+	-- Only the best `slots` equipped pets count, even if saved data says more.
+	local equippedMults = {}
 	for _, petData in ipairs(data.Pets) do
 		if petData.Equipped then
 			local def = Config.Pets[petData.Type]
 			if def then
-				petMult += (def.Multiplier - 1)
+				table.insert(equippedMults, def.Multiplier)
 			end
 		end
+	end
+	table.sort(equippedMults, function(a, b)
+		return a > b
+	end)
+	local slots = profile.Runtime.PetSlots or Config.BasePetSlots
+	local petMult = 1
+	for index = 1, math.min(#equippedMults, slots) do
+		petMult += equippedMults[index] - 1
 	end
 	info.Pets = petMult
 	info.Rebirth = 1 + data.Rebirths * Config.Rebirth.MultiplierPerRebirth
@@ -142,11 +151,7 @@ function EconomyService.ScaleCoins(player: Player, baseAmount: number): number
 	if not profile then
 		return baseAmount
 	end
-	local data = profile.Data
-	local zone = Config.Zones[math.clamp(data.ZonesUnlocked, 1, #Config.Zones)]
-	local zoneScale = zone.OrbValue / Config.Zones[1].OrbValue
-	local rebirthScale = 1 + data.Rebirths * Config.Rebirth.MultiplierPerRebirth
-	return math.floor(baseAmount * zoneScale * rebirthScale)
+	return Config.ScaleCoins(baseAmount, profile.Data.ZonesUnlocked, profile.Data.Rebirths)
 end
 
 --------------------------------------------------------------------------------
@@ -211,8 +216,21 @@ function EconomyService.SpendGems(player: Player, amount: number): boolean
 end
 
 function EconomyService.Init()
-	DataService.ProfileLoaded:Connect(function(player)
+	DataService.ProfileLoaded:Connect(function(player, profile)
 		EconomyService.RefreshMultiplier(player)
+		-- Boosts bought in an earlier session: refresh the UI when they run out.
+		local now = os.time()
+		for _, boost in pairs(profile.Data.Boosts) do
+			local remaining = (boost.ExpiresAt or 0) - now
+			if remaining > 0 then
+				task.delay(remaining + 1, function()
+					if DataService:GetProfile(player) == profile then
+						EconomyService.RefreshMultiplier(player)
+						DataService:Replicate(player, { Boosts = profile.Data.Boosts })
+					end
+				end)
+			end
+		end
 	end)
 	GamepassService.Changed:Connect(function(player)
 		EconomyService.RefreshMultiplier(player)

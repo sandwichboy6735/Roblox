@@ -20,7 +20,7 @@ local function notify(player: Player, message: string, kind: string?)
 end
 
 function RebirthService.GetCost(rebirths: number): number
-	return math.floor(Config.Rebirth.BaseCost * Config.Rebirth.CostGrowth ^ rebirths)
+	return Config.GetRebirthCost(rebirths)
 end
 
 function RebirthService.Rebirth(player: Player)

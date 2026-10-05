@@ -1,8 +1,9 @@
-# Built place files
+# Built place files (the committed snapshot in build/ is the exception)
 *.rbxl
 *.rbxlx
 *.rbxm
 *.rbxmx
+!build/HatchLegends.rbxlx
 
 # Rojo / editor
 /sourcemap.json

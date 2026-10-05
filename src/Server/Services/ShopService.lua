@@ -6,6 +6,7 @@
 local MarketplaceService = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared.Config)
@@ -53,7 +54,12 @@ local function processReceipt(receiptInfo)
 	if not player then
 		return Enum.ProductPurchaseDecision.NotProcessedYet
 	end
-	local profile = DataService:GetProfile(player)
+	if DataService.UsingMock and not RunService:IsStudio() then
+		return Enum.ProductPurchaseDecision.NotProcessedYet -- never confirm into a fake store
+	end
+	-- Receipts are often redelivered right as the player joins, while their data
+	-- is still loading, so wait for it rather than bouncing the receipt.
+	local profile = DataService:WaitForProfile(player, 60)
 	if not profile or not profile.Loaded then
 		return Enum.ProductPurchaseDecision.NotProcessedYet
 	end
@@ -61,6 +67,13 @@ local function processReceipt(receiptInfo)
 	local purchases = profile.Data.Purchases
 	for _, id in ipairs(purchases) do
 		if id == receiptInfo.PurchaseId then
+			if profile.UnsavedReceipts[receiptInfo.PurchaseId] then
+				-- Granted earlier but the save failed: only confirm once it's saved.
+				if DataService:Save(player) then
+					return Enum.ProductPurchaseDecision.PurchaseGranted
+				end
+				return Enum.ProductPurchaseDecision.NotProcessedYet
+			end
 			return Enum.ProductPurchaseDecision.PurchaseGranted
 		end
 	end
@@ -84,9 +97,10 @@ local function processReceipt(receiptInfo)
 	profile.Data.Stats.RobuxSpent += receiptInfo.CurrencySpent or 0
 
 	-- Persist before confirming so the receipt is never granted twice.
+	profile.UnsavedReceipts[receiptInfo.PurchaseId] = true
 	local saved = DataService:Save(player)
 	if not saved then
-		-- Grant is in memory; a retry will hit the dedupe list above.
+		-- Grant is in memory; a retry hits the dedupe list above and re-saves.
 		return Enum.ProductPurchaseDecision.NotProcessedYet
 	end
 	return Enum.ProductPurchaseDecision.PurchaseGranted

@@ -24,6 +24,7 @@ local BRIDGE_WIDTH = 30
 local WALL_HEIGHT = 40
 
 local zoneSpawns: { CFrame } = {}
+local blockedSpots: { { Position: Vector3, Radius: number } } = {}
 local zoneBounds: { any } = {}
 local eggStandPositions: { [string]: Vector3 } = {}
 local leaderboardBoards: { [string]: Part } = {}
@@ -118,7 +119,7 @@ local function buildTree(parent: Instance, position: Vector3, theme, rng: Random
 	part({
 		Name = "Leaves",
 		Shape = Enum.PartType.Ball,
-		Size = Vector3.new(leafSize, leafSize * 0.9, leafSize),
+		Size = Vector3.new(leafSize, leafSize, leafSize),
 		Position = position + Vector3.new(0, height + leafSize * 0.3, 0),
 		Color = theme.Accent,
 		Material = Enum.Material.Grass,
@@ -150,8 +151,8 @@ local function buildCandy(parent: Instance, position: Vector3, theme, rng: Rando
 		part({
 			Name = "Gumdrop",
 			Shape = Enum.PartType.Ball,
-			Size = Vector3.new(size, size * 0.8, size),
-			Position = position + Vector3.new(0, size * 0.4, 0),
+			Size = Vector3.new(size, size, size),
+			Position = position + Vector3.new(0, size * 0.35, 0),
 			Color = Color3.fromHSV(rng:NextNumber(), 0.6, 1),
 			Material = Enum.Material.SmoothPlastic,
 		}, parent)
@@ -235,7 +236,7 @@ local function isReserved(zoneIndex: number, localX: number, z: number): boolean
 	if math.abs(z) < 14 then
 		return true -- central walking lane
 	end
-	if z < -58 and z > -24 and math.abs(localX) < 45 then
+	if z > -58 and z < -24 and math.abs(localX) < 45 then
 		return true -- egg stands
 	end
 	if zoneIndex == 1 then
@@ -387,14 +388,18 @@ local function buildEggStand(parent: Instance, eggKey: string, egg, position: Ve
 		Material = Enum.Material.Marble,
 	}, model)
 
+	-- Ball parts are always perfectly round, so a block with a sphere mesh is
+	-- used to get a taller-than-wide egg shape.
 	local eggPart = part({
 		Name = "Egg",
-		Shape = Enum.PartType.Ball,
 		Size = Vector3.new(5, 6.5, 5),
 		Position = position + Vector3.new(0, 1.5 + 3.25, 0),
 		Color = egg.Color,
 		Material = Enum.Material.SmoothPlastic,
 	}, model)
+	local eggMesh = Instance.new("SpecialMesh")
+	eggMesh.MeshType = Enum.MeshType.Sphere
+	eggMesh.Parent = eggPart
 	eggPart:SetAttribute("EggId", eggKey)
 
 	local spots = part({
@@ -426,6 +431,7 @@ local function buildEggStand(parent: Instance, eggKey: string, egg, position: Ve
 	model.PrimaryPart = eggPart
 	model.Parent = parent
 	eggStandPositions[eggKey] = eggPart.Position
+	table.insert(blockedSpots, { Position = position, Radius = 9 })
 end
 
 local function buildRebirthPortal(parent: Instance, position: Vector3)
@@ -483,6 +489,7 @@ local function buildRebirthPortal(parent: Instance, position: Vector3)
 
 	model.PrimaryPart = ring
 	model.Parent = parent
+	table.insert(blockedSpots, { Position = position, Radius = 10 })
 end
 
 local function buildLeaderboard(parent: Instance, key: string, title: string, position: Vector3)
@@ -529,7 +536,7 @@ local function buildLeaderboard(parent: Instance, key: string, title: string, po
 	list.Parent = gui
 
 	local layout = Instance.new("UIListLayout")
-	layout.Padding = UDim.new(0, 4)
+	layout.Padding = UDim.new(0, 5)
 	layout.SortOrder = Enum.SortOrder.LayoutOrder
 	layout.Parent = list
 
@@ -737,6 +744,7 @@ function MapBuilder.Build()
 
 	local mapFolder = Instance.new("Folder")
 	mapFolder.Name = "Map"
+	table.clear(blockedSpots)
 
 	for index = 1, #Config.Zones do
 		buildZone(mapFolder, index)
@@ -761,6 +769,18 @@ end
 
 function MapBuilder.GetZoneBounds(index: number)
 	return zoneBounds[index]
+end
+
+-- True if an orb at this position would sit inside an egg stand or portal.
+function MapBuilder.IsSpotBlocked(position: Vector3): boolean
+	local flat = Vector3.new(position.X, 0, position.Z)
+	for _, spot in ipairs(blockedSpots) do
+		local center = Vector3.new(spot.Position.X, 0, spot.Position.Z)
+		if (flat - center).Magnitude < spot.Radius then
+			return true
+		end
+	end
+	return false
 end
 
 function MapBuilder.GetEggStandPosition(eggKey: string): Vector3?

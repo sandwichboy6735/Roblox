@@ -114,7 +114,7 @@ function ZonesUI.Init()
 		end
 	end)
 
-	UIController.AddSideButton("Zones", "ZONES", UIKit.Colors.Info, 3, function()
+	UIController.AddSideButton("Zones", "ZONES", UIKit.Colors.Info, 5, function()
 		UIController.Toggle("Zones")
 	end)
 end

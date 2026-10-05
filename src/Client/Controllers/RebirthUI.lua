@@ -22,9 +22,7 @@ local nextLabel: TextLabel
 local costLabel: TextLabel
 local rebirthButton: TextButton
 
-local function getCost(rebirths: number): number
-	return math.floor(Config.Rebirth.BaseCost * Config.Rebirth.CostGrowth ^ rebirths)
-end
+local getCost = Config.GetRebirthCost
 
 local function refresh()
 	if not window or not window.IsOpen() then
@@ -106,7 +104,7 @@ function RebirthUI.Init()
 		end
 	end)
 
-	UIController.AddSideButton("Rebirth", "REBIRTH", UIKit.Colors.Purple, 4, function()
+	UIController.AddSideButton("Rebirth", "REBIRTH", UIKit.Colors.Purple, 6, function()
 		UIController.Toggle("Rebirth")
 	end)
 end

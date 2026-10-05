@@ -198,6 +198,139 @@ for _, egg in pairs(Config.Eggs) do
 	end
 end
 
+--------------------------------------------------------------------------------
+-- Pet looks (PetStyles)
+--------------------------------------------------------------------------------
+
+local KNOWN_MATERIALS = { Glass = true, Foil = true, Ice = true, Neon = true, SmoothPlastic = true, Plastic = true, Marble = true, Metal = true, ForceField = true, Granite = true, Slate = true, Basalt = true, CrackedLava = true }
+for name in pairs(Config.Pets) do
+	local style = PetStyles.Pets[name]
+	check(style ~= nil, "PetStyles has a look for " .. name)
+	if style then
+		check(PetStyles.Archetypes[style.Archetype] == true, name .. " uses a known archetype (" .. tostring(style.Archetype) .. ")")
+		check(style.Primary ~= nil and style.Secondary ~= nil and style.Accent ~= nil, name .. " has all three colours")
+		for _, extra in ipairs(style.Extras or {}) do
+			check(PetStyles.Extras[extra] == true, name .. " uses a known extra (" .. tostring(extra) .. ")")
+		end
+		if style.Material then
+			check(KNOWN_MATERIALS[style.Material] == true, name .. " uses a known material (" .. style.Material .. ")")
+		end
+		if style.Transparency then
+			check(style.Transparency >= 0 and style.Transparency < 0.6, name .. " stays visible")
+		end
+	end
+end
+for name in pairs(PetStyles.Pets) do
+	check(Config.Pets[name] ~= nil, "PetStyles entry " .. name .. " matches a pet in Config")
+end
+
+--------------------------------------------------------------------------------
+-- Golden / Rainbow tiers
+--------------------------------------------------------------------------------
+
+check(#Config.PetTiers == 2, "Two craftable tiers")
+for index, tier in ipairs(Config.PetTiers) do
+	check(tier.Needed >= 2 and tier.Bonus > 1, "Tier " .. index .. " needs copies and boosts")
+	if index > 1 then
+		check(tier.Bonus > Config.PetTiers[index - 1].Bonus, "Tier " .. index .. " beats the tier below")
+	end
+end
+for name, def in pairs(Config.Pets) do
+	check(near(Config.GetPetMultiplier(name, 0), def.Multiplier), name .. " normal multiplier unchanged")
+	check(near(Config.GetPetMultiplier(name, nil), def.Multiplier), name .. " nil tier is normal")
+	if def.Multiplier > 1 then
+		check(Config.GetPetMultiplier(name, 1) > def.Multiplier, name .. " Golden beats normal")
+		check(Config.GetPetMultiplier(name, 2) > Config.GetPetMultiplier(name, 1), name .. " Rainbow beats Golden")
+	end
+	check(Config.GetPetMultiplier(name, 1) >= def.Multiplier, name .. " Golden never worse")
+end
+check(Config.GetPetMultiplier("NotAPet", 2) == 1, "Unknown pet multiplier is 1")
+check(near(Config.GetPetMultiplier("Dog", 1), 1 + (Config.Pets.Dog.Multiplier - 1) * Config.PetTiers[1].Bonus), "Golden formula")
+
+--------------------------------------------------------------------------------
+-- Daily quests
+--------------------------------------------------------------------------------
+
+local questIds = {}
+for _, quest in ipairs(Config.Quests.Pool) do
+	check(questIds[quest.Id] == nil, "Quest id unique: " .. quest.Id)
+	questIds[quest.Id] = true
+	check(Config.DataTemplate.Stats[quest.Stat] ~= nil, quest.Id .. " tracks a saved stat (" .. quest.Stat .. ")")
+	check(quest.Goal > 0 and (quest.Scale or 1) > 0, quest.Id .. " has a positive goal")
+	check(string.find(quest.Text, "%d", 1, true) ~= nil, quest.Id .. " text shows the goal")
+	local reward = quest.Reward
+	check((reward.Gems or 0) > 0 or (reward.CoinMinutes or 0) > 0, quest.Id .. " gives a reward")
+	check(Config.GetQuest(quest.Id) == quest, "GetQuest finds " .. quest.Id)
+end
+check(Config.GetQuest("Nope") == nil, "GetQuest unknown id")
+check(Config.Quests.BonusReward.Gems > 0, "Quest bonus reward")
+
+local distinctStats = {}
+local statCount = 0
+for _, quest in ipairs(Config.Quests.Pool) do
+	if not distinctStats[quest.Stat] then
+		distinctStats[quest.Stat] = true
+		statCount += 1
+	end
+end
+check(statCount >= Config.Quests.PerDay, "Enough different quest stats for a full day")
+
+local seenSets = {}
+local setCount = 0
+for _, userId in ipairs({ 1, 42, 123456789, 5000000000, -1, -2 }) do
+	for day = 19000, 19030 do
+		local ids = Config.PickQuests(day, userId)
+		check(#ids == Config.Quests.PerDay, "PickQuests gives PerDay quests (" .. day .. "/" .. userId .. ")")
+		local stats, unique = {}, true
+		for _, id in ipairs(ids) do
+			local quest = Config.GetQuest(id)
+			if not quest or stats[quest.Stat] then
+				unique = false
+			else
+				stats[quest.Stat] = true
+			end
+		end
+		check(unique, "PickQuests: valid ids, one per stat (" .. day .. "/" .. userId .. ")")
+		local again = Config.PickQuests(day, userId)
+		check(table.concat(again, ",") == table.concat(ids, ","), "PickQuests is deterministic")
+		local key = table.concat(ids, ",")
+		if not seenSets[key] then
+			seenSets[key] = true
+			setCount += 1
+		end
+	end
+end
+check(setCount >= 5, "Quests vary from day to day (" .. setCount .. " different sets)")
+
+--------------------------------------------------------------------------------
+-- Server events and gem upgrades
+--------------------------------------------------------------------------------
+
+check(Config.Events.Duration > 0 and Config.Events.Duration < Config.Events.Interval, "Events are shorter than the gap between them")
+for key, event in pairs(Config.Events.List) do
+	check(type(event.Name) == "string" and type(event.Description) == "string" and event.Color ~= nil, "Event " .. key .. " has name, text and colour")
+	check(event.CoinMult ~= nil or event.GemChance ~= nil, "Event " .. key .. " does something")
+	if event.GemChance then
+		check(event.GemChance > Config.Orbs.GemOrbChance and event.GemChance + Config.Orbs.BigOrbChance < 1, "Event " .. key .. " gem chance sane")
+	end
+end
+
+local upgradeOrders = {}
+for key, upgrade in pairs(Config.Upgrades) do
+	check(Config.DataTemplate.Upgrades[key] == 0, "Upgrade " .. key .. " saved in the data template")
+	check(upgrade.PerLevel > 0 and #upgrade.Costs >= 1, "Upgrade " .. key .. " has levels")
+	for level = 2, #upgrade.Costs do
+		check(upgrade.Costs[level] > upgrade.Costs[level - 1], "Upgrade " .. key .. " cost rises at level " .. level)
+	end
+	check(upgradeOrders[upgrade.Order] == nil, "Upgrade " .. key .. " has a unique order")
+	upgradeOrders[upgrade.Order] = true
+end
+for key in pairs(Config.DataTemplate.Upgrades) do
+	check(Config.Upgrades[key] ~= nil, "Data template upgrade " .. key .. " exists in Config")
+end
+check(Config.BaseWalkSpeed + Config.Upgrades.WalkSpeed.PerLevel * #Config.Upgrades.WalkSpeed.Costs <= 40, "Max walk speed stays reasonable")
+check(type(Config.DataTemplate.Quests.Ids) == "table" and Config.DataTemplate.Quests.BonusClaimed == false, "Quest data template")
+
 print(string.format("\n%d passed, %d failed", passed, failed))
 if failed > 0 then
 	error("tests failed")

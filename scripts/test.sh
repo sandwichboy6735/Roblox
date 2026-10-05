@@ -14,6 +14,9 @@ trap 'rm -f "$BUNDLE"' EXIT
 	echo 'local Util = (function()'
 	cat src/Shared/Util.lua
 	echo 'end)()'
+	echo 'local PetStyles = (function()'
+	cat src/Shared/PetStyles.lua
+	echo 'end)()'
 	echo 'local Codes = (function()'
 	cat src/Server/Codes.lua
 	echo 'end)()'

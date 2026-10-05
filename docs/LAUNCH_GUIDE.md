@@ -5,9 +5,9 @@ This guide is a practical plan for that part.
 
 ## 1. Make it look like a hit before launch
 
-The game runs on generated placeholder shapes. Real art is the biggest upgrade you can make.
+Every pet already has a generated 3D model, and the world has terrain, weather and lighting per zone. Custom art is still the biggest upgrade you can make.
 
-1. **Pet models.** Make or commission models for the pets, starting with Legendary and Mythic. Put each Model in `ReplicatedStorage > PetModels` with the exact pet name. No code changes are needed.
+1. **Pet models.** Make or commission models for the pets, starting with Legendary and Mythic. Put each Model in `ReplicatedStorage > PetModels` with the exact pet name. No code changes are needed. To tweak a generated pet instead, edit its colours and extras in `src/Shared/PetStyles.lua`.
 2. **Icon (512x512).** One cute, high-contrast pet on a bright background, with no small text. This is what players see in search and on the home page.
 3. **Thumbnails (1920x1080).** Show the most exciting moment: a Mythic hatch, a huge pet army, or a giant coin number. Add a few big words such as "NEW!" or "UPDATE 1".
 4. **Title.** Lead with the genre and add an update tag later, for example `Hatch Legends [UPDATE 1]`.
@@ -48,8 +48,8 @@ Successful simulators update every one to two weeks. Each update is a reason for
 ## 5. Ideas for later
 
 - **Trading** between players. It is a big engagement driver, but it is complex and needs careful anti-scam design.
-- **Pet levels or fusing** duplicates into stronger pets, which gives every hatch value.
-- **Quests** with daily goals such as "Hatch 25 pets" or "Collect 500 orbs".
+- **Pet levels** on top of Golden and Rainbow crafting, so favourite pets keep growing.
+- **More events**, such as a Luck Hour or a limited event egg, added to `Config.Events`.
 - **Badges** for milestones. They show up on player profiles and work as free advertising.
 - **Private servers.** Turn them on in the experience settings and set a price for an extra income stream.
 

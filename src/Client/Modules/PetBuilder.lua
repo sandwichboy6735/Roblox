@@ -879,13 +879,23 @@ function PetBuilder.FrameCamera(viewport: ViewportFrame, model: Model, zoom: num
 	cam.CFrame = CFrame.lookAt(cf.Position + direction * distance, cf.Position)
 end
 
+local VIEW_AMBIENT = Color3.fromRGB(170, 170, 185)
+local VIEW_LIGHT = Color3.fromRGB(255, 250, 240)
+
+-- Shows the pet as a black shape (undiscovered pets in the Index).
+function PetBuilder.SetSilhouette(viewport: ViewportFrame, silhouette: boolean)
+	viewport.ImageColor3 = if silhouette then Color3.new(0, 0, 0) else Color3.new(1, 1, 1)
+	viewport.Ambient = if silhouette then Color3.new(0, 0, 0) else VIEW_AMBIENT
+	viewport.LightColor = if silhouette then Color3.new(0, 0, 0) else VIEW_LIGHT
+end
+
 -- props: any ViewportFrame properties, plus Silhouette = true for "???" pets.
 function PetBuilder.CreateViewport(petName: string, tier: number?, props: { [string]: any }?): (ViewportFrame, Model)
 	local p = props or {}
 	local viewport = Instance.new("ViewportFrame")
 	viewport.BackgroundTransparency = 1
-	viewport.Ambient = Color3.fromRGB(170, 170, 185)
-	viewport.LightColor = Color3.fromRGB(255, 250, 240)
+	viewport.Ambient = VIEW_AMBIENT
+	viewport.LightColor = VIEW_LIGHT
 	viewport.LightDirection = V(-0.6, -1, -0.7)
 	for key, value in pairs(p) do
 		if key ~= "Silhouette" and key ~= "Zoom" and key ~= "Parent" then
@@ -896,9 +906,7 @@ function PetBuilder.CreateViewport(petName: string, tier: number?, props: { [str
 	built.Model.Parent = viewport
 	PetBuilder.FrameCamera(viewport, built.Model, p.Zoom)
 	if p.Silhouette then
-		viewport.ImageColor3 = Color3.new(0, 0, 0)
-		viewport.Ambient = Color3.new(0, 0, 0)
-		viewport.LightColor = Color3.new(0, 0, 0)
+		PetBuilder.SetSilhouette(viewport, true)
 	end
 	if p.Parent then
 		viewport.Parent = p.Parent

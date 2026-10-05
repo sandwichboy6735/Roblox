@@ -17,7 +17,9 @@ local Remotes = require(Shared.Remotes)
 local Modules = script.Parent.Parent:WaitForChild("Modules")
 local State = require(Modules.ClientState)
 local UIKit = require(Modules.UIKit)
+local PetBuilder = require(Modules.PetBuilder)
 local UIController = require(script.Parent.UIController)
+local EffectsController = require(script.Parent.EffectsController)
 
 local player = Players.LocalPlayer
 
@@ -34,6 +36,9 @@ local luckLabel: TextLabel
 local hatchOneButton: TextButton
 local hatchThreeButton: TextButton
 local autoButton: TextButton
+
+local oddsEgg: string? = nil -- egg whose cells are in the odds grid
+local chanceLabels: { TextLabel } = {}
 
 local currentEgg: string? = nil
 local currentStand: BasePart? = nil
@@ -134,61 +139,67 @@ local function refreshButtons()
 	end
 end
 
+-- Builds the 3D odds cells once per egg; later calls only refresh the chances
+-- (they change with luck boosts).
 local function rebuildOdds()
 	if not currentEgg then
 		return
 	end
 	local egg = Config.Eggs[currentEgg]
-	UIKit.ClearChildren(oddsGrid)
-	for order, entry in ipairs(adjustedOdds(egg)) do
-		local def = Config.Pets[entry.Pet]
-		local rarityColor = Config.Rarities[def.Rarity].Color
-		local cell = UIKit.Frame({
-			BackgroundColor3 = UIKit.Colors.Panel,
-			LayoutOrder = order,
-			Parent = oddsGrid,
-		})
-		UIKit.Corner(cell, 10)
-		UIKit.Stroke(cell, rarityColor, 1.5)
+	local odds = adjustedOdds(egg)
+	if oddsEgg ~= currentEgg then
+		oddsEgg = currentEgg
+		UIKit.ClearChildren(oddsGrid)
+		table.clear(chanceLabels)
+		for order, entry in ipairs(odds) do
+			local def = Config.Pets[entry.Pet]
+			local rarityColor = Config.Rarities[def.Rarity].Color
+			local cell = UIKit.Frame({
+				BackgroundColor3 = UIKit.Colors.Panel,
+				LayoutOrder = order,
+				Parent = oddsGrid,
+			})
+			UIKit.Corner(cell, 10)
+			UIKit.Stroke(cell, rarityColor, 1.5)
 
-		local swatch = UIKit.Frame({
-			AnchorPoint = Vector2.new(0.5, 0),
-			Position = UDim2.new(0.5, 0, 0, 8),
-			Size = UDim2.fromOffset(40, 40),
-			BackgroundColor3 = def.Color,
-			Parent = cell,
-		})
-		UIKit.Corner(swatch, def.Shape == "Ball" and 20 or 8)
-		UIKit.Stroke(swatch, rarityColor, 2)
-
-		UIKit.Label({
-			Position = UDim2.fromOffset(4, 52),
-			Size = UDim2.new(1, -8, 0, 18),
-			Text = def.Name,
-			TextSize = 13,
-			TextTruncate = Enum.TextTruncate.AtEnd,
-			TextXAlignment = Enum.TextXAlignment.Center,
-			Parent = cell,
-		})
-		UIKit.Label({
-			Position = UDim2.fromOffset(4, 70),
-			Size = UDim2.new(1, -8, 0, 18),
-			Text = string.format("x%s", tostring(def.Multiplier)),
-			TextSize = 13,
-			TextColor3 = UIKit.Colors.Accent,
-			TextXAlignment = Enum.TextXAlignment.Center,
-			Parent = cell,
-		})
-		UIKit.Label({
-			Position = UDim2.fromOffset(4, 88),
-			Size = UDim2.new(1, -8, 0, 20),
-			Text = formatChance(entry.Chance),
-			TextSize = 16,
-			Font = UIKit.Fonts.Black,
-			TextColor3 = rarityColor,
-			TextXAlignment = Enum.TextXAlignment.Center,
-			Parent = cell,
-		})
+			local backdrop = UIKit.Frame({ Position = UDim2.fromOffset(4, 4), Size = UDim2.new(1, -8, 0, 54), BackgroundColor3 = rarityColor, Parent = cell })
+			UIKit.Corner(backdrop, 8)
+			UIKit.Gradient(backdrop, rarityColor:Lerp(Color3.new(0, 0, 0), 0.45), rarityColor:Lerp(Color3.new(0, 0, 0), 0.8), 90)
+			PetBuilder.CreateViewport(entry.Pet, 0, { Size = UDim2.fromScale(1, 1), Parent = backdrop })
+			UIKit.Label({
+				Position = UDim2.fromOffset(4, 60),
+				Size = UDim2.new(1, -8, 0, 16),
+				Text = def.Name,
+				TextSize = 13,
+				TextTruncate = Enum.TextTruncate.AtEnd,
+				TextXAlignment = Enum.TextXAlignment.Center,
+				Parent = cell,
+			})
+			UIKit.Label({
+				Position = UDim2.fromOffset(4, 75),
+				Size = UDim2.new(1, -8, 0, 16),
+				Text = string.format("x%s", tostring(def.Multiplier)),
+				TextSize = 12,
+				TextColor3 = UIKit.Colors.Accent,
+				TextXAlignment = Enum.TextXAlignment.Center,
+				Parent = cell,
+			})
+			chanceLabels[order] = UIKit.Label({
+				Position = UDim2.fromOffset(4, 91),
+				Size = UDim2.new(1, -8, 0, 20),
+				TextSize = 16,
+				Font = UIKit.Fonts.Black,
+				TextColor3 = rarityColor,
+				TextXAlignment = Enum.TextXAlignment.Center,
+				Parent = cell,
+			})
+		end
+	end
+	for order, entry in ipairs(odds) do
+		local label = chanceLabels[order]
+		if label then
+			label.Text = formatChance(entry.Chance)
+		end
 	end
 end
 
@@ -216,98 +227,139 @@ end
 -- Reveal animation
 --------------------------------------------------------------------------------
 
-local function eggShape(parent: Instance, color: Color3, xScale: number): Frame
-	local eggFrame = UIKit.Frame({
+-- A 3D egg (sphere-meshed block like the ones in the world) in a viewport.
+local function eggShape(parent: Instance, egg, xScale: number): ViewportFrame
+	local viewport = UIKit.Create("ViewportFrame", {
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(xScale, 0.5),
-		Size = UDim2.fromOffset(150, 190),
-		BackgroundColor3 = color,
+		Size = UDim2.fromOffset(190, 230),
+		BackgroundTransparency = 1,
+		Ambient = Color3.fromRGB(170, 170, 185),
+		LightColor = Color3.fromRGB(255, 250, 240),
+		LightDirection = Vector3.new(-0.6, -1, -0.7),
 		ZIndex = 202,
 		Parent = parent,
-	})
-	UIKit.Create("UICorner", { CornerRadius = UDim.new(0.5, 0), Parent = eggFrame })
-	UIKit.Stroke(eggFrame, color:Lerp(Color3.new(0, 0, 0), 0.4), 4)
-	UIKit.Gradient(eggFrame, color:Lerp(Color3.new(1, 1, 1), 0.35), color:Lerp(Color3.new(0, 0, 0), 0.15), 90)
-	-- shine
-	local shine = UIKit.Frame({
-		Position = UDim2.fromScale(0.22, 0.14),
-		Size = UDim2.fromScale(0.2, 0.22),
-		BackgroundColor3 = Color3.new(1, 1, 1),
-		BackgroundTransparency = 0.45,
-		ZIndex = 203,
-		Parent = eggFrame,
-	})
-	UIKit.Create("UICorner", { CornerRadius = UDim.new(0.5, 0), Parent = shine })
-	return eggFrame
+	}) :: ViewportFrame
+	local model = Instance.new("Model")
+	local shell = Instance.new("Part")
+	shell.Anchored = true
+	shell.Size = Vector3.new(5, 6.5, 5)
+	shell.Color = egg.Color
+	shell.Material = Enum.Material.SmoothPlastic
+	shell.Parent = model
+	local mesh = Instance.new("SpecialMesh")
+	mesh.MeshType = Enum.MeshType.Sphere
+	mesh.Parent = shell
+	-- Spots in a lighter shade, scattered over the shell.
+	local spotRng = Random.new(#egg.Name)
+	for _ = 1, 7 do
+		local yaw = spotRng:NextNumber(0, math.pi * 2)
+		local height = spotRng:NextNumber(-0.6, 0.75)
+		local ring = math.sqrt(1 - height * height)
+		local spot = Instance.new("Part")
+		spot.Anchored = true
+		spot.Shape = Enum.PartType.Ball
+		spot.Size = Vector3.one * spotRng:NextNumber(0.8, 1.3)
+		spot.Color = egg.Color:Lerp(Color3.new(1, 1, 1), 0.55)
+		spot.Material = Enum.Material.SmoothPlastic
+		spot.Position = Vector3.new(math.cos(yaw) * ring * 2.4, height * 3.1, math.sin(yaw) * ring * 2.4)
+		spot.Parent = model
+	end
+	model.Parent = viewport
+	PetBuilder.FrameCamera(viewport, model, 1.1)
+	return viewport
 end
 
-local function petCard(parent: Instance, result, xScale: number): Frame
+-- Rotating light rays behind a revealed pet (each ray spins about the centre).
+local function addRays(parent: GuiObject, color: Color3, count: number): { Frame }
+	local rays = {}
+	for i = 1, count do
+		local ray = UIKit.Frame({
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			Position = UDim2.fromScale(0.5, 0.5),
+			Size = UDim2.fromOffset(22, 340),
+			BackgroundColor3 = color,
+			BackgroundTransparency = 0.35,
+			Rotation = (i - 1) * 180 / count,
+			ZIndex = 202,
+			Parent = parent,
+		})
+		UIKit.Create("UIGradient", {
+			Rotation = 90,
+			Transparency = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 1),
+				NumberSequenceKeypoint.new(0.5, 0.2),
+				NumberSequenceKeypoint.new(1, 1),
+			}),
+			Parent = ray,
+		})
+		rays[i] = ray
+	end
+	return rays
+end
+
+local function petCard(parent: Instance, result, xScale: number): (Frame, Model, { Frame })
 	local def = Config.Pets[result.Type]
 	local rarityColor = Config.Rarities[def.Rarity].Color
-	local card = UIKit.Frame({
+	local holder = UIKit.Frame({
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(xScale, 0.5),
-		Size = UDim2.fromOffset(200, 250),
-		BackgroundColor3 = UIKit.Colors.Background,
+		Size = UDim2.fromOffset(210, 280),
+		BackgroundTransparency = 1,
 		ZIndex = 202,
 		Parent = parent,
+	})
+	-- Rare and better pets get spinning light rays behind the card.
+	local order = Config.Rarities[def.Rarity].Order
+	local rays = if order >= Config.Rarities.Rare.Order then addRays(holder, rarityColor, 4 + order) else {}
+
+	local card = UIKit.Frame({
+		Size = UDim2.fromScale(1, 1),
+		BackgroundColor3 = UIKit.Colors.Background,
+		ZIndex = 203,
+		Parent = holder,
 	})
 	UIKit.Corner(card, 18)
 	UIKit.Stroke(card, rarityColor, 4)
 
 	local glow = UIKit.Frame({
 		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0, 14),
-		Size = UDim2.fromOffset(120, 120),
+		Position = UDim2.new(0.5, 0, 0, 12),
+		Size = UDim2.fromOffset(176, 160),
 		BackgroundColor3 = rarityColor,
-		ZIndex = 203,
+		ZIndex = 204,
 		Parent = card,
 	})
-	UIKit.Create("UICorner", { CornerRadius = UDim.new(0.5, 0), Parent = glow })
-	UIKit.RarityGradient(glow, rarityColor)
-
-	local body = UIKit.Frame({
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.fromScale(0.5, 0.5),
-		Size = UDim2.fromOffset(64, 64),
-		BackgroundColor3 = def.Color,
-		ZIndex = 204,
+	UIKit.Corner(glow, 16)
+	UIKit.Gradient(glow, rarityColor:Lerp(Color3.new(1, 1, 1), 0.15), rarityColor:Lerp(Color3.new(0, 0, 0), 0.65), 90)
+	local viewport, model = PetBuilder.CreateViewport(result.Type, 0, {
+		Size = UDim2.fromScale(1, 1),
+		Zoom = 0.95,
+		ZIndex = 205,
 		Parent = glow,
 	})
-	UIKit.Corner(body, def.Shape == "Ball" and 32 or 14)
-	UIKit.Stroke(body, Color3.new(0, 0, 0), 3, 0.5)
-	for _, x in ipairs({ 0.32, 0.68 }) do
-		local eye = UIKit.Frame({
-			AnchorPoint = Vector2.new(0.5, 0.5),
-			Position = UDim2.fromScale(x, 0.4),
-			Size = UDim2.fromOffset(10, 12),
-			BackgroundColor3 = Color3.new(0.05, 0.05, 0.05),
-			ZIndex = 205,
-			Parent = body,
-		})
-		UIKit.Create("UICorner", { CornerRadius = UDim.new(0.5, 0), Parent = eye })
-	end
+	viewport.Name = "PetView"
 
 	UIKit.Label({
-		Position = UDim2.fromOffset(8, 142),
+		Position = UDim2.fromOffset(8, 176),
 		Size = UDim2.new(1, -16, 0, 30),
 		Text = def.Name,
 		Font = UIKit.Fonts.Title,
 		TextSize = 24,
 		TextWrapped = true,
 		TextXAlignment = Enum.TextXAlignment.Center,
-		ZIndex = 203,
+		ZIndex = 204,
 		Parent = card,
 	})
 	UIKit.Label({
-		Position = UDim2.fromOffset(8, 174),
+		Position = UDim2.fromOffset(8, 206),
 		Size = UDim2.new(1, -16, 0, 26),
 		Text = string.upper(def.Rarity),
 		Font = UIKit.Fonts.Black,
 		TextSize = 20,
 		TextColor3 = rarityColor,
 		TextXAlignment = Enum.TextXAlignment.Center,
-		ZIndex = 203,
+		ZIndex = 204,
 		Parent = card,
 	})
 	if result.New then
@@ -333,16 +385,16 @@ local function petCard(parent: Instance, result, xScale: number): Frame
 		})
 	end
 	UIKit.Label({
-		Position = UDim2.fromOffset(8, 202),
+		Position = UDim2.fromOffset(8, 236),
 		Size = UDim2.new(1, -16, 0, 22),
 		Text = string.format("x%s coins", tostring(def.Multiplier)) .. (result.Equipped and "  <font color='#50DC78'>EQUIPPED</font>" or ""),
 		TextSize = 16,
 		TextColor3 = UIKit.Colors.Accent,
 		TextXAlignment = Enum.TextXAlignment.Center,
-		ZIndex = 203,
+		ZIndex = 204,
 		Parent = card,
 	})
-	return card
+	return holder, model, rays
 end
 
 local function bestRarityOrder(results): number
@@ -371,7 +423,7 @@ local function playReveal(eggKey: string, results)
 	-- 1) Eggs pop in and shake with rising intensity
 	local eggs = {}
 	for i = 1, count do
-		local eggFrame = eggShape(stage, egg.Color, positions[i])
+		local eggFrame = eggShape(stage, egg, positions[i])
 		local scale = UIKit.Create("UIScale", { Scale = 0, Parent = eggFrame })
 		TweenService:Create(scale, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
 		eggs[i] = eggFrame
@@ -411,11 +463,28 @@ local function playReveal(eggKey: string, results)
 		UIController.PlaySound("Hatch")
 	end
 
+	local models: { Model } = {}
+	local allRays: { Frame } = {}
 	for i, result in ipairs(results) do
-		local card = petCard(stage, result, positions[i])
+		local card, model, rays = petCard(stage, result, positions[i])
 		local scale = UIKit.Create("UIScale", { Scale = 0.3, Parent = card })
 		TweenService:Create(scale, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+		table.insert(models, model)
+		for _, ray in ipairs(rays) do
+			table.insert(allRays, ray)
+		end
 	end
+	-- Pets turn to show themselves off; the rays slowly spin.
+	local started = os.clock()
+	local spin = RunService.RenderStepped:Connect(function()
+		local t = os.clock() - started
+		for index, model in ipairs(models) do
+			model:PivotTo(CFrame.Angles(0, math.sin(t * 1.6 + index) * 0.9 + t * 0.6, 0))
+		end
+		for _, ray in ipairs(allRays) do
+			ray.Rotation += 0.6
+		end
+	end)
 
 	if best >= Config.Rarities.Legendary.Order then
 		local isMythic = best >= Config.Rarities.Mythic.Order
@@ -434,6 +503,7 @@ local function playReveal(eggKey: string, results)
 		})
 		local scale = UIKit.Create("UIScale", { Scale = 0.2, Parent = banner })
 		TweenService:Create(scale, TweenInfo.new(0.5, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+		EffectsController.Confetti(isMythic and 160 or 100)
 	end
 
 	task.wait(best >= Config.Rarities.Legendary.Order and 2.2 or 1.4)
@@ -444,12 +514,15 @@ local function playReveal(eggKey: string, results)
 			UIKit.Tween(child, { BackgroundTransparency = 1 }, 0.25)
 			if child:IsA("TextLabel") then
 				UIKit.Tween(child, { TextTransparency = 1, TextStrokeTransparency = 1 }, 0.25)
+			elseif child:IsA("ViewportFrame") then
+				UIKit.Tween(child, { ImageTransparency = 1 }, 0.25)
 			end
 		elseif child:IsA("UIStroke") then
 			UIKit.Tween(child, { Transparency = 1 }, 0.25)
 		end
 	end
 	task.wait(0.27)
+	spin:Disconnect()
 	UIKit.ClearChildren(stage)
 	overlay.Visible = false
 end

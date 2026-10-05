@@ -11,19 +11,27 @@ local Config = require(Shared.Config)
 local Modules = script.Parent.Parent:WaitForChild("Modules")
 local State = require(Modules.ClientState)
 local UIKit = require(Modules.UIKit)
+local PetBuilder = require(Modules.PetBuilder)
 local UIController = require(script.Parent.UIController)
 
 local IndexUI = {}
 
-local CELL_W, CELL_H, PAD, COLUMNS = 96, 112, 8, 6
+local CELL_W, CELL_H, PAD, COLUMNS = 96, 120, 8, 6
 
 local window
 local list: ScrollingFrame
 local progressLabel: TextLabel
 
+type Cell = { Frame: Frame, Stroke: UIStroke, View: ViewportFrame, Name: TextLabel, Discovered: boolean? }
+type Group = { Title: string, Color: Color3, Pets: { string }, Header: TextLabel? }
+
+local groups: { Group } = {}
+local cells: { [string]: Cell } = {}
+local built = false
+
 -- Groups: one per egg (in zone order), then pets that come from no egg.
-local function buildGroups()
-	local groups = {}
+local function buildGroups(): { Group }
+	local result: { Group } = {}
 	local seen = {}
 	for _, entry in ipairs(Config.GetEggsSortedByZone()) do
 		local names = {}
@@ -31,7 +39,7 @@ local function buildGroups()
 			table.insert(names, item.Pet)
 			seen[item.Pet] = true
 		end
-		table.insert(groups, { Title = entry.Egg.Name, Color = entry.Egg.Color, Pets = names })
+		table.insert(result, { Title = entry.Egg.Name, Color = entry.Egg.Color, Pets = names })
 	end
 	local exclusive = {}
 	for name in pairs(Config.Pets) do
@@ -41,79 +49,69 @@ local function buildGroups()
 	end
 	table.sort(exclusive)
 	if #exclusive > 0 then
-		table.insert(groups, { Title = "Exclusive Rewards", Color = UIKit.Colors.Accent, Pets = exclusive })
+		table.insert(result, { Title = "Exclusive Rewards", Color = UIKit.Colors.Accent, Pets = exclusive })
 	end
-	return groups
+	return result
 end
 
-local function cell(parent: Instance, petName: string, order: number, discovered: boolean)
+local function createCell(parent: Instance, petName: string, order: number): Cell
 	local def = Config.Pets[petName]
 	local rarityColor = Config.Rarities[def.Rarity].Color
 	local frame = UIKit.Frame({
-		BackgroundColor3 = discovered and UIKit.Colors.Panel or UIKit.Colors.PanelDark,
+		BackgroundColor3 = UIKit.Colors.Panel,
 		LayoutOrder = order,
 		Parent = parent,
 	})
 	UIKit.Corner(frame, 10)
-	UIKit.Stroke(frame, rarityColor, 1.5, discovered and 0 or 0.6)
+	local stroke = UIKit.Stroke(frame, rarityColor, 1.5)
 
-	local swatch = UIKit.Frame({
-		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0, 8),
-		Size = UDim2.fromOffset(44, 44),
-		BackgroundColor3 = discovered and def.Color or Color3.fromRGB(15, 15, 22),
-		Parent = frame,
-	})
-	UIKit.Corner(swatch, def.Shape == "Ball" and 22 or 9)
+	local backdrop = UIKit.Frame({ Position = UDim2.fromOffset(5, 5), Size = UDim2.new(1, -10, 0, 64), BackgroundColor3 = rarityColor, Parent = frame })
+	UIKit.Corner(backdrop, 8)
+	UIKit.Gradient(backdrop, rarityColor:Lerp(Color3.new(0, 0, 0), 0.5), rarityColor:Lerp(Color3.new(0, 0, 0), 0.82), 90)
+	local view = PetBuilder.CreateViewport(petName, 0, { Size = UDim2.fromScale(1, 1), Parent = backdrop })
 
-	UIKit.Label({
-		Position = UDim2.fromOffset(4, 56),
-		Size = UDim2.new(1, -8, 0, 32),
-		Text = discovered and def.Name or "???",
+	local nameLabel = UIKit.Label({
+		Position = UDim2.fromOffset(4, 72),
+		Size = UDim2.new(1, -8, 0, 26),
 		TextSize = 13,
 		TextWrapped = true,
-		TextColor3 = discovered and UIKit.Colors.Text or UIKit.Colors.Muted,
 		TextXAlignment = Enum.TextXAlignment.Center,
 		Parent = frame,
 	})
 	UIKit.Label({
-		Position = UDim2.fromOffset(4, 88),
-		Size = UDim2.new(1, -8, 0, 18),
+		Position = UDim2.fromOffset(4, 98),
+		Size = UDim2.new(1, -8, 0, 16),
 		Text = def.Rarity,
 		TextSize = 12,
 		TextColor3 = rarityColor,
 		TextXAlignment = Enum.TextXAlignment.Center,
 		Parent = frame,
 	})
+	return { Frame = frame, Stroke = stroke, View = view, Name = nameLabel }
 end
 
-local function rebuild()
-	if not window or not window.IsOpen() then
+local function setDiscovered(petName: string, cellData: Cell, discovered: boolean)
+	if cellData.Discovered == discovered then
 		return
 	end
-	UIKit.ClearChildren(list)
-	local discovered = State.Get("Discovered", {})
-	local found, total = 0, 0
-	for name in pairs(Config.Pets) do
-		total += 1
-		if discovered[name] then
-			found += 1
-		end
-	end
-	progressLabel.Text = string.format("Discovered <font color='#FFC400'>%d / %d</font> pets", found, total)
+	cellData.Discovered = discovered
+	cellData.Frame.BackgroundColor3 = if discovered then UIKit.Colors.Panel else UIKit.Colors.PanelDark
+	cellData.Stroke.Transparency = if discovered then 0 else 0.6
+	cellData.Name.Text = if discovered then Config.Pets[petName].Name else "???"
+	cellData.Name.TextColor3 = if discovered then UIKit.Colors.Text else UIKit.Colors.Muted
+	PetBuilder.SetSilhouette(cellData.View, not discovered)
+end
 
+-- The book (with its 3D previews) is built once; later refreshes only flip
+-- discovered state and counters.
+local function buildBook()
+	built = true
+	groups = buildGroups()
 	local order = 0
-	for _, group in ipairs(buildGroups()) do
-		local groupFound = 0
-		for _, name in ipairs(group.Pets) do
-			if discovered[name] then
-				groupFound += 1
-			end
-		end
+	for _, group in ipairs(groups) do
 		order += 1
-		UIKit.Label({
+		group.Header = UIKit.Label({
 			Size = UDim2.new(1, 0, 0, 28),
-			Text = string.format("%s  <font color='#A5AAC8'>%d/%d</font>", group.Title, groupFound, #group.Pets),
 			Font = UIKit.Fonts.Title,
 			TextSize = 20,
 			TextColor3 = group.Color,
@@ -135,7 +133,43 @@ local function rebuild()
 			Parent = grid,
 		})
 		for index, name in ipairs(group.Pets) do
-			cell(grid, name, index, discovered[name] == true)
+			if not cells[name] then
+				cells[name] = createCell(grid, name, index)
+			end
+		end
+	end
+end
+
+local function rebuild()
+	if not window or not window.IsOpen() then
+		return
+	end
+	if not built then
+		buildBook()
+	end
+	local discovered = State.Get("Discovered", {})
+	local found, total = 0, 0
+	for name in pairs(Config.Pets) do
+		total += 1
+		if discovered[name] then
+			found += 1
+		end
+	end
+	progressLabel.Text = string.format("Discovered <font color='#FFC400'>%d / %d</font> pets", found, total)
+
+	for name, cellData in pairs(cells) do
+		setDiscovered(name, cellData, discovered[name] == true)
+	end
+	for _, group in ipairs(groups) do
+		local groupFound = 0
+		for _, name in ipairs(group.Pets) do
+			if discovered[name] then
+				groupFound += 1
+			end
+		end
+		if group.Header then
+			local done = groupFound == #group.Pets
+			group.Header.Text = string.format("%s  <font color='%s'>%d/%d%s</font>", group.Title, if done then "#50DC78" else "#A5AAC8", groupFound, #group.Pets, if done then "  COMPLETE!" else "")
 		end
 	end
 end

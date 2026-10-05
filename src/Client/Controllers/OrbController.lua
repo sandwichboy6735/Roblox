@@ -89,8 +89,19 @@ local function showPopup(position: Vector3, text: string, color: Color3)
 	end)
 end
 
+local burstPart: Part
+local burst: ParticleEmitter
+
+-- Quick sparkle burst where an orb was picked up.
+local function burstAt(position: Vector3, color: Color3, amount: number)
+	burstPart.CFrame = CFrame.new(position)
+	burst.Color = ColorSequence.new(color, Color3.new(1, 1, 1))
+	burst:Emit(amount)
+end
+
 local function popupFor(orb: BasePart)
 	local kind = orb:GetAttribute("Kind")
+	burstAt(orb.Position, orb.Color, if kind == "Coin" then 8 else 18)
 	local value = orb:GetAttribute("Value") or 0
 	if kind == "Gem" then
 		showPopup(orb.Position, "+" .. value .. " Gems", Color3.fromRGB(110, 250, 225))
@@ -213,6 +224,25 @@ local function animate()
 end
 
 function OrbController.Init()
+	burstPart = Instance.new("Part")
+	burstPart.Name = "PickupBurst"
+	burstPart.Anchored = true
+	burstPart.CanCollide = false
+	burstPart.CanQuery = false
+	burstPart.CanTouch = false
+	burstPart.Transparency = 1
+	burstPart.Size = Vector3.new(1, 1, 1)
+	burstPart.Parent = Workspace
+	burst = Instance.new("ParticleEmitter")
+	burst.Rate = 0
+	burst.LightEmission = 1
+	burst.Lifetime = NumberRange.new(0.35, 0.6)
+	burst.Speed = NumberRange.new(8, 14)
+	burst.Drag = 6
+	burst.SpreadAngle = Vector2.new(180, 180)
+	burst.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.5), NumberSequenceKeypoint.new(1, 0) })
+	burst.Parent = burstPart
+
 	popupFolder = Instance.new("Folder")
 	popupFolder.Name = "OrbPopups"
 	popupFolder.Parent = Workspace

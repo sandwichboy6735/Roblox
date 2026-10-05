@@ -37,6 +37,9 @@ local START_ORDER = {
 	"OrbController",
 	"PetFollowController",
 	"WorldController",
+	"AmbienceController",
+	"EggDisplayController",
+	"EffectsController",
 	"ChatController",
 }
 

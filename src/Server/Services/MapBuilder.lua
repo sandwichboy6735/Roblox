@@ -229,11 +229,12 @@ local function buildZoneTerrain(index: number, cx: number, mats, rng: Random)
 			Terrain:FillBall(V(x + rng:NextNumber(-6, 6), rng:NextNumber(-8, -2), side * (outer + rng:NextNumber(-3, 6))), rng:NextNumber(18, 27), mats.Hill)
 		end
 	end
+	-- Big hills only on the outer edges of the world; between zones a narrow
+	-- ridge fills the gap so hills never spill into the neighbouring zone.
 	for z = -HALF, HALF, 22 do
 		for _, side in ipairs({ -1, 1 }) do
 			local isWorldEdge = (side < 0 and index == 1) or (side > 0 and index == #Config.Zones)
-			-- Leave the bridge corridor open between zones.
-			if isWorldEdge or math.abs(z) > 34 then
+			if isWorldEdge then
 				Terrain:FillBall(V(cx + side * (outer + rng:NextNumber(-3, 6)), rng:NextNumber(-8, -2), z + rng:NextNumber(-6, 6)), rng:NextNumber(18, 27), mats.Hill)
 			end
 		end
@@ -246,8 +247,14 @@ local function buildZoneTerrain(index: number, cx: number, mats, rng: Random)
 		local nextMats = TERRAIN[nextZone.Theme.Decor] or TERRAIN.Trees
 		local liquid = nextMats.River
 		if liquid then
-			Terrain:FillBlock(CFrame.new(gapX, -12, 0), V(ZONE_SPACING - ZONE_SIZE + 8, 4, 120), mats.Hill)
-			Terrain:FillBlock(CFrame.new(gapX, -6, 0), V(ZONE_SPACING - ZONE_SIZE + 4, 8, 120), liquid)
+			Terrain:FillBlock(CFrame.new(gapX, -12, 0), V(ZONE_SPACING - ZONE_SIZE + 8, 4, ZONE_SIZE + 20), mats.Hill)
+			Terrain:FillBlock(CFrame.new(gapX, -6, 0), V(ZONE_SPACING - ZONE_SIZE + 4, 8, ZONE_SIZE + 20), liquid)
+		end
+		-- Ridge along the gap, leaving the bridge corridor open.
+		for z = -HALF - 10, HALF + 10, 11 do
+			if math.abs(z) > 30 then
+				Terrain:FillBall(V(gapX + rng:NextNumber(-1.5, 1.5), rng:NextNumber(-3, 0), z), rng:NextNumber(9, 11), mats.Hill)
+			end
 		end
 	end
 end
@@ -670,7 +677,7 @@ local function buildZone(mapFolder: Folder, index: number)
 	decor.Name = "Decor"
 	decor.Parent = zoneModel
 	local placed, attempts = 0, 0
-	local target = 34
+	local target = 46
 	while placed < target and attempts < 300 do
 		attempts += 1
 		local localX = rng:NextNumber(-HALF + 9, HALF - 9)

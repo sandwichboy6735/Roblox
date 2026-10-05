@@ -20,6 +20,7 @@ local CollectibleService = {}
 
 local ORB_TAG = "Orb"
 local GEM_COLOR = Color3.fromRGB(255, 90, 210)
+local COIN_COLOR = Color3.fromRGB(245, 185, 30)
 
 -- Pickup throughput: bursts of BUCKET_SIZE, then PICKUP_RATE per second. A
 -- walking player (even with Auto Collect) averages well under this.
@@ -64,32 +65,34 @@ local function spawnOrb(zoneIndex: number)
 	orb.TopSurface = Enum.SurfaceType.Smooth
 	orb.BottomSurface = Enum.SurfaceType.Smooth
 
+	-- Coins are upright discs (Cylinder parts lie along X) that the client spins.
 	local value
 	if kind == "Gem" then
 		orb.Shape = Enum.PartType.Block
-		orb.Size = Vector3.new(1.8, 2.6, 1.8)
+		orb.Size = Vector3.new(1.5, 1.5, 1.5)
 		orb.Color = GEM_COLOR
 		value = rng:NextInteger(1, 3)
 		local sparkles = Instance.new("Sparkles")
 		sparkles.SparkleColor = GEM_COLOR
 		sparkles.Parent = orb
 	elseif kind == "Big" then
-		orb.Shape = Enum.PartType.Ball
-		orb.Size = Vector3.new(3.8, 3.8, 3.8)
+		orb.Shape = Enum.PartType.Cylinder
+		orb.Size = Vector3.new(0.7, 4.2, 4.2)
 		orb.Color = zone.Theme.Orb
 		value = math.floor(zone.OrbValue * Config.Orbs.BigOrbMultiplier)
 		local light = Instance.new("PointLight")
 		light.Color = orb.Color
 		light.Range = 10
 		light.Brightness = 1.5
+		light.Shadows = false
 		light.Parent = orb
 		local sparkles = Instance.new("Sparkles")
 		sparkles.SparkleColor = orb.Color
 		sparkles.Parent = orb
 	else
-		orb.Shape = Enum.PartType.Ball
-		orb.Size = Vector3.new(2.4, 2.4, 2.4)
-		orb.Color = zone.Theme.Orb
+		orb.Shape = Enum.PartType.Cylinder
+		orb.Size = Vector3.new(0.45, 2.6, 2.6)
+		orb.Color = COIN_COLOR
 		value = math.max(1, math.floor(zone.OrbValue * rng:NextNumber(0.8, 1.25)))
 	end
 
@@ -100,7 +103,8 @@ local function spawnOrb(zoneIndex: number)
 			break
 		end
 	end
-	orb.CFrame = CFrame.new(position) * CFrame.Angles(0, rng:NextNumber(0, math.pi * 2), if kind == "Gem" then math.rad(45) else 0)
+	local yaw = CFrame.Angles(0, rng:NextNumber(0, math.pi * 2), 0)
+	orb.CFrame = if kind == "Gem" then CFrame.new(position) * yaw * CFrame.Angles(math.rad(45), 0, math.rad(45)) else CFrame.new(position) * yaw
 
 	orb:SetAttribute("Zone", zoneIndex)
 	orb:SetAttribute("Value", value)

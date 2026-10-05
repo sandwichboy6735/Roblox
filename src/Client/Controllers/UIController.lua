@@ -6,6 +6,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local SoundService = game:GetService("SoundService")
+local TweenService = game:GetService("TweenService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared.Config)
@@ -424,6 +425,50 @@ function UIController.Notify(text: string, kind: string?)
 		UIKit.Tween(label, { TextTransparency = 1 }, 0.3)
 		task.wait(0.3)
 		toast:Destroy()
+	end)
+end
+
+--------------------------------------------------------------------------------
+-- Big centre-screen banner (zone unlocked, rebirth, legendary hatch, events)
+--------------------------------------------------------------------------------
+
+function UIController.Banner(title: string, subtitle: string?, color: Color3?)
+	local holder = UIKit.Frame({
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.3),
+		Size = UDim2.fromOffset(760, 140),
+		BackgroundTransparency = 1,
+		ZIndex = 150,
+		Parent = root,
+	})
+	local titleLabel = UIKit.Label({
+		Size = UDim2.new(1, 0, 0, 84),
+		Text = title,
+		Font = UIKit.Fonts.Title,
+		TextSize = 72,
+		TextColor3 = color or UIKit.Colors.Accent,
+		TextStrokeTransparency = 0,
+		TextXAlignment = Enum.TextXAlignment.Center,
+		ZIndex = 151,
+		Parent = holder,
+	})
+	local subLabel = UIKit.Label({
+		Position = UDim2.fromOffset(0, 84),
+		Size = UDim2.new(1, 0, 0, 40),
+		Text = subtitle or "",
+		TextSize = 28,
+		TextStrokeTransparency = 0.2,
+		TextXAlignment = Enum.TextXAlignment.Center,
+		ZIndex = 151,
+		Parent = holder,
+	})
+	local scale = UIKit.Create("UIScale", { Scale = 0.2, Parent = holder })
+	TweenService:Create(scale, TweenInfo.new(0.55, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+	task.delay(2.4, function()
+		UIKit.Tween(titleLabel, { TextTransparency = 1, TextStrokeTransparency = 1 }, 0.4)
+		UIKit.Tween(subLabel, { TextTransparency = 1, TextStrokeTransparency = 1 }, 0.4)
+		task.wait(0.45)
+		holder:Destroy()
 	end)
 end
 

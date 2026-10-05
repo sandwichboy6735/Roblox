@@ -81,13 +81,16 @@ local FLOWER_COLORS = { rgb(255, 120, 170), rgb(255, 225, 80), rgb(255, 255, 255
 
 local function tree(parent: Instance, pos: Vector3, rng: Random)
 	local h = rng:NextNumber(7, 10)
-	pillar(parent, pos - V(0, 0.5, 0), h, rng:NextNumber(0.7, 1), rgb(120, 85, 55), Enum.Material.Wood)
+	pillar(parent, pos - V(0, 0.5, 0), h, rng:NextNumber(0.7, 1), rgb(120, 85, 55), Enum.Material.SmoothPlastic)
 	local green = pick(LEAF_GREENS, rng)
 	local top = pos + V(0, h, 0)
-	ball(parent, top + V(0, 1, 0), rng:NextNumber(6.5, 8), green, Enum.Material.Grass)
+	local crown = rng:NextNumber(6.5, 8)
+	ball(parent, top + V(0, 1, 0), crown, green, Enum.Material.SmoothPlastic)
+	-- lighter "sunlit" puff on top gives the toy cel-shaded look
+	ball(parent, top + V(-0.7, 1 + crown * 0.28, -0.7), crown * 0.62, green:Lerp(rgb(235, 255, 160), 0.35), Enum.Material.SmoothPlastic, { CastShadow = false })
 	for i = 1, 3 do
 		local angle = i * 2.1 + rng:NextNumber(0, 1)
-		ball(parent, top + V(math.cos(angle) * 2.2, rng:NextNumber(-1.2, 0), math.sin(angle) * 2.2), rng:NextNumber(4.5, 6), green:Lerp(rgb(40, 110, 40), rng:NextNumber(0, 0.3)), Enum.Material.Grass)
+		ball(parent, top + V(math.cos(angle) * 2.2, rng:NextNumber(-1.2, 0), math.sin(angle) * 2.2), rng:NextNumber(4.5, 6), green:Lerp(rgb(40, 110, 40), rng:NextNumber(0, 0.3)), Enum.Material.SmoothPlastic)
 	end
 	-- a few apples / blossoms
 	if rng:NextNumber() < 0.5 then
@@ -112,7 +115,7 @@ end
 local function bush(parent: Instance, pos: Vector3, rng: Random)
 	local green = pick(LEAF_GREENS, rng)
 	for i = 1, 3 do
-		ball(parent, pos + V((i - 2) * 1.4, rng:NextNumber(0.6, 1.2), rng:NextNumber(-0.6, 0.6)), rng:NextNumber(2.4, 3.2), green, Enum.Material.Grass)
+		ball(parent, pos + V((i - 2) * 1.4, rng:NextNumber(0.6, 1.2), rng:NextNumber(-0.6, 0.6)), rng:NextNumber(2.4, 3.2), green, Enum.Material.SmoothPlastic)
 	end
 	if rng:NextNumber() < 0.6 then
 		local berry = pick(FLOWER_COLORS, rng)
@@ -212,16 +215,16 @@ end
 
 local function pineTree(parent: Instance, pos: Vector3, rng: Random)
 	local s = rng:NextNumber(0.85, 1.25)
-	pillar(parent, pos - V(0, 0.5, 0), 3 * s, 0.6 * s, rgb(100, 70, 50), Enum.Material.Wood)
+	pillar(parent, pos - V(0, 0.5, 0), 3 * s, 0.6 * s, rgb(100, 70, 50), Enum.Material.SmoothPlastic)
 	local green = rgb(40, 110, 70)
 	local y = 2.4 * s
 	for i, radius in ipairs({ 3.6, 2.8, 1.9, 1.0 }) do
 		local r = radius * s
-		pillar(parent, pos + V(0, y, 0), 1.8 * s, r, green, Enum.Material.Grass)
-		pillar(parent, pos + V(0, y + 1.8 * s, 0), 0.35 * s, r * 0.85, rgb(245, 250, 255), Enum.Material.Snow, { CastShadow = false })
+		pillar(parent, pos + V(0, y, 0), 1.8 * s, r, green, Enum.Material.SmoothPlastic)
+		pillar(parent, pos + V(0, y + 1.8 * s, 0), 0.35 * s, r * 0.85, rgb(245, 250, 255), Enum.Material.SmoothPlastic, { CastShadow = false })
 		y += 1.55 * s
 		if i == 4 then
-			ball(parent, pos + V(0, y + 0.5 * s, 0), 0.9 * s, rgb(245, 250, 255), Enum.Material.Snow)
+			ball(parent, pos + V(0, y + 0.5 * s, 0), 0.9 * s, rgb(245, 250, 255), Enum.Material.SmoothPlastic)
 		end
 	end
 end
@@ -230,9 +233,9 @@ local function snowman(parent: Instance, pos: Vector3, rng: Random)
 	local yaw = rng:NextNumber(-0.6, 0.6)
 	local base = CFrame.new(pos) * CFrame.Angles(0, yaw, 0)
 	local white = rgb(248, 250, 255)
-	ball(parent, (base * CFrame.new(0, 1.6, 0)).Position, 3.4, white, Enum.Material.Snow)
-	ball(parent, (base * CFrame.new(0, 3.9, 0)).Position, 2.5, white, Enum.Material.Snow)
-	ball(parent, (base * CFrame.new(0, 5.6, 0)).Position, 1.8, white, Enum.Material.Snow)
+	ball(parent, (base * CFrame.new(0, 1.6, 0)).Position, 3.4, white, Enum.Material.SmoothPlastic)
+	ball(parent, (base * CFrame.new(0, 3.9, 0)).Position, 2.5, white, Enum.Material.SmoothPlastic)
+	ball(parent, (base * CFrame.new(0, 5.6, 0)).Position, 1.8, white, Enum.Material.SmoothPlastic)
 	for _, x in ipairs({ -0.35, 0.35 }) do
 		ball(parent, (base * CFrame.new(x, 5.85, -0.8)).Position, 0.25, rgb(25, 25, 30), Enum.Material.SmoothPlastic)
 	end
@@ -243,14 +246,14 @@ local function snowman(parent: Instance, pos: Vector3, rng: Random)
 	-- hat + scarf
 	pillar(parent, (base * CFrame.new(0, 6.3, 0)).Position, 0.2, 1.1, rgb(30, 30, 40), Enum.Material.SmoothPlastic)
 	pillar(parent, (base * CFrame.new(0, 6.5, 0)).Position, 1.1, 0.7, rgb(30, 30, 40), Enum.Material.SmoothPlastic)
-	pillar(parent, (base * CFrame.new(0, 4.75, 0)).Position, 0.45, 1.05, rgb(220, 40, 50), Enum.Material.Fabric)
+	pillar(parent, (base * CFrame.new(0, 4.75, 0)).Position, 0.45, 1.05, rgb(220, 40, 50), Enum.Material.SmoothPlastic)
 	-- stick arms
 	for _, side in ipairs({ -1, 1 }) do
 		part({
 			Size = V(2.2, 0.18, 0.18),
 			CFrame = base * CFrame.new(side * 2.0, 4.3, 0) * CFrame.Angles(0, 0, math.rad(25 * side)),
 			Color = rgb(110, 75, 45),
-			Material = Enum.Material.Wood,
+			Material = Enum.Material.SmoothPlastic,
 		}, parent)
 	end
 end
@@ -274,7 +277,7 @@ end
 --------------------------------------------------------------------------------
 
 local function torch(parent: Instance, pos: Vector3, _rng: Random)
-	pillar(parent, pos, 5, 0.7, rgb(60, 55, 55), Enum.Material.Basalt)
+	pillar(parent, pos, 5, 0.7, rgb(60, 55, 55), Enum.Material.SmoothPlastic)
 	local bowl = pillar(parent, pos + V(0, 5, 0), 0.8, 1.2, rgb(45, 40, 40), Enum.Material.Metal)
 	local fire = Instance.new("Fire")
 	fire.Size = 5
@@ -306,7 +309,7 @@ local function obsidian(parent: Instance, pos: Vector3, rng: Random)
 end
 
 local function vent(parent: Instance, pos: Vector3, _rng: Random)
-	local cone = pillar(parent, pos - V(0, 0.4, 0), 1.6, 2.2, rgb(70, 50, 45), Enum.Material.Basalt)
+	local cone = pillar(parent, pos - V(0, 0.4, 0), 1.6, 2.2, rgb(70, 50, 45), Enum.Material.SmoothPlastic)
 	pillar(parent, pos + V(0, 1.2, 0), 0.1, 1.2, rgb(255, 110, 30), Enum.Material.Neon, { CastShadow = false })
 	local smoke = Instance.new("Smoke")
 	smoke.Color = rgb(90, 80, 80)
@@ -351,7 +354,7 @@ local function floatingRock(parent: Instance, pos: Vector3, rng: Random)
 		Size = V(size, size * 0.6, size * 0.9),
 		CFrame = CFrame.new(pos + V(0, y, 0)) * CFrame.Angles(0, rng:NextNumber(0, math.pi), math.rad(rng:NextNumber(-12, 12))),
 		Color = rgb(70, 60, 100),
-		Material = Enum.Material.Slate,
+		Material = Enum.Material.SmoothPlastic,
 		CanCollide = false,
 	}, parent)
 	local color = pick(NEON_SPACE, rng)
@@ -517,9 +520,43 @@ function MapDecor.Backdrop(themeName: string, parent: Instance, center: Vector3,
 			CastShadow = false,
 		}, parent)
 		ball(parent, center + V(-170, 110, -260), 60, rgb(90, 170, 255), Enum.Material.SmoothPlastic, { CanCollide = false, CastShadow = false })
-		ball(parent, center + V(200, 90, 240), 40, rgb(210, 210, 230), Enum.Material.Slate, { CanCollide = false, CastShadow = false })
+		ball(parent, center + V(200, 90, 240), 40, rgb(210, 210, 230), Enum.Material.SmoothPlastic, { CanCollide = false, CastShadow = false })
 		for i = -2, 2 do
 			Terrain:FillBall(north + V(i * 45, -25, rng:NextNumber(-20, 10)), rng:NextNumber(35, 48), Enum.Material.Slate)
+		end
+	end
+end
+
+-- Puffy cartoon clouds: clusters of white balls high above the zone.
+local CLOUD_COLORS = {
+	Trees = rgb(255, 255, 255),
+	Candy = rgb(255, 228, 244),
+	Ice = rgb(240, 247, 255),
+	Rock = rgb(92, 78, 78),
+}
+
+function MapDecor.Clouds(themeName: string, parent: Instance, center: Vector3, rng: Random)
+	local color = CLOUD_COLORS[themeName]
+	if not color then
+		return -- no clouds in space
+	end
+	local folder = Instance.new("Folder")
+	folder.Name = "Clouds"
+	folder.Parent = parent
+	for i = 1, 7 do
+		local angle = (i / 7) * math.pi * 2 + rng:NextNumber(-0.3, 0.3)
+		local distance = rng:NextNumber(40, 150)
+		local base = center + V(math.cos(angle) * distance, rng:NextNumber(75, 115), math.sin(angle) * distance)
+		local width = rng:NextNumber(26, 44)
+		for j = 1, rng:NextInteger(5, 7) do
+			local t = (j - 1) / 6 - 0.5
+			local size = rng:NextNumber(12, 20) * (1 - math.abs(t) * 0.8)
+			ball(folder, base + V(t * width, rng:NextNumber(-1, 3) + size * 0.15, rng:NextNumber(-6, 6)), size, color, Enum.Material.SmoothPlastic, {
+				CanCollide = false,
+				CanQuery = false,
+				CanTouch = false,
+				CastShadow = false,
+			})
 		end
 	end
 end

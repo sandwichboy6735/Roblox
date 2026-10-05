@@ -21,12 +21,12 @@ local EggDisplayController = {}
 local CELL = 62
 local ANIMATE_DISTANCE = 120
 
+type Piece = { Part: BasePart, Offset: CFrame }
 type Stand = {
 	EggKey: string,
 	Egg: BasePart,
-	Spots: BasePart?,
 	EggBase: CFrame,
-	SpotsBase: CFrame?,
+	Pieces: { Piece }, -- the rest of the egg (shell, pattern), moved with it
 	Phase: number,
 	Chances: { TextLabel },
 }
@@ -151,17 +151,46 @@ local function register(eggPart: Instance)
 	if type(eggKey) ~= "string" or not Config.Eggs[eggKey] then
 		return
 	end
-	local model = eggPart.Parent
-	local spots = model and model:FindFirstChild("Spots")
 	local stand: Stand = {
 		EggKey = eggKey,
 		Egg = eggPart,
-		Spots = if spots and spots:IsA("BasePart") then spots else nil,
 		EggBase = eggPart.CFrame,
-		SpotsBase = if spots and spots:IsA("BasePart") then spots.CFrame else nil,
+		Pieces = {},
 		Phase = math.random() * math.pi * 2,
 		Chances = {},
 	}
+	-- Every other part of the egg model follows the egg as it floats.
+	local function collectPieces()
+		local model = eggPart.Parent
+		if not model then
+			return
+		end
+		local pieces = {}
+		for _, child in ipairs(model:GetChildren()) do
+			if child:IsA("BasePart") and child ~= eggPart then
+				table.insert(pieces, { Part = child, Offset = stand.EggBase:ToObjectSpace(child.CFrame) })
+			end
+		end
+		stand.Pieces = pieces
+	end
+	collectPieces()
+	-- Parts can still be arriving from the server; pick up any stragglers.
+	task.delay(2, function()
+		local model = eggPart.Parent
+		if model and #model:GetChildren() - 1 > #stand.Pieces then
+			-- Late pieces haven't been moved yet, so they still sit at their
+			-- original offset from the egg's base position.
+			local known = {}
+			for _, piece in ipairs(stand.Pieces) do
+				known[piece.Part] = true
+			end
+			for _, child in ipairs(model:GetChildren()) do
+				if child:IsA("BasePart") and child ~= eggPart and not known[child] then
+					table.insert(stand.Pieces, { Part = child, Offset = stand.EggBase:ToObjectSpace(child.CFrame) })
+				end
+			end
+		end
+	end)
 	table.insert(stands, stand)
 	buildBoard(stand)
 end
@@ -177,12 +206,12 @@ local function animate()
 	for _, stand in ipairs(stands) do
 		if (stand.EggBase.Position - cameraPosition).Magnitude < ANIMATE_DISTANCE then
 			local offset = CFrame.new(0, math.sin(t * 1.6 + stand.Phase) * 0.35, 0) * CFrame.Angles(0, math.sin(t * 0.7 + stand.Phase) * 0.35, math.sin(t * 1.1 + stand.Phase) * 0.04)
+			local eggCFrame = stand.EggBase * offset
 			table.insert(parts, stand.Egg)
-			table.insert(cframes, stand.EggBase * offset)
-			if stand.Spots and stand.SpotsBase then
-				-- keep the spots glued to the egg
-				table.insert(parts, stand.Spots)
-				table.insert(cframes, stand.EggBase * offset * stand.EggBase:ToObjectSpace(stand.SpotsBase))
+			table.insert(cframes, eggCFrame)
+			for _, piece in ipairs(stand.Pieces) do
+				table.insert(parts, piece.Part)
+				table.insert(cframes, eggCFrame * piece.Offset)
 			end
 		end
 	end

@@ -11,6 +11,7 @@ local TweenService = game:GetService("TweenService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared.Config)
+local EggLooks = require(Shared.EggLooks)
 local Util = require(Shared.Util)
 local Remotes = require(Shared.Remotes)
 
@@ -227,7 +228,7 @@ end
 -- Reveal animation
 --------------------------------------------------------------------------------
 
--- A 3D egg (sphere-meshed block like the ones in the world) in a viewport.
+-- A 3D egg in a viewport, built exactly like the ones on the egg stands.
 local function eggShape(parent: Instance, egg, xScale: number): ViewportFrame
 	local viewport = UIKit.Create("ViewportFrame", {
 		AnchorPoint = Vector2.new(0.5, 0.5),
@@ -240,31 +241,7 @@ local function eggShape(parent: Instance, egg, xScale: number): ViewportFrame
 		ZIndex = 202,
 		Parent = parent,
 	}) :: ViewportFrame
-	local model = Instance.new("Model")
-	local shell = Instance.new("Part")
-	shell.Anchored = true
-	shell.Size = Vector3.new(5, 6.5, 5)
-	shell.Color = egg.Color
-	shell.Material = Enum.Material.SmoothPlastic
-	shell.Parent = model
-	local mesh = Instance.new("SpecialMesh")
-	mesh.MeshType = Enum.MeshType.Sphere
-	mesh.Parent = shell
-	-- Spots in a lighter shade, scattered over the shell.
-	local spotRng = Random.new(#egg.Name)
-	for _ = 1, 7 do
-		local yaw = spotRng:NextNumber(0, math.pi * 2)
-		local height = spotRng:NextNumber(-0.6, 0.75)
-		local ring = math.sqrt(1 - height * height)
-		local spot = Instance.new("Part")
-		spot.Anchored = true
-		spot.Shape = Enum.PartType.Ball
-		spot.Size = Vector3.one * spotRng:NextNumber(0.8, 1.3)
-		spot.Color = egg.Color:Lerp(Color3.new(1, 1, 1), 0.55)
-		spot.Material = Enum.Material.SmoothPlastic
-		spot.Position = Vector3.new(math.cos(yaw) * ring * 2.4, height * 3.1, math.sin(yaw) * ring * 2.4)
-		spot.Parent = model
-	end
+	local model = EggLooks.Build(egg)
 	model.Parent = viewport
 	PetBuilder.FrameCamera(viewport, model, 1.1)
 	return viewport

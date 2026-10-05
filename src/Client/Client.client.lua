@@ -44,6 +44,7 @@ local START_ORDER = {
 	"EffectsController",
 	"BreakableController",
 	"GuideController",
+	"TrailController",
 	"EventUI",
 	"ChatController",
 }

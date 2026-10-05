@@ -260,7 +260,9 @@ Config.Eggs = {
 		Zone = 1,
 		Cost = 250,
 		Currency = "Coins",
-		Color = Color3.fromRGB(230, 230, 210),
+		Color = Color3.fromRGB(250, 242, 215),
+		Pattern = "Spots", -- egg look: Spots / Stripes / Diamonds (see EggLooks)
+		PatternColor = Color3.fromRGB(110, 200, 90),
 		Pets = {
 			{ Pet = "Dog", Chance = 40 },
 			{ Pet = "Cat", Chance = 30 },
@@ -276,6 +278,8 @@ Config.Eggs = {
 		Cost = 8000,
 		Currency = "Coins",
 		Color = Color3.fromRGB(255, 150, 200),
+		Pattern = "Stripes",
+		PatternColor = Color3.fromRGB(255, 255, 255),
 		Pets = {
 			{ Pet = "Gummy Bear", Chance = 40 },
 			{ Pet = "Lollipop Lamb", Chance = 30 },
@@ -291,6 +295,8 @@ Config.Eggs = {
 		Cost = 320000,
 		Currency = "Coins",
 		Color = Color3.fromRGB(170, 220, 255),
+		Pattern = "Diamonds",
+		PatternColor = Color3.fromRGB(245, 252, 255),
 		Pets = {
 			{ Pet = "Penguin", Chance = 40 },
 			{ Pet = "Seal", Chance = 30 },
@@ -306,6 +312,9 @@ Config.Eggs = {
 		Cost = 9000000,
 		Currency = "Coins",
 		Color = Color3.fromRGB(255, 90, 40),
+		Pattern = "Spots",
+		PatternColor = Color3.fromRGB(255, 220, 60),
+		PatternNeon = true,
 		Pets = {
 			{ Pet = "Magma Crab", Chance = 40 },
 			{ Pet = "Ember Lizard", Chance = 30 },
@@ -321,6 +330,9 @@ Config.Eggs = {
 		Cost = 250000000,
 		Currency = "Coins",
 		Color = Color3.fromRGB(90, 60, 160),
+		Pattern = "Spots",
+		PatternColor = Color3.fromRGB(255, 120, 235),
+		PatternNeon = true,
 		Pets = {
 			{ Pet = "Moon Bunny", Chance = 40 },
 			{ Pet = "Star Pup", Chance = 30 },
@@ -336,6 +348,10 @@ Config.Eggs = {
 		Cost = 50,
 		Currency = "Gems",
 		Color = Color3.fromRGB(120, 255, 230),
+		Pattern = "Diamonds",
+		PatternColor = Color3.fromRGB(255, 220, 80),
+		PatternNeon = true,
+		Glass = true,
 		Pets = {
 			{ Pet = "Golden Dog", Chance = 50 },
 			{ Pet = "Diamond Cat", Chance = 30 },

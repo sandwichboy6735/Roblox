@@ -37,6 +37,14 @@ function UpgradeService.GetBonus(player: Player, key: string): number
 end
 
 local function applySpeed(player: Player)
+	-- Trail colour for everyone to see: one tier per speed level, plus a
+	-- special one for maxed speed after a rebirth.
+	local profile = DataService:GetProfile(player)
+	if profile then
+		local level = UpgradeService.GetLevel(player, "WalkSpeed")
+		local maxed = level >= #Config.Upgrades.WalkSpeed.Costs
+		player:SetAttribute("TrailTier", level + (if maxed and profile.Data.Rebirths > 0 then 1 else 0))
+	end
 	local character = player.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 	if humanoid then

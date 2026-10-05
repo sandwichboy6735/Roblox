@@ -39,6 +39,7 @@ local currentEgg: string? = nil
 local currentStand: BasePart? = nil
 local busy = false
 local autoHatching = false
+local autoRun = 0 -- id of the active auto-hatch loop (stale loops exit)
 
 local overlay: Frame
 local stage: Frame
@@ -465,10 +466,14 @@ end
 -- Hatching
 --------------------------------------------------------------------------------
 
--- Returns (success, shortOfFunds).
-local function hatch(count: number): (boolean, boolean)
-	if busy or not currentEgg then
-		return false, false
+-- Returns "ok", "funds" (can't afford yet), "busy" (a hatch is in progress)
+-- or "failed".
+local function hatch(count: number): string
+	if busy then
+		return "busy"
+	end
+	if not currentEgg then
+		return "failed"
 	end
 	local eggKey = currentEgg
 	local egg = Config.Eggs[eggKey]
@@ -476,7 +481,7 @@ local function hatch(count: number): (boolean, boolean)
 		if not autoHatching then
 			UIController.Notify("Not enough " .. egg.Currency .. "! Collect orbs or visit the shop.", "error")
 		end
-		return false, true
+		return "funds"
 	end
 
 	busy = true
@@ -518,7 +523,7 @@ local function hatch(count: number): (boolean, boolean)
 
 	busy = false
 	refreshButtons()
-	return success, false
+	return if success then "ok" else "failed"
 end
 
 local function refreshAutoChip()
@@ -532,22 +537,25 @@ local function refreshAutoChip()
 	end
 end
 
-local function autoLoop()
+local function autoLoop(runId: number)
 	refreshAutoChip()
-	while autoHatching do
+	-- A newer loop (AUTO toggled off and on quickly) replaces this one.
+	while autoHatching and autoRun == runId do
 		local started = os.clock()
 		local count = State.Owns("TripleHatch") and 3 or 1
 		local egg = currentEgg and Config.Eggs[currentEgg]
 		if egg and count == 3 and currencyAmount(egg) < egg.Cost * 3 then
 			count = 1
 		end
-		local ok, shortOfFunds = hatch(count)
-		if not ok and shortOfFunds then
-			-- Keep running and hatch again as soon as there are enough coins.
+		local result = hatch(count)
+		if result == "funds" or result == "busy" then
+			-- Keep running: hatch again once there are enough coins / it's free.
 			task.wait(AUTO_WAIT_FOR_FUNDS)
-		elseif not ok then
-			autoHatching = false
-			refreshButtons()
+		elseif result == "failed" then
+			if autoRun == runId then
+				autoHatching = false
+				refreshButtons()
+			end
 			break
 		end
 		local elapsed = os.clock() - started
@@ -555,7 +563,9 @@ local function autoLoop()
 			task.wait(MIN_AUTO_INTERVAL - elapsed)
 		end
 	end
-	refreshAutoChip()
+	if autoRun == runId then
+		refreshAutoChip()
+	end
 end
 
 local function stopAuto()
@@ -643,7 +653,10 @@ function HatchUI.Init()
 		autoHatching = not autoHatching
 		refreshButtons()
 		if autoHatching then
-			task.spawn(autoLoop)
+			autoRun += 1
+			task.spawn(autoLoop, autoRun)
+		else
+			refreshAutoChip()
 		end
 	end)
 	autoButton.Parent = buttonRow

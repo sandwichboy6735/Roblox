@@ -90,9 +90,8 @@ function EconomyService.GetMultiplierInfo(player: Player)
 	local equippedMults = {}
 	for _, petData in ipairs(data.Pets) do
 		if petData.Equipped then
-			local def = Config.Pets[petData.Type]
-			if def then
-				table.insert(equippedMults, def.Multiplier)
+			if Config.Pets[petData.Type] then
+				table.insert(equippedMults, Config.GetPetMultiplier(petData.Type, petData.Tier))
 			end
 		end
 	end

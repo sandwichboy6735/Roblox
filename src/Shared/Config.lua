@@ -229,6 +229,24 @@ Config.Pets = {
 	["Golden Capybara"] = pet("Golden Capybara", "Legendary", 60, Color3.fromRGB(255, 200, 40), "Block"),
 }
 
+-- Golden / Rainbow crafting: combine `Needed` copies of a pet at the tier below.
+-- A tier multiplies the pet's bonus: Dog x1.25 -> Golden 1 + 0.25 * 2.5 = x1.63.
+Config.PetTiers = {
+	{ Name = "Golden", Needed = 5, Bonus = 2.5 },
+	{ Name = "Rainbow", Needed = 5, Bonus = 6 },
+}
+
+-- Effective coin multiplier of one pet, including its Golden/Rainbow tier.
+function Config.GetPetMultiplier(petType: string, tier: number?): number
+	local def = Config.Pets[petType]
+	if not def then
+		return 1
+	end
+	local tierInfo = Config.PetTiers[tier or 0]
+	local bonus = if tierInfo then tierInfo.Bonus else 1
+	return 1 + (def.Multiplier - 1) * bonus
+end
+
 Config.PetStorageLimit = 150 -- total pets a player can hold
 Config.BasePetSlots = 3 -- equipped at once (before gamepasses)
 
@@ -505,12 +523,14 @@ Config.DataTemplate = {
 	Rebirths = 0,
 	PurchasedRebirths = 0, -- from the Instant Rebirth product (don't raise the cost)
 	ZonesUnlocked = 1,
-	Pets = {}, -- { {Id, Type, Equipped, Hatched} }
+	Pets = {}, -- { {Id, Type, Tier, Equipped, Hatched} }  Tier: 0 normal, 1 Golden, 2 Rainbow
 	Discovered = {}, -- { [PetName] = true } for the pet Index
 	Stats = {
 		TotalCoins = 0,
 		PetsHatched = 0,
+		PetsCrafted = 0,
 		OrbsCollected = 0,
+		GemOrbs = 0,
 		Playtime = 0, -- seconds
 		RobuxSpent = 0,
 		Joins = 0,

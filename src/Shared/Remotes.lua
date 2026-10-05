@@ -19,6 +19,7 @@ local DEFINITIONS: { [string]: string } = {
 	EquipBest = "RemoteEvent",
 	UnequipAll = "RemoteEvent",
 	DeletePet = "RemoteEvent",
+	CraftPet = "RemoteEvent",
 	UnlockZone = "RemoteEvent",
 	TeleportZone = "RemoteEvent",
 	Rebirth = "RemoteEvent",

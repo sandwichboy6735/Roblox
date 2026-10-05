@@ -1,10 +1,10 @@
 --------------------------------------------------------------------------------
--- PetFollowController - renders equipped pets following every player.
--- Purely visual and client-side (zero server cost). Reads the "EquippedPets"
--- player attribute (JSON list of pet names) that the server keeps updated.
+-- PetFollowController - renders every player's equipped pets following them.
+-- Purely visual and client-side. Reads the "EquippedPets" player attribute
+-- (JSON list of {n = name, t = tier}) that the server keeps updated.
 --
--- To use real art: put a Model named exactly like the pet (e.g. "Dog") inside
--- ReplicatedStorage.PetModels. Otherwise a cute placeholder is generated.
+-- Pets hop when their owner walks, flying pets hover and flap their wings,
+-- and Rainbow pets cycle colours.
 --------------------------------------------------------------------------------
 
 local HttpService = game:GetService("HttpService")
@@ -14,169 +14,78 @@ local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
-local Config = require(Shared.Config)
+local PetStyles = require(Shared.PetStyles)
+
+local Modules = script.Parent.Parent:WaitForChild("Modules")
+local PetBuilder = require(Modules.PetBuilder)
 
 local PetFollowController = {}
 
-local RENDER_DISTANCE = 200
-local FOLLOW_SPEED = 10
+local RENDER_DISTANCE = 160
+local ANIMATE_DISTANCE = 70
+local FOLLOW_SPEED = 9
 local ROW_SIZE = 4
-local SPACING = 4.5
+local SPACING = 4.2
+local WORLD_SCALE = 0.75
+local FLYING = { Owl = true, Phoenix = true, Dragon = true }
 
-type PetVisual = { Model: Model, Current: CFrame, Phase: number, Height: number }
+type PetVisual = {
+	Built: PetBuilder.Built,
+	Current: CFrame,
+	Phase: number,
+	Flying: boolean,
+}
 type Owner = { Pets: { PetVisual }, Connection: RBXScriptConnection? }
 
 local owners: { [Player]: Owner } = {}
 local petFolder: Folder
-local modelsFolder: Instance? = nil
-
---------------------------------------------------------------------------------
--- Model creation
---------------------------------------------------------------------------------
-
-local function prepareModel(model: Model)
-	for _, descendant in ipairs(model:GetDescendants()) do
-		if descendant:IsA("BasePart") then
-			descendant.Anchored = true
-			descendant.CanCollide = false
-			descendant.CanTouch = false
-			descendant.CanQuery = false
-			descendant.Massless = true
-		elseif descendant:IsA("Script") or descendant:IsA("LocalScript") then
-			descendant:Destroy()
-		end
-	end
-end
-
-local function makePart(props: { [string]: any }, parent: Instance): Part
-	local part = Instance.new("Part")
-	part.Anchored = true
-	part.CanCollide = false
-	part.CanTouch = false
-	part.CanQuery = false
-	part.CastShadow = false
-	part.TopSurface = Enum.SurfaceType.Smooth
-	part.BottomSurface = Enum.SurfaceType.Smooth
-	for key, value in pairs(props) do
-		(part :: any)[key] = value
-	end
-	part.Parent = parent
-	return part
-end
-
-local function placeholderModel(def): Model
-	local model = Instance.new("Model")
-	model.Name = def.Name
-
-	local isBall = def.Shape == "Ball"
-	local body = makePart({
-		Name = "Body",
-		Shape = isBall and Enum.PartType.Ball or Enum.PartType.Block,
-		Size = isBall and Vector3.new(2.2, 2.2, 2.2) or Vector3.new(2, 1.8, 2.3),
-		Color = def.Color,
-		Material = Enum.Material.SmoothPlastic,
-	}, model)
-	model.PrimaryPart = body
-
-	local front = body.Size.Z / 2
-	for _, x in ipairs({ -0.45, 0.45 }) do
-		local eye = makePart({
-			Name = "Eye",
-			Size = Vector3.new(0.38, 0.45, 0.2),
-			Color = Color3.new(0.05, 0.05, 0.05),
-			Material = Enum.Material.SmoothPlastic,
-			-- Ball pets are round, so pull the eyes in to sit on the curved surface.
-			CFrame = body.CFrame * CFrame.new(x, 0.25, -front + (isBall and 0.25 or 0.02)),
-		}, model)
-		local mesh = Instance.new("SpecialMesh")
-		mesh.MeshType = Enum.MeshType.Sphere
-		mesh.Parent = eye
-	end
-
-	-- little ears for block pets
-	if not isBall then
-		for _, x in ipairs({ -0.6, 0.6 }) do
-			makePart({
-				Name = "Ear",
-				Size = Vector3.new(0.45, 0.6, 0.3),
-				Color = def.Color:Lerp(Color3.new(0, 0, 0), 0.2),
-				Material = Enum.Material.SmoothPlastic,
-				CFrame = body.CFrame * CFrame.new(x, 1.15, -0.3),
-			}, model)
-		end
-	end
-
-	local rarity = Config.Rarities[def.Rarity]
-	if rarity and rarity.Order >= Config.Rarities.Legendary.Order then
-		local light = Instance.new("PointLight")
-		light.Color = rarity.Color
-		light.Range = 8
-		light.Brightness = 1.2
-		light.Parent = body
-
-		local particles = Instance.new("ParticleEmitter")
-		particles.Color = ColorSequence.new(rarity.Color)
-		particles.LightEmission = 1
-		particles.Rate = 6
-		particles.Lifetime = NumberRange.new(0.6, 1)
-		particles.Speed = NumberRange.new(0.5, 1.5)
-		particles.Size = NumberSequence.new(0.35, 0)
-		particles.SpreadAngle = Vector2.new(180, 180)
-		particles.Parent = body
-	end
-
-	return model
-end
-
-local function createPet(petName: string): PetVisual?
-	local def = Config.Pets[petName]
-	if not def then
-		return nil
-	end
-	local model: Model
-	local custom = modelsFolder and modelsFolder:FindFirstChild(petName)
-	if custom and custom:IsA("Model") then
-		model = custom:Clone()
-		prepareModel(model)
-	else
-		model = placeholderModel(def)
-	end
-
-	local rarity = Config.Rarities[def.Rarity]
-	if rarity and rarity.Order >= Config.Rarities.Epic.Order then
-		local gui = Instance.new("BillboardGui")
-		gui.Size = UDim2.fromOffset(120, 24)
-		gui.StudsOffset = Vector3.new(0, 2.2, 0)
-		gui.MaxDistance = 45
-		gui.LightInfluence = 0
-		gui.Adornee = model.PrimaryPart
-		local label = Instance.new("TextLabel")
-		label.BackgroundTransparency = 1
-		label.Size = UDim2.fromScale(1, 1)
-		label.Font = Enum.Font.FredokaOne
-		label.Text = def.Name
-		label.TextColor3 = rarity.Color
-		label.TextScaled = true
-		label.TextStrokeTransparency = 0.3
-		label.Parent = gui
-		gui.Parent = model
-	end
-
-	local _, size = model:GetBoundingBox()
-	-- Parented by update() once the owner's character exists, so pets never
-	-- appear at the world origin while an avatar is still loading.
-	return { Model = model, Current = model:GetPivot(), Phase = math.random() * math.pi * 2, Height = size.Y }
-end
+local rayParams = RaycastParams.new()
+rayParams.FilterType = Enum.RaycastFilterType.Exclude
 
 --------------------------------------------------------------------------------
 -- Owners
 --------------------------------------------------------------------------------
 
+local function isFlying(petName: string): boolean
+	local style = PetStyles.Pets[petName]
+	if not style then
+		return false
+	end
+	if FLYING[style.Archetype] then
+		return true
+	end
+	for _, extra in ipairs(style.Extras or {}) do
+		if extra == "AngelWings" then
+			return true
+		end
+	end
+	return false
+end
+
 local function clearPets(owner: Owner)
 	for _, pet in ipairs(owner.Pets) do
-		pet.Model:Destroy()
+		pet.Built.Model:Destroy()
 	end
 	table.clear(owner.Pets)
+end
+
+local function decode(raw: any): { { Name: string, Tier: number } }
+	local result = {}
+	if type(raw) ~= "string" or raw == "" then
+		return result
+	end
+	local ok, list = pcall(HttpService.JSONDecode, HttpService, raw)
+	if not ok or type(list) ~= "table" then
+		return result
+	end
+	for _, entry in ipairs(list) do
+		if type(entry) == "string" then
+			table.insert(result, { Name = entry, Tier = 0 })
+		elseif type(entry) == "table" and type(entry.n) == "string" then
+			table.insert(result, { Name = entry.n, Tier = tonumber(entry.t) or 0 })
+		end
+	end
+	return result
 end
 
 local function rebuild(player: Player)
@@ -185,26 +94,15 @@ local function rebuild(player: Player)
 		return
 	end
 	clearPets(owner)
-
-	local raw = player:GetAttribute("EquippedPets")
-	if type(raw) ~= "string" or raw == "" then
-		return
-	end
-	local ok, list = pcall(HttpService.JSONDecode, HttpService, raw)
-	if not ok or type(list) ~= "table" then
-		return
-	end
-	local character = player.Character
-	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
-	for _, petName in ipairs(list) do
-		if type(petName) == "string" then
-			local pet = createPet(petName)
-			if pet then
-				if root then
-					pet.Current = root.CFrame
-				end
-				table.insert(owner.Pets, pet)
-			end
+	for _, entry in ipairs(decode(player:GetAttribute("EquippedPets"))) do
+		local ok, built = pcall(PetBuilder.Build, entry.Name, entry.Tier, { Effects = true, Weld = true, Scale = WORLD_SCALE })
+		if ok and built then
+			table.insert(owner.Pets, {
+				Built = built,
+				Current = CFrame.new(),
+				Phase = math.random() * math.pi * 2,
+				Flying = isFlying(entry.Name),
+			})
 		end
 	end
 end
@@ -246,47 +144,82 @@ local function slotOffset(index: number, count: number): Vector3
 	return Vector3.new(x, 0, z)
 end
 
+local function groundHeight(position: Vector3, fallback: number): number
+	local result = Workspace:Raycast(position + Vector3.new(0, 6, 0), Vector3.new(0, -14, 0), rayParams)
+	if result then
+		return result.Position.Y
+	end
+	return fallback
+end
+
+local function hide(pet: PetVisual)
+	if pet.Built.Model.Parent then
+		pet.Built.Model.Parent = nil
+	end
+end
+
 local function update(dt: number)
 	local camera = Workspace.CurrentCamera
 	local cameraPosition = camera and camera.CFrame.Position or Vector3.zero
 	local t = os.clock()
 	local alpha = math.clamp(dt * FOLLOW_SPEED, 0, 1)
 
+	-- Never let pets stand on pets or players.
+	local ignore: { Instance } = { petFolder }
+	for player in pairs(owners) do
+		if player.Character then
+			table.insert(ignore, player.Character)
+		end
+	end
+	rayParams.FilterDescendantsInstances = ignore
+
 	for player, owner in pairs(owners) do
 		local character = player.Character
 		local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
 		if not root then
 			for _, pet in ipairs(owner.Pets) do
-				if pet.Model.Parent then
-					pet.Model.Parent = nil
-				end
+				hide(pet)
 			end
 		elseif #owner.Pets > 0 then
-			local far = (root.Position - cameraPosition).Magnitude > RENDER_DISTANCE
+			local distanceToCamera = (root.Position - cameraPosition).Magnitude
+			local far = distanceToCamera > RENDER_DISTANCE
+			local animate = distanceToCamera < ANIMATE_DISTANCE
+			local velocity = root.AssemblyLinearVelocity * Vector3.new(1, 0, 1)
+			local moving = velocity.Magnitude > 2
 			local flat = CFrame.lookAlong(root.Position, root.CFrame.LookVector * Vector3.new(1, 0, 1) + Vector3.new(0, 0, 1e-4))
 			local count = #owner.Pets
 			for index, pet in ipairs(owner.Pets) do
 				if far then
-					if pet.Model.Parent then
-						pet.Model.Parent = nil
-					end
+					hide(pet)
 				else
 					local offset = slotOffset(index, count)
-					local bob = math.sin(t * 3 + pet.Phase) * 0.35
-					-- Hover just above the ground (root is ~3 studs above the floor).
-					local target = flat * CFrame.new(offset.X, -3 + pet.Height / 2 + 0.6 + bob, offset.Z)
-					if not pet.Model.Parent then
-						-- Appearing (new, or back in range): start in the slot.
-						pet.Model.Parent = petFolder
-						pet.Current = target
+					local spot = flat * Vector3.new(offset.X, 0, offset.Z)
+					local ground = groundHeight(spot, root.Position.Y - 3)
+					local lift
+					if pet.Flying then
+						lift = 2.2 + math.sin(t * 2.4 + pet.Phase) * 0.45
+					elseif moving then
+						lift = math.abs(math.sin(t * 9 + pet.Phase)) * 0.9 -- hop along
+					else
+						lift = math.abs(math.sin(t * 2 + pet.Phase)) * 0.15
 					end
-					local distance = (pet.Current.Position - target.Position).Magnitude
-					if distance > 60 then
-						pet.Current = target -- teleported: snap
+					local tilt = if moving and not pet.Flying then CFrame.Angles(math.rad(-8), 0, 0) else CFrame.identity
+					local target = CFrame.new(spot.X, ground + lift, spot.Z) * flat.Rotation * tilt
+
+					local model = pet.Built.Model
+					if not model.Parent then
+						-- Appearing (new, or back in range): start in the slot.
+						pet.Current = target
+						model.Parent = petFolder
+					elseif (pet.Current.Position - target.Position).Magnitude > 60 then
+						pet.Current = target -- owner teleported: snap
 					else
 						pet.Current = pet.Current:Lerp(target, alpha)
 					end
-					pet.Model:PivotTo(pet.Current)
+					pet.Built.Root.CFrame = pet.Current
+					if animate then
+						PetBuilder.Animate(pet.Built, t, pet.Phase)
+					end
 				end
 			end
 		end
@@ -297,8 +230,6 @@ function PetFollowController.Init()
 	petFolder = Instance.new("Folder")
 	petFolder.Name = "ClientPets"
 	petFolder.Parent = Workspace
-
-	modelsFolder = ReplicatedStorage:FindFirstChild("PetModels")
 
 	for _, player in ipairs(Players:GetPlayers()) do
 		addOwner(player)

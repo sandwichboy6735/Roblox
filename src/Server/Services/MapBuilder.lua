@@ -1,10 +1,13 @@
 --------------------------------------------------------------------------------
 -- MapBuilder - procedurally builds the whole world from Config.Zones so the
--- game works with ZERO external assets. Replace/decorate freely in Studio;
--- the gameplay only depends on the attributes set here:
+-- game works with ZERO external assets: smooth terrain (themed ground, hills,
+-- rivers, lava), structures (plaza, fountain, gates, egg stands, portal,
+-- leaderboards) and lighting. Scenery props live in MapDecor.
+--
+-- Gameplay only depends on these, so decorate freely in Studio:
 --   Gate parts:       Attribute "Zone" (number)
---   Egg stand parts:  Attribute "EggId" (string) + ProximityPrompt
---   Rebirth portal:   Attribute "Portal" = "Rebirth" + ProximityPrompt
+--   Egg stand parts:  Attribute "EggId" (string) + ProximityPrompt "HatchPrompt"
+--   Rebirth portal:   Attribute "Portal" = "Rebirth" + ProximityPrompt "RebirthPrompt"
 --------------------------------------------------------------------------------
 
 local Lighting = game:GetService("Lighting")
@@ -15,13 +18,20 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared.Config)
 local Util = require(Shared.Util)
 
+local MapDecor = require(script.Parent.MapDecor)
+
 local MapBuilder = {}
+
+local V = Vector3.new
+local rgb = Color3.fromRGB
+local Terrain = Workspace.Terrain
 
 local ZONE_SIZE = Config.Map.ZoneSize
 local ZONE_SPACING = Config.Map.ZoneSpacing
 local HALF = ZONE_SIZE / 2
 local BRIDGE_WIDTH = 30
 local WALL_HEIGHT = 40
+local GROUND_DEPTH = 12
 
 local zoneSpawns: { CFrame } = {}
 local blockedSpots: { { Position: Vector3, Radius: number } } = {}
@@ -31,31 +41,80 @@ local leaderboardBoards: { [string]: Part } = {}
 
 MapBuilder.Folders = {}
 
+-- Terrain materials per theme (Config.Zones[i].Theme.Decor).
+local TERRAIN = {
+	Trees = { Ground = Enum.Material.Grass, Hill = Enum.Material.LeafyGrass, Path = Enum.Material.Ground, River = Enum.Material.Water },
+	Candy = { Ground = Enum.Material.Salt, Hill = Enum.Material.Sandstone, Path = Enum.Material.Pavement, River = Enum.Material.Water },
+	Ice = { Ground = Enum.Material.Snow, Hill = Enum.Material.Glacier, Path = Enum.Material.Limestone, River = Enum.Material.Water },
+	Rock = { Ground = Enum.Material.Basalt, Hill = Enum.Material.Basalt, Path = Enum.Material.Mud, River = Enum.Material.CrackedLava },
+	Crystal = { Ground = Enum.Material.Asphalt, Hill = Enum.Material.Slate, Path = Enum.Material.Concrete, River = nil },
+}
+
+local MATERIAL_COLORS = {
+	{ Enum.Material.Grass, rgb(104, 178, 64) },
+	{ Enum.Material.LeafyGrass, rgb(72, 140, 52) },
+	{ Enum.Material.Ground, rgb(160, 122, 84) },
+	{ Enum.Material.Rock, rgb(128, 122, 118) },
+	{ Enum.Material.Cobblestone, rgb(176, 168, 158) },
+	{ Enum.Material.Salt, rgb(255, 190, 222) },
+	{ Enum.Material.Sandstone, rgb(222, 170, 255) },
+	{ Enum.Material.Pavement, rgb(255, 238, 215) },
+	{ Enum.Material.Snow, rgb(238, 246, 255) },
+	{ Enum.Material.Glacier, rgb(150, 205, 245) },
+	{ Enum.Material.Limestone, rgb(205, 228, 245) },
+	{ Enum.Material.Basalt, rgb(58, 50, 52) },
+	{ Enum.Material.CrackedLava, rgb(255, 112, 30) },
+	{ Enum.Material.Mud, rgb(96, 64, 52) },
+	{ Enum.Material.Asphalt, rgb(52, 42, 84) },
+	{ Enum.Material.Slate, rgb(74, 62, 112) },
+	{ Enum.Material.Concrete, rgb(122, 112, 165) },
+}
+
 --------------------------------------------------------------------------------
 -- Helpers
 --------------------------------------------------------------------------------
 
-local function part(props: { [string]: any }, parent: Instance?): Part
-	local p = Instance.new("Part")
+local function part(props: { [string]: any }, parent: Instance?): BasePart
+	local p: BasePart
+	if props.Wedge then
+		p = Instance.new("WedgePart")
+	else
+		p = Instance.new("Part")
+	end
 	p.Anchored = true
 	p.TopSurface = Enum.SurfaceType.Smooth
 	p.BottomSurface = Enum.SurfaceType.Smooth
 	p.CastShadow = true
 	for key, value in pairs(props) do
-		(p :: any)[key] = value
+		if key ~= "Wedge" then
+			(p :: any)[key] = value
+		end
 	end
 	p.Parent = parent
 	return p
 end
 
-local function material(name: string): Enum.Material
-	local ok, result = pcall(function()
-		return (Enum.Material :: any)[name]
-	end)
-	if ok and result then
-		return result
+local function cylinder(parent: Instance, base: Vector3, height: number, radius: number, color: Color3, mat: Enum.Material, props: { [string]: any }?): BasePart
+	local p = {
+		Shape = Enum.PartType.Cylinder,
+		Size = V(height, radius * 2, radius * 2),
+		CFrame = CFrame.new(base + V(0, height / 2, 0)) * CFrame.Angles(0, 0, math.rad(90)),
+		Color = color,
+		Material = mat,
+	}
+	for key, value in pairs(props or {}) do
+		p[key] = value
 	end
-	return Enum.Material.SmoothPlastic
+	return part(p, parent)
+end
+
+local function light(parentPart: Instance, color: Color3, range: number, brightness: number)
+	local l = Instance.new("PointLight")
+	l.Color = color
+	l.Range = range
+	l.Brightness = brightness
+	l.Shadows = false
+	l.Parent = parentPart
 end
 
 local function zoneCenterX(index: number): number
@@ -66,7 +125,7 @@ local function billboard(adornee: BasePart, title: string, subtitle: string?, co
 	local gui = Instance.new("BillboardGui")
 	gui.Name = "Label"
 	gui.Size = size or UDim2.fromOffset(260, 90)
-	gui.StudsOffset = Vector3.new(0, offsetY or 5, 0)
+	gui.StudsOffset = V(0, offsetY or 5, 0)
 	gui.AlwaysOnTop = false
 	gui.MaxDistance = 140
 	gui.LightInfluence = 0
@@ -91,7 +150,7 @@ local function billboard(adornee: BasePart, title: string, subtitle: string?, co
 	subLabel.Size = UDim2.new(1, 0, 0.45, 0)
 	subLabel.Font = Enum.Font.GothamBold
 	subLabel.Text = subtitle or ""
-	subLabel.TextColor3 = Color3.fromRGB(255, 235, 150)
+	subLabel.TextColor3 = rgb(255, 235, 150)
 	subLabel.TextScaled = true
 	subLabel.TextStrokeTransparency = 0.2
 	subLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
@@ -101,214 +160,125 @@ local function billboard(adornee: BasePart, title: string, subtitle: string?, co
 	return gui
 end
 
---------------------------------------------------------------------------------
--- Decorations
---------------------------------------------------------------------------------
-
-local function buildTree(parent: Instance, position: Vector3, theme, rng: Random)
-	local height = rng:NextNumber(6, 10)
-	part({
-		Name = "Trunk",
-		Shape = Enum.PartType.Cylinder,
-		Size = Vector3.new(height, 1.6, 1.6),
-		CFrame = CFrame.new(position + Vector3.new(0, height / 2, 0)) * CFrame.Angles(0, 0, math.rad(90)),
-		Color = theme.Trim,
-		Material = Enum.Material.Wood,
-	}, parent)
-	local leafSize = rng:NextNumber(6, 9)
-	part({
-		Name = "Leaves",
-		Shape = Enum.PartType.Ball,
-		Size = Vector3.new(leafSize, leafSize, leafSize),
-		Position = position + Vector3.new(0, height + leafSize * 0.3, 0),
-		Color = theme.Accent,
-		Material = Enum.Material.Grass,
-	}, parent)
-end
-
-local function buildCandy(parent: Instance, position: Vector3, theme, rng: Random)
-	if rng:NextNumber() < 0.5 then
-		local height = rng:NextNumber(5, 9)
-		part({
-			Name = "Stick",
-			Shape = Enum.PartType.Cylinder,
-			Size = Vector3.new(height, 0.8, 0.8),
-			CFrame = CFrame.new(position + Vector3.new(0, height / 2, 0)) * CFrame.Angles(0, 0, math.rad(90)),
-			Color = Color3.fromRGB(255, 255, 255),
-			Material = Enum.Material.SmoothPlastic,
-		}, parent)
-		local size = rng:NextNumber(4, 6)
-		part({
-			Name = "Lollipop",
-			Shape = Enum.PartType.Cylinder,
-			Size = Vector3.new(1.2, size, size),
-			CFrame = CFrame.new(position + Vector3.new(0, height + size / 2 - 0.5, 0)) * CFrame.Angles(0, math.rad(90), 0),
-			Color = if rng:NextNumber() < 0.5 then theme.Trim else theme.Accent,
-			Material = Enum.Material.Neon,
-		}, parent)
-	else
-		local size = rng:NextNumber(3, 6)
-		part({
-			Name = "Gumdrop",
-			Shape = Enum.PartType.Ball,
-			Size = Vector3.new(size, size, size),
-			Position = position + Vector3.new(0, size * 0.35, 0),
-			Color = Color3.fromHSV(rng:NextNumber(), 0.6, 1),
-			Material = Enum.Material.SmoothPlastic,
-		}, parent)
-	end
-end
-
-local function buildIce(parent: Instance, position: Vector3, theme, rng: Random)
-	local count = rng:NextInteger(1, 3)
-	for _ = 1, count do
-		local height = rng:NextNumber(5, 12)
-		local offset = Vector3.new(rng:NextNumber(-2, 2), 0, rng:NextNumber(-2, 2))
-		part({
-			Name = "IceSpike",
-			Size = Vector3.new(rng:NextNumber(1.5, 3), height, rng:NextNumber(1.5, 3)),
-			CFrame = CFrame.new(position + offset + Vector3.new(0, height / 2 - 0.5, 0))
-				* CFrame.Angles(math.rad(rng:NextNumber(-12, 12)), math.rad(rng:NextNumber(0, 360)), math.rad(rng:NextNumber(-12, 12))),
-			Color = theme.Accent,
-			Material = Enum.Material.Glass,
-			Transparency = 0.25,
-			Reflectance = 0.2,
-		}, parent)
-	end
-end
-
-local function buildRock(parent: Instance, position: Vector3, theme, rng: Random)
-	if rng:NextNumber() < 0.3 then
-		local size = rng:NextNumber(6, 12)
-		local pool = part({
-			Name = "LavaPool",
-			Shape = Enum.PartType.Cylinder,
-			Size = Vector3.new(0.4, size, size),
-			CFrame = CFrame.new(position + Vector3.new(0, 0.2, 0)) * CFrame.Angles(0, 0, math.rad(90)),
-			Color = theme.Accent,
-			Material = Enum.Material.Neon,
-			CanCollide = false,
-		}, parent)
-		local light = Instance.new("PointLight")
-		light.Color = theme.Accent
-		light.Range = size
-		light.Brightness = 1.5
-		light.Parent = pool
-	else
-		local size = rng:NextNumber(3, 7)
-		part({
-			Name = "Rock",
-			Size = Vector3.new(size, size * rng:NextNumber(0.6, 1.2), size * rng:NextNumber(0.7, 1.3)),
-			CFrame = CFrame.new(position + Vector3.new(0, size * 0.35, 0))
-				* CFrame.Angles(math.rad(rng:NextNumber(-20, 20)), math.rad(rng:NextNumber(0, 360)), math.rad(rng:NextNumber(-20, 20))),
-			Color = theme.Trim,
-			Material = Enum.Material.Basalt,
-		}, parent)
-	end
-end
-
-local function buildCrystal(parent: Instance, position: Vector3, theme, rng: Random)
-	local height = rng:NextNumber(6, 14)
-	local crystal = part({
-		Name = "Crystal",
-		Size = Vector3.new(rng:NextNumber(1.5, 3), height, rng:NextNumber(1.5, 3)),
-		CFrame = CFrame.new(position + Vector3.new(0, height / 2 - 1, 0))
-			* CFrame.Angles(math.rad(rng:NextNumber(-15, 15)), math.rad(rng:NextNumber(0, 360)), math.rad(rng:NextNumber(-15, 15))),
-		Color = if rng:NextNumber() < 0.5 then theme.Accent else theme.Trim,
-		Material = Enum.Material.Neon,
-	}, parent)
-	local light = Instance.new("PointLight")
-	light.Color = crystal.Color
-	light.Range = 12
-	light.Brightness = 0.8
-	light.Parent = crystal
-end
-
-local DECOR_BUILDERS = {
-	Trees = buildTree,
-	Candy = buildCandy,
-	Ice = buildIce,
-	Rock = buildRock,
-	Crystal = buildCrystal,
-}
-
+-- Areas kept clear of scenery (zone-local coordinates).
 local function isReserved(zoneIndex: number, localX: number, z: number): boolean
-	if math.abs(z) < 14 then
-		return true -- central walking lane
+	if math.abs(z) < 12 then
+		return true -- main path
 	end
-	if z > -58 and z < -24 and math.abs(localX) < 45 then
-		return true -- egg stands
+	if z > -62 and z < -20 and math.abs(localX) < 40 then
+		return true -- egg stands and their path
+	end
+	if math.abs(localX) < 8 and z < 0 and z > -42 then
+		return true
 	end
 	if zoneIndex == 1 then
-		if z < -72 then
+		if z < -70 then
 			return true -- leaderboards
 		end
-		if localX < -40 and math.abs(z) < 26 then
-			return true -- spawn
+		if localX < -36 and math.abs(z) < 28 then
+			return true -- spawn plaza
 		end
-		if z > 48 and math.abs(localX) < 16 then
+		if z > 40 and math.abs(localX) < 16 then
 			return true -- rebirth portal
+		end
+		if math.abs(localX) < 8 and z > 0 then
+			return true -- portal path
 		end
 	end
 	return false
 end
 
 --------------------------------------------------------------------------------
--- Zone pieces
+-- Terrain
 --------------------------------------------------------------------------------
 
-local function buildWalls(zoneModel: Model, index: number, cx: number, theme)
+local function setupTerrain()
+	Terrain:Clear()
+	for _, entry in ipairs(MATERIAL_COLORS) do
+		Terrain:SetMaterialColor(entry[1], entry[2])
+	end
+	Terrain.WaterColor = rgb(60, 160, 230)
+	Terrain.WaterTransparency = 0.45
+	Terrain.WaterReflectance = 0.6
+	Terrain.WaterWaveSize = 0.12
+	Terrain.WaterWaveSpeed = 8
+
+	local clouds = Terrain:FindFirstChildOfClass("Clouds") or Instance.new("Clouds")
+	clouds.Cover = 0.55
+	clouds.Density = 0.7
+	clouds.Color = rgb(255, 255, 255)
+	clouds.Parent = Terrain
+end
+
+local function buildZoneTerrain(index: number, cx: number, mats, rng: Random)
+	-- Flat playable ground, top surface at y = 0.
+	Terrain:FillBlock(CFrame.new(cx, -GROUND_DEPTH / 2, 0), V(ZONE_SIZE + 8, GROUND_DEPTH, ZONE_SIZE + 8), mats.Ground)
+	-- Paths: main lane, egg area, and (zone 1) portal path
+	Terrain:FillBlock(CFrame.new(cx, -2, 0), V(ZONE_SIZE + 8, 4, 12), mats.Path)
+	Terrain:FillBlock(CFrame.new(cx, -2, -22), V(10, 4, 36), mats.Path)
+	Terrain:FillCylinder(CFrame.new(cx, -2, -42), 4, 24, mats.Path)
+	if index == 1 then
+		Terrain:FillBlock(CFrame.new(cx, -2, 30), V(10, 4, 50), mats.Path)
+		Terrain:FillCylinder(CFrame.new(cx - 62, -2, 0), 4, 22, Enum.Material.Cobblestone)
+	end
+
+	-- Rolling hills just outside the walls frame every zone.
+	local outer = HALF + 24
+	for x = cx - HALF, cx + HALF, 22 do
+		for _, side in ipairs({ -1, 1 }) do
+			Terrain:FillBall(V(x + rng:NextNumber(-6, 6), rng:NextNumber(-8, -2), side * (outer + rng:NextNumber(-3, 6))), rng:NextNumber(18, 27), mats.Hill)
+		end
+	end
+	for z = -HALF, HALF, 22 do
+		for _, side in ipairs({ -1, 1 }) do
+			local isWorldEdge = (side < 0 and index == 1) or (side > 0 and index == #Config.Zones)
+			-- Leave the bridge corridor open between zones.
+			if isWorldEdge or math.abs(z) > 34 then
+				Terrain:FillBall(V(cx + side * (outer + rng:NextNumber(-3, 6)), rng:NextNumber(-8, -2), z + rng:NextNumber(-6, 6)), rng:NextNumber(18, 27), mats.Hill)
+			end
+		end
+	end
+
+	-- River / lava under the bridge to the next zone.
+	local nextZone = Config.Zones[index + 1]
+	if nextZone then
+		local gapX = cx + ZONE_SPACING / 2
+		local nextMats = TERRAIN[nextZone.Theme.Decor] or TERRAIN.Trees
+		local liquid = nextMats.River
+		if liquid then
+			Terrain:FillBlock(CFrame.new(gapX, -12, 0), V(ZONE_SPACING - ZONE_SIZE + 8, 4, 120), mats.Hill)
+			Terrain:FillBlock(CFrame.new(gapX, -6, 0), V(ZONE_SPACING - ZONE_SIZE + 4, 8, 120), liquid)
+		end
+	end
+end
+
+--------------------------------------------------------------------------------
+-- Structures
+--------------------------------------------------------------------------------
+
+local function buildWalls(zoneModel: Model, index: number, cx: number)
 	local walls = Instance.new("Folder")
 	walls.Name = "Walls"
 	walls.Parent = zoneModel
 
 	local function wall(size: Vector3, position: Vector3)
-		part({
-			Name = "Wall",
-			Size = size,
-			Position = position,
-			Transparency = 1,
-			CanCollide = true,
-		}, walls)
-	end
-	local function fence(size: Vector3, position: Vector3)
-		part({
-			Name = "Fence",
-			Size = size,
-			Position = position,
-			Color = theme.Trim,
-			Material = Enum.Material.SmoothPlastic,
-		}, walls)
+		part({ Name = "Wall", Size = size, Position = position, Transparency = 1, CanCollide = true, CastShadow = false }, walls)
 	end
 
-	-- North / South
-	wall(Vector3.new(ZONE_SIZE + 2, WALL_HEIGHT, 2), Vector3.new(cx, WALL_HEIGHT / 2, -(HALF + 1)))
-	wall(Vector3.new(ZONE_SIZE + 2, WALL_HEIGHT, 2), Vector3.new(cx, WALL_HEIGHT / 2, HALF + 1))
-	fence(Vector3.new(ZONE_SIZE + 2, 2.5, 1.5), Vector3.new(cx, 1.25, -(HALF + 1)))
-	fence(Vector3.new(ZONE_SIZE + 2, 2.5, 1.5), Vector3.new(cx, 1.25, HALF + 1))
+	wall(V(ZONE_SIZE + 2, WALL_HEIGHT, 2), V(cx, WALL_HEIGHT / 2, -(HALF + 1)))
+	wall(V(ZONE_SIZE + 2, WALL_HEIGHT, 2), V(cx, WALL_HEIGHT / 2, HALF + 1))
 
 	local segmentLength = HALF - BRIDGE_WIDTH / 2
 	local segmentCenter = BRIDGE_WIDTH / 2 + segmentLength / 2
-
-	-- West
-	if index == 1 then
-		wall(Vector3.new(2, WALL_HEIGHT, ZONE_SIZE), Vector3.new(cx - (HALF + 1), WALL_HEIGHT / 2, 0))
-		fence(Vector3.new(1.5, 2.5, ZONE_SIZE), Vector3.new(cx - (HALF + 1), 1.25, 0))
-	else
-		for _, sign in ipairs({ -1, 1 }) do
-			wall(Vector3.new(2, WALL_HEIGHT, segmentLength), Vector3.new(cx - (HALF + 1), WALL_HEIGHT / 2, sign * segmentCenter))
-			fence(Vector3.new(1.5, 2.5, segmentLength), Vector3.new(cx - (HALF + 1), 1.25, sign * segmentCenter))
-		end
-	end
-
-	-- East
-	if index == #Config.Zones then
-		wall(Vector3.new(2, WALL_HEIGHT, ZONE_SIZE), Vector3.new(cx + HALF + 1, WALL_HEIGHT / 2, 0))
-		fence(Vector3.new(1.5, 2.5, ZONE_SIZE), Vector3.new(cx + HALF + 1, 1.25, 0))
-	else
-		for _, sign in ipairs({ -1, 1 }) do
-			wall(Vector3.new(2, WALL_HEIGHT, segmentLength), Vector3.new(cx + HALF + 1, WALL_HEIGHT / 2, sign * segmentCenter))
-			fence(Vector3.new(1.5, 2.5, segmentLength), Vector3.new(cx + HALF + 1, 1.25, sign * segmentCenter))
+	for _, side in ipairs({ -1, 1 }) do
+		local x = cx + side * (HALF + 1)
+		local closed = (side < 0 and index == 1) or (side > 0 and index == #Config.Zones)
+		if closed then
+			wall(V(2, WALL_HEIGHT, ZONE_SIZE), V(x, WALL_HEIGHT / 2, 0))
+		else
+			for _, zSide in ipairs({ -1, 1 }) do
+				wall(V(2, WALL_HEIGHT, segmentLength), V(x, WALL_HEIGHT / 2, zSide * segmentCenter))
+			end
 		end
 	end
 end
@@ -322,93 +292,96 @@ local function buildBridgeAndGate(mapFolder: Folder, index: number)
 	local gapCenter = cx + ZONE_SPACING / 2
 	local gapWidth = ZONE_SPACING - ZONE_SIZE
 	local theme = nextZone.Theme
+	local isSpace = theme.Decor == "Crystal"
 
 	local bridges = mapFolder:FindFirstChild("Bridges") or Instance.new("Folder")
 	bridges.Name = "Bridges"
 	bridges.Parent = mapFolder
 
-	part({
-		Name = "Bridge" .. index,
-		Size = Vector3.new(gapWidth + 2, 2, BRIDGE_WIDTH),
-		Position = Vector3.new(gapCenter, -1, 0),
-		Color = theme.Trim,
-		Material = Enum.Material.WoodPlanks,
-	}, bridges)
-	for _, sign in ipairs({ -1, 1 }) do
-		part({
-			Name = "Rail",
-			Size = Vector3.new(gapWidth + 2, WALL_HEIGHT, 1),
-			Position = Vector3.new(gapCenter, WALL_HEIGHT / 2, sign * (BRIDGE_WIDTH / 2 + 0.5)),
-			Transparency = 1,
-		}, bridges)
-		part({
-			Name = "RailVisible",
-			Size = Vector3.new(gapWidth + 2, 3, 1),
-			Position = Vector3.new(gapCenter, 1.5, sign * (BRIDGE_WIDTH / 2 + 0.5)),
-			Color = theme.Trim,
-			Material = Enum.Material.Wood,
-		}, bridges)
+	-- Deck of planks (or a glowing glass walkway into space)
+	local deckLength = gapWidth + 12
+	if isSpace then
+		part({ Name = "Bridge" .. index, Size = V(deckLength, 2, BRIDGE_WIDTH), Position = V(gapCenter, -1, 0), Color = rgb(120, 200, 255), Material = Enum.Material.Glass, Transparency = 0.3 }, bridges)
+		for _, z in ipairs({ -BRIDGE_WIDTH / 2 + 1, BRIDGE_WIDTH / 2 - 1 }) do
+			part({ Size = V(deckLength, 0.3, 0.6), Position = V(gapCenter, 0.1, z), Color = rgb(170, 90, 255), Material = Enum.Material.Neon, CastShadow = false }, bridges)
+		end
+	else
+		for i = 0, math.floor(deckLength / 2) - 1 do
+			part({
+				Name = "Plank",
+				Size = V(1.9, 1, BRIDGE_WIDTH),
+				Position = V(gapCenter - deckLength / 2 + 1 + i * 2, -0.5, 0),
+				Color = if i % 2 == 0 then rgb(150, 105, 65) else rgb(135, 95, 58),
+				Material = Enum.Material.WoodPlanks,
+			}, bridges)
+		end
+		part({ Name = "Bridge" .. index, Size = V(deckLength, 1, BRIDGE_WIDTH), Position = V(gapCenter, -1.5, 0), Color = rgb(110, 80, 50), Material = Enum.Material.Wood }, bridges)
+	end
+	for _, side in ipairs({ -1, 1 }) do
+		local z = side * (BRIDGE_WIDTH / 2 + 0.5)
+		part({ Name = "Rail", Size = V(deckLength, WALL_HEIGHT, 1), Position = V(gapCenter, WALL_HEIGHT / 2, z), Transparency = 1, CastShadow = false }, bridges)
+		part({ Name = "Handrail", Size = V(deckLength, 0.5, 0.6), Position = V(gapCenter, 3, z), Color = theme.Trim, Material = Enum.Material.Wood }, bridges)
+		for x = gapCenter - deckLength / 2 + 1, gapCenter + deckLength / 2 - 1, 4 do
+			part({ Name = "Post", Size = V(0.6, 3, 0.6), Position = V(x, 1.5, z), Color = theme.Trim, Material = Enum.Material.Wood }, bridges)
+		end
 	end
 
+	-- Stone arch with a glowing barrier (the gate itself)
 	local gates = mapFolder:FindFirstChild("Gates") or Instance.new("Folder")
 	gates.Name = "Gates"
 	gates.Parent = mapFolder
+	local archX = gapCenter + gapWidth / 2 - 2
+	local stone = if isSpace then rgb(80, 70, 120) else rgb(150, 145, 140)
+	local stoneMat = if isSpace then Enum.Material.Metal else Enum.Material.Cobblestone
+	for _, side in ipairs({ -1, 1 }) do
+		part({ Name = "Pillar", Size = V(5, 24, 5), Position = V(archX, 12, side * (BRIDGE_WIDTH / 2 + 2.5)), Color = stone, Material = stoneMat }, gates)
+		part({ Name = "PillarCap", Size = V(6, 1.5, 6), Position = V(archX, 24.75, side * (BRIDGE_WIDTH / 2 + 2.5)), Color = theme.Trim, Material = stoneMat }, gates)
+		local orb = part({ Name = "PillarOrb", Shape = Enum.PartType.Ball, Size = V(2.4, 2.4, 2.4), Position = V(archX, 26.8, side * (BRIDGE_WIDTH / 2 + 2.5)), Color = theme.Accent, Material = Enum.Material.Neon, CastShadow = false }, gates)
+		light(orb, theme.Accent, 16, 1.2)
+	end
+	part({ Name = "Lintel", Size = V(5, 3, BRIDGE_WIDTH + 10), Position = V(archX, 23.5, 0), Color = stone, Material = stoneMat }, gates)
+	part({ Name = "LintelTrim", Size = V(5.3, 0.6, BRIDGE_WIDTH + 10.5), Position = V(archX, 22, 0), Color = theme.Accent, Material = Enum.Material.Neon, CastShadow = false }, gates)
 
 	local gate = part({
 		Name = "Gate" .. (index + 1),
-		Size = Vector3.new(2, 18, BRIDGE_WIDTH),
-		Position = Vector3.new(gapCenter, 9, 0),
+		Size = V(1.5, 22, BRIDGE_WIDTH),
+		Position = V(archX, 11, 0),
 		Color = theme.Accent,
 		Material = Enum.Material.ForceField,
-		Transparency = 0.2,
+		Transparency = 0.15,
 		CanCollide = true,
+		CastShadow = false,
 	}, gates)
 	gate:SetAttribute("Zone", index + 1)
-	billboard(
-		gate,
-		nextZone.Name,
-		"Unlock: " .. Util.FormatNumber(nextZone.Cost) .. " Coins",
-		theme.Accent,
-		UDim2.fromOffset(320, 110),
-		12
-	)
+	billboard(gate, nextZone.Name, "Unlock: " .. Util.FormatNumber(nextZone.Cost) .. " Coins", theme.Accent, UDim2.fromOffset(320, 110), 15)
 end
 
-local function buildEggStand(parent: Instance, eggKey: string, egg, position: Vector3)
+local function buildEggStand(parent: Instance, eggKey: string, egg, position: Vector3, trim: Color3)
 	local model = Instance.new("Model")
 	model.Name = eggKey
 	model:SetAttribute("EggId", eggKey)
 
-	part({
-		Name = "Pedestal",
-		Shape = Enum.PartType.Cylinder,
-		Size = Vector3.new(1.5, 10, 10),
-		CFrame = CFrame.new(position + Vector3.new(0, 0.75, 0)) * CFrame.Angles(0, 0, math.rad(90)),
-		Color = Color3.fromRGB(60, 60, 70),
-		Material = Enum.Material.Marble,
-	}, model)
+	cylinder(model, position, 1.2, 7, trim:Lerp(rgb(60, 60, 70), 0.55), Enum.Material.Cobblestone)
+	cylinder(model, position + V(0, 1.2, 0), 0.25, 7.2, egg.Color, Enum.Material.Neon, { CastShadow = false })
+	cylinder(model, position + V(0, 1.2, 0), 1.2, 3.6, rgb(245, 245, 250), Enum.Material.Marble)
+	cylinder(model, position + V(0, 2.4, 0), 0.25, 3.9, egg.Color, Enum.Material.Neon, { CastShadow = false })
+	for i = 0, 3 do
+		local angle = math.rad(45 + i * 90)
+		local p = position + V(math.cos(angle) * 5.6, 1.2, math.sin(angle) * 5.6)
+		cylinder(model, p, 4, 0.45, rgb(230, 230, 240), Enum.Material.Marble)
+		local orb = part({ Name = "Lamp", Shape = Enum.PartType.Ball, Size = V(1.1, 1.1, 1.1), Position = p + V(0, 4.5, 0), Color = egg.Color, Material = Enum.Material.Neon, CastShadow = false }, model)
+		orb.CanCollide = false
+	end
 
-	-- Ball parts are always perfectly round, so a block with a sphere mesh is
-	-- used to get a taller-than-wide egg shape.
+	-- Block + sphere mesh gives a taller-than-wide egg (Ball parts are always round).
 	local eggPart = part({
 		Name = "Egg",
-		Size = Vector3.new(5, 6.5, 5),
-		Position = position + Vector3.new(0, 1.5 + 3.25, 0),
+		Size = V(5, 6.5, 5),
+		Position = position + V(0, 2.65 + 3.25, 0),
 		Color = egg.Color,
 		Material = Enum.Material.SmoothPlastic,
-		CanCollide = false, -- the mesh is round but a block would collide square
+		CanCollide = false,
 	}, model)
-	-- An invisible sphere that fits inside the visible egg blocks players without
-	-- invisible corners or a flat top to stand on.
-	local collider = part({
-		Name = "Collider",
-		Shape = Enum.PartType.Ball,
-		Size = Vector3.new(5, 5, 5),
-		Position = eggPart.Position,
-		Transparency = 1,
-		CastShadow = false,
-	}, model)
-	collider.CanQuery = false
 	local eggMesh = Instance.new("SpecialMesh")
 	eggMesh.MeshType = Enum.MeshType.Sphere
 	eggMesh.Parent = eggPart
@@ -417,14 +390,29 @@ local function buildEggStand(parent: Instance, eggKey: string, egg, position: Ve
 	local spots = part({
 		Name = "Spots",
 		Shape = Enum.PartType.Ball,
-		Size = Vector3.new(5.2, 5.2, 5.2),
-		Position = position + Vector3.new(0, 1.5 + 2.6, 0),
-		Color = egg.Color:Lerp(Color3.new(1, 1, 1), 0.4),
+		Size = V(5.15, 5.15, 5.15),
+		Position = eggPart.Position + V(0, -0.65, 0),
+		Color = egg.Color:Lerp(Color3.new(1, 1, 1), 0.45),
 		Material = Enum.Material.SmoothPlastic,
-		Transparency = 0.55,
+		Transparency = 0.5,
 		CanCollide = false,
+		CastShadow = false,
 	}, model)
 	spots.CanQuery = false
+
+	-- An invisible sphere inside the egg blocks players without square corners.
+	local collider = part({ Name = "Collider", Shape = Enum.PartType.Ball, Size = V(5, 5, 5), Position = eggPart.Position, Transparency = 1, CastShadow = false }, model)
+	collider.CanQuery = false
+
+	local sparkles = Instance.new("ParticleEmitter")
+	sparkles.Color = ColorSequence.new(egg.Color:Lerp(Color3.new(1, 1, 1), 0.5))
+	sparkles.LightEmission = 1
+	sparkles.Rate = 6
+	sparkles.Lifetime = NumberRange.new(1, 1.6)
+	sparkles.Speed = NumberRange.new(1, 2)
+	sparkles.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.45), NumberSequenceKeypoint.new(1, 0) })
+	sparkles.SpreadAngle = Vector2.new(180, 180)
+	sparkles.Parent = eggPart
 
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.Name = "HatchPrompt"
@@ -437,56 +425,64 @@ local function buildEggStand(parent: Instance, eggKey: string, egg, position: Ve
 	prompt.Style = Enum.ProximityPromptStyle.Default
 	prompt.Parent = eggPart
 
-	local currencyLabel = egg.Currency == "Gems" and " Gems" or " Coins"
+	local currencyLabel = if egg.Currency == "Gems" then " Gems" else " Coins"
 	billboard(eggPart, egg.Name, Util.FormatNumber(egg.Cost) .. currencyLabel, egg.Color, UDim2.fromOffset(240, 90), 5.5)
 
 	model.PrimaryPart = eggPart
 	model.Parent = parent
 	eggStandPositions[eggKey] = eggPart.Position
-	table.insert(blockedSpots, { Position = position, Radius = 9 })
+	table.insert(blockedSpots, { Position = position, Radius = 10 })
 end
 
 local function buildRebirthPortal(parent: Instance, position: Vector3)
 	local model = Instance.new("Model")
 	model.Name = "RebirthPortal"
+	local purple = rgb(180, 90, 255)
 
-	part({
-		Name = "Base",
-		Shape = Enum.PartType.Cylinder,
-		Size = Vector3.new(1, 14, 14),
-		CFrame = CFrame.new(position + Vector3.new(0, 0.5, 0)) * CFrame.Angles(0, 0, math.rad(90)),
-		Color = Color3.fromRGB(40, 30, 60),
-		Material = Enum.Material.Marble,
-	}, model)
+	cylinder(model, position, 1, 9, rgb(45, 35, 70), Enum.Material.Marble)
+	cylinder(model, position + V(0, 1, 0), 0.3, 9.3, purple, Enum.Material.Neon, { CastShadow = false })
+	for _, side in ipairs({ -1, 1 }) do
+		part({ Name = "Pillar", Size = V(2.2, 15, 2.2), Position = position + V(side * 7.5, 8.5, 0), Color = rgb(60, 45, 95), Material = Enum.Material.Marble }, model)
+		local top = part({ Name = "Crystal", Size = V(1.4, 3, 1.4), CFrame = CFrame.new(position + V(side * 7.5, 17.6, 0)) * CFrame.Angles(0, math.rad(45), 0), Color = purple, Material = Enum.Material.Neon, CastShadow = false }, model)
+		top.CanCollide = false
+	end
 
 	local ring = part({
 		Name = "Ring",
 		Shape = Enum.PartType.Cylinder,
-		Size = Vector3.new(1.5, 12, 12),
-		CFrame = CFrame.new(position + Vector3.new(0, 7, 0)) * CFrame.Angles(0, math.rad(90), 0),
-		Color = Color3.fromRGB(180, 90, 255),
+		Size = V(1.5, 12, 12),
+		CFrame = CFrame.new(position + V(0, 8, 0)) * CFrame.Angles(0, math.rad(90), 0),
+		Color = purple,
 		Material = Enum.Material.Neon,
 		CanCollide = false,
+		CastShadow = false,
 	}, model)
 	ring:SetAttribute("Portal", "Rebirth")
 
 	local core = part({
 		Name = "Core",
 		Shape = Enum.PartType.Cylinder,
-		Size = Vector3.new(0.6, 9.5, 9.5),
-		CFrame = CFrame.new(position + Vector3.new(0, 7, 0)) * CFrame.Angles(0, math.rad(90), 0),
-		Color = Color3.fromRGB(255, 120, 255),
+		Size = V(0.6, 10, 10),
+		CFrame = CFrame.new(position + V(0, 8, 0)) * CFrame.Angles(0, math.rad(90), 0),
+		Color = rgb(255, 120, 255),
 		Material = Enum.Material.ForceField,
-		Transparency = 0.3,
+		Transparency = 0.2,
 		CanCollide = false,
+		CastShadow = false,
 	}, model)
 	core.CanQuery = false
 
-	local light = Instance.new("PointLight")
-	light.Color = ring.Color
-	light.Range = 20
-	light.Brightness = 2
-	light.Parent = ring
+	local swirl = Instance.new("ParticleEmitter")
+	swirl.Color = ColorSequence.new(rgb(255, 140, 255), rgb(140, 90, 255))
+	swirl.LightEmission = 1
+	swirl.Rate = 25
+	swirl.Lifetime = NumberRange.new(1, 1.8)
+	swirl.Speed = NumberRange.new(2, 4)
+	swirl.RotSpeed = NumberRange.new(-90, 90)
+	swirl.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.6), NumberSequenceKeypoint.new(1, 0) })
+	swirl.SpreadAngle = Vector2.new(180, 180)
+	swirl.Parent = core
+	light(ring, purple, 24, 2)
 
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.Name = "RebirthPrompt"
@@ -497,29 +493,29 @@ local function buildRebirthPortal(parent: Instance, position: Vector3)
 	prompt.RequiresLineOfSight = false
 	prompt.Parent = ring
 
-	billboard(ring, "REBIRTH", "Reset for permanent +50% coins", ring.Color, UDim2.fromOffset(300, 100), 8)
+	billboard(ring, "REBIRTH", "Reset for permanent +50% coins", purple, UDim2.fromOffset(300, 100), 9)
 
 	model.PrimaryPart = ring
 	model.Parent = parent
-	table.insert(blockedSpots, { Position = position, Radius = 10 })
+	table.insert(blockedSpots, { Position = position, Radius = 11 })
 end
 
 local function buildLeaderboard(parent: Instance, key: string, title: string, position: Vector3)
+	local wood = rgb(110, 80, 55)
+	for _, side in ipairs({ -1, 1 }) do
+		part({ Name = "Post", Size = V(1.4, 17, 1.4), Position = position + V(side * 11.8, 8.5, 0.6), Color = wood, Material = Enum.Material.Wood }, parent)
+	end
+	part({ Name = "Roof", Size = V(26, 1.2, 4), Position = position + V(0, 17.4, 0.6), Color = rgb(170, 60, 50), Material = Enum.Material.WoodPlanks }, parent)
+
 	local board = part({
 		Name = key,
-		Size = Vector3.new(22, 15, 1),
-		CFrame = CFrame.new(position + Vector3.new(0, 8.5, 0)) * CFrame.Angles(0, math.pi, 0),
-		Color = Color3.fromRGB(30, 32, 45),
+		Size = V(22, 15, 1),
+		CFrame = CFrame.new(position + V(0, 9, 0)) * CFrame.Angles(0, math.pi, 0),
+		Color = rgb(30, 32, 45),
 		Material = Enum.Material.SmoothPlastic,
-	}, parent)
+	}, parent) :: Part
 
-	part({
-		Name = "Frame",
-		Size = Vector3.new(23, 16, 0.8),
-		CFrame = board.CFrame * CFrame.new(0, 0, 0.2),
-		Color = Color3.fromRGB(255, 200, 60),
-		Material = Enum.Material.Metal,
-	}, parent)
+	part({ Name = "Frame", Size = V(23, 16, 0.8), CFrame = board.CFrame * CFrame.new(0, 0, 0.2), Color = rgb(255, 200, 60), Material = Enum.Material.Metal }, parent)
 
 	local gui = Instance.new("SurfaceGui")
 	gui.Name = "Board"
@@ -536,7 +532,7 @@ local function buildLeaderboard(parent: Instance, key: string, title: string, po
 	titleLabel.Size = UDim2.new(1, 0, 0, 90)
 	titleLabel.Font = Enum.Font.FredokaOne
 	titleLabel.Text = title
-	titleLabel.TextColor3 = Color3.fromRGB(255, 210, 80)
+	titleLabel.TextColor3 = rgb(255, 210, 80)
 	titleLabel.TextScaled = true
 	titleLabel.Parent = gui
 
@@ -558,7 +554,7 @@ local function buildLeaderboard(parent: Instance, key: string, title: string, po
 	status.Size = UDim2.new(1, 0, 0, 40)
 	status.Font = Enum.Font.Gotham
 	status.Text = "Loading..."
-	status.TextColor3 = Color3.fromRGB(200, 200, 210)
+	status.TextColor3 = rgb(200, 200, 210)
 	status.TextScaled = true
 	status.Parent = list
 
@@ -566,22 +562,85 @@ local function buildLeaderboard(parent: Instance, key: string, title: string, po
 	leaderboardBoards[key] = board
 end
 
-local function buildWelcomeSign(parent: Instance, position: Vector3)
-	local post = part({
-		Name = "WelcomeSign",
-		Size = Vector3.new(0.6, 7, 0.6),
-		Position = position + Vector3.new(0, 3.5, 0),
-		Color = Color3.fromRGB(140, 100, 60),
-		Material = Enum.Material.Wood,
-	}, parent)
-	billboard(
-		post,
-		"Welcome to " .. Config.GameName .. "!",
-		"Walk into orbs for coins  >  Hatch eggs  >  Unlock zones  >  Rebirth!",
-		Color3.fromRGB(255, 230, 120),
-		UDim2.fromOffset(420, 120),
-		5
-	)
+local function buildPlaza(zoneModel: Model, cx: number)
+	local plaza = Instance.new("Folder")
+	plaza.Name = "SpawnPlaza"
+	plaza.Parent = zoneModel
+	local center = V(cx - 62, 0, 0)
+
+	-- Fountain at the west end of the plaza
+	local fountain = center + V(-12, 0, 0)
+	cylinder(plaza, fountain, 1.6, 7, rgb(205, 200, 195), Enum.Material.Marble)
+	cylinder(plaza, fountain + V(0, 1.2, 0), 0.5, 6.2, rgb(80, 170, 255), Enum.Material.Glass, { Transparency = 0.25, Reflectance = 0.25, CanCollide = false })
+	cylinder(plaza, fountain + V(0, 1.6, 0), 4, 0.9, rgb(225, 220, 215), Enum.Material.Marble)
+	local bowl = cylinder(plaza, fountain + V(0, 5.4, 0), 0.8, 2.8, rgb(225, 220, 215), Enum.Material.Marble)
+	cylinder(plaza, fountain + V(0, 6.0, 0), 0.25, 2.4, rgb(80, 170, 255), Enum.Material.Glass, { Transparency = 0.25, CanCollide = false })
+	local spray = Instance.new("ParticleEmitter")
+	spray.Color = ColorSequence.new(rgb(200, 235, 255))
+	spray.LightEmission = 0.4
+	spray.Rate = 60
+	spray.Lifetime = NumberRange.new(0.9, 1.3)
+	spray.Speed = NumberRange.new(9, 12)
+	spray.SpreadAngle = Vector2.new(14, 14)
+	spray.Acceleration = V(0, -22, 0)
+	spray.EmissionDirection = Enum.NormalId.Right -- cylinder X axis points up
+	spray.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.35), NumberSequenceKeypoint.new(1, 0.15) })
+	spray.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.2), NumberSequenceKeypoint.new(1, 0.8) })
+	spray.Parent = bowl
+
+	-- Lamp posts around the plaza
+	for i = 0, 3 do
+		local angle = math.rad(45 + i * 90)
+		local p = center + V(math.cos(angle) * 17, 0, math.sin(angle) * 17)
+		cylinder(plaza, p, 9, 0.35, rgb(45, 45, 55), Enum.Material.Metal)
+		local lamp = part({ Name = "Lamp", Shape = Enum.PartType.Ball, Size = V(1.8, 1.8, 1.8), Position = p + V(0, 9.6, 0), Color = rgb(255, 225, 160), Material = Enum.Material.Neon, CastShadow = false }, plaza)
+		light(lamp, rgb(255, 220, 160), 16, 1)
+	end
+
+	-- Flower beds
+	local colors = { rgb(255, 120, 170), rgb(255, 225, 80), rgb(185, 130, 255), rgb(255, 255, 255) }
+	for i = 0, 7 do
+		local angle = math.rad(i * 45 + 22.5)
+		local p = center + V(math.cos(angle) * 21, 0, math.sin(angle) * 21)
+		if p.X > center.X - 2 or math.abs(p.Z) > 8 then
+			for j = 1, 4 do
+				local f = p + V((j - 2.5) * 0.9, 0, (j % 2) * 0.8)
+				cylinder(plaza, f, 1.1, 0.07, rgb(70, 150, 50), Enum.Material.SmoothPlastic, { CastShadow = false, CanCollide = false })
+				part({ Shape = Enum.PartType.Ball, Size = V(0.7, 0.7, 0.7), Position = f + V(0, 1.25, 0), Color = colors[(i + j) % #colors + 1], Material = Enum.Material.SmoothPlastic, CanCollide = false, CastShadow = false }, plaza)
+			end
+		end
+	end
+
+	-- Welcome sign
+	for _, side in ipairs({ -1, 1 }) do
+		part({ Name = "SignPost", Size = V(0.6, 6, 0.6), Position = center + V(2, 3, -14 + side * 3.5), Color = rgb(120, 85, 55), Material = Enum.Material.Wood }, plaza)
+	end
+	local signBoard = part({ Name = "WelcomeSign", Size = V(0.5, 3, 8), Position = center + V(2, 5.5, -14), Color = rgb(150, 110, 70), Material = Enum.Material.WoodPlanks }, plaza)
+	billboard(signBoard, "Welcome to " .. Config.GameName .. "!", "Collect orbs  >  Hatch eggs  >  Unlock zones  >  Rebirth!", rgb(255, 230, 120), UDim2.fromOffset(420, 120), 4)
+
+	-- Spawn pad (players face +X, toward the zone)
+	local spawn = Instance.new("SpawnLocation")
+	spawn.Name = "Spawn"
+	spawn.Anchored = true
+	spawn.Size = V(10, 0.4, 10)
+	spawn.CFrame = CFrame.lookAt(center + V(4, 0.2, 0), center + V(10, 0.2, 0))
+	spawn.Color = rgb(255, 255, 255)
+	spawn.Material = Enum.Material.Marble
+	spawn.Neutral = true
+	spawn.Duration = 0
+	spawn.TopSurface = Enum.SurfaceType.Smooth
+	spawn.Parent = zoneModel
+	cylinder(plaza, center + V(4, 0.38, 0), 0.06, 4.6, rgb(255, 210, 80), Enum.Material.Neon, { CastShadow = false, CanCollide = false })
+end
+
+local function buildSpaceFloor(zoneModel: Model, cx: number)
+	local grid = Instance.new("Folder")
+	grid.Name = "NeonGrid"
+	grid.Parent = zoneModel
+	for offset = -75, 75, 30 do
+		part({ Size = V(ZONE_SIZE - 10, 0.12, 0.35), Position = V(cx, 0.06, offset), Color = rgb(150, 90, 255), Material = Enum.Material.Neon, CanCollide = false, CastShadow = false }, grid)
+		part({ Size = V(0.35, 0.12, ZONE_SIZE - 10), Position = V(cx + offset, 0.06, 0), Color = rgb(90, 200, 255), Material = Enum.Material.Neon, CanCollide = false, CastShadow = false }, grid)
+	end
 end
 
 --------------------------------------------------------------------------------
@@ -593,50 +652,37 @@ local function buildZone(mapFolder: Folder, index: number)
 	local theme = zone.Theme
 	local cx = zoneCenterX(index)
 	local rng = Random.new(index * 7919)
+	local mats = TERRAIN[theme.Decor] or TERRAIN.Trees
 
 	local zoneModel = Instance.new("Model")
 	zoneModel.Name = "Zone" .. index
 	zoneModel:SetAttribute("Zone", index)
 	zoneModel:SetAttribute("ZoneName", zone.Name)
 
-	part({
-		Name = "Ground",
-		Size = Vector3.new(ZONE_SIZE, 4, ZONE_SIZE),
-		Position = Vector3.new(cx, -2, 0),
-		Color = theme.Ground,
-		Material = material(theme.Material),
-	}, zoneModel)
+	buildZoneTerrain(index, cx, mats, rng)
+	buildWalls(zoneModel, index, cx)
+	if theme.Decor == "Crystal" then
+		buildSpaceFloor(zoneModel, cx)
+	end
 
-	-- Path along the lane so players know where to go.
-	part({
-		Name = "Path",
-		Size = Vector3.new(ZONE_SIZE, 0.2, 10),
-		Position = Vector3.new(cx, 0.1, 0),
-		Color = theme.Trim,
-		Material = Enum.Material.Cobblestone,
-		CanCollide = false,
-	}, zoneModel)
-
-	buildWalls(zoneModel, index, cx, theme)
-
-	-- Decorations
+	-- Scenery
 	local decor = Instance.new("Folder")
 	decor.Name = "Decor"
 	decor.Parent = zoneModel
-	local builder = DECOR_BUILDERS[theme.Decor] or buildTree
-	local placed = 0
-	local attempts = 0
-	while placed < 26 and attempts < 200 do
+	local placed, attempts = 0, 0
+	local target = 34
+	while placed < target and attempts < 300 do
 		attempts += 1
-		local localX = rng:NextNumber(-HALF + 10, HALF - 10)
-		local z = rng:NextNumber(-HALF + 10, HALF - 10)
+		local localX = rng:NextNumber(-HALF + 9, HALF - 9)
+		local z = rng:NextNumber(-HALF + 9, HALF - 9)
 		if not isReserved(index, localX, z) then
-			builder(decor, Vector3.new(cx + localX, 0, z), theme, rng)
+			MapDecor.Place(theme.Decor, decor, V(cx + localX, 0, z), rng)
 			placed += 1
 		end
 	end
+	MapDecor.Backdrop(theme.Decor, decor, V(cx, 0, 0), rng)
 
-	-- Egg stands for this zone
+	-- Egg stands
 	local stands = Instance.new("Folder")
 	stands.Name = "EggStands"
 	stands.Parent = zoneModel
@@ -648,47 +694,31 @@ local function buildZone(mapFolder: Folder, index: number)
 	end
 	for i, entry in ipairs(eggsHere) do
 		local offset = (i - (#eggsHere + 1) / 2) * 26
-		buildEggStand(stands, entry.Key, entry.Egg, Vector3.new(cx + offset, 0, -42))
+		buildEggStand(stands, entry.Key, entry.Egg, V(cx + offset, 0, -42), theme.Trim)
 	end
 
-	-- Zone title sign at the entrance
-	local signPos = Vector3.new(cx - HALF + 14, 0, -20)
-	local sign = part({
-		Name = "ZoneSign",
-		Size = Vector3.new(0.6, 8, 0.6),
-		Position = signPos + Vector3.new(0, 4, 0),
-		Color = theme.Trim,
-		Material = Enum.Material.Wood,
-	}, zoneModel)
-	billboard(sign, zone.Name, "Zone " .. index, theme.Accent, UDim2.fromOffset(260, 90), 5.5)
+	-- Zone sign at the entrance
+	local signPos = V(cx - HALF + 14, 0, -16)
+	for _, dz in ipairs({ -3, 3 }) do
+		part({ Name = "SignPost", Size = V(0.7, 7, 0.7), Position = signPos + V(0, 3.5, dz), Color = theme.Trim, Material = Enum.Material.Wood }, zoneModel)
+	end
+	local sign = part({ Name = "ZoneSign", Size = V(0.6, 3.2, 7.5), Position = signPos + V(0, 6.2, 0), Color = theme.Trim:Lerp(rgb(255, 255, 255), 0.2), Material = Enum.Material.WoodPlanks }, zoneModel)
+	billboard(sign, zone.Name, "Zone " .. index, theme.Accent, UDim2.fromOffset(260, 90), 4.5)
 
 	if index == 1 then
-		local spawn = Instance.new("SpawnLocation")
-		spawn.Name = "Spawn"
-		spawn.Anchored = true
-		spawn.Size = Vector3.new(14, 1, 14)
-		spawn.Position = Vector3.new(cx - 62, 0.5, 0)
-		spawn.Color = Color3.fromRGB(255, 255, 255)
-		spawn.Material = Enum.Material.Neon
-		spawn.Neutral = true
-		spawn.Duration = 0
-		spawn.TopSurface = Enum.SurfaceType.Smooth
-		spawn.Parent = zoneModel
-
-		buildWelcomeSign(zoneModel, Vector3.new(cx - 62, 0, -12))
-		buildRebirthPortal(zoneModel, Vector3.new(cx, 0, 62))
-
+		buildPlaza(zoneModel, cx)
+		buildRebirthPortal(zoneModel, V(cx, 0, 62))
 		local boards = Instance.new("Folder")
 		boards.Name = "Leaderboards"
 		boards.Parent = zoneModel
-		buildLeaderboard(boards, "TotalCoins", "TOP COINS", Vector3.new(cx - 36, 0, -84))
-		buildLeaderboard(boards, "Rebirths", "TOP REBIRTHS", Vector3.new(cx, 0, -84))
-		buildLeaderboard(boards, "PetsHatched", "TOP HATCHERS", Vector3.new(cx + 36, 0, -84))
+		buildLeaderboard(boards, "TotalCoins", "TOP COINS", V(cx - 36, 0, -84))
+		buildLeaderboard(boards, "Rebirths", "TOP REBIRTHS", V(cx, 0, -84))
+		buildLeaderboard(boards, "PetsHatched", "TOP HATCHERS", V(cx + 36, 0, -84))
 	end
 
 	zoneModel.Parent = mapFolder
 
-	local spawnPos = Vector3.new(cx - 60, 4, 0)
+	local spawnPos = V(cx - 60, 4, 0)
 	zoneSpawns[index] = CFrame.lookAt(spawnPos, spawnPos + Vector3.xAxis)
 	zoneBounds[index] = {
 		MinX = cx - HALF + 8,
@@ -700,44 +730,52 @@ local function buildZone(mapFolder: Folder, index: number)
 end
 
 --------------------------------------------------------------------------------
--- Lighting / atmosphere (asset-free)
+-- Lighting / atmosphere (the client tweens these per zone)
 --------------------------------------------------------------------------------
 
 local function setupLighting()
 	for _, child in ipairs(Lighting:GetChildren()) do
-		if child:IsA("PostEffect") or child:IsA("Atmosphere") then
+		if child:IsA("PostEffect") or child:IsA("Atmosphere") or child:IsA("Sky") then
 			child:Destroy()
 		end
 	end
 
+	local sky = Instance.new("Sky")
+	sky.StarCount = 3000
+	sky.CelestialBodiesShown = true
+	sky.Parent = Lighting
+
 	local atmosphere = Instance.new("Atmosphere")
-	atmosphere.Density = 0.3
-	atmosphere.Offset = 0.25
-	atmosphere.Color = Color3.fromRGB(199, 199, 210)
-	atmosphere.Decay = Color3.fromRGB(106, 112, 125)
-	atmosphere.Glare = 0.2
-	atmosphere.Haze = 1.2
+	atmosphere.Density = 0.28
+	atmosphere.Offset = 0.2
+	atmosphere.Color = rgb(199, 212, 232)
+	atmosphere.Decay = rgb(110, 120, 140)
+	atmosphere.Glare = 0.15
+	atmosphere.Haze = 1
 	atmosphere.Parent = Lighting
 
 	local bloom = Instance.new("BloomEffect")
-	bloom.Intensity = 0.5
-	bloom.Size = 24
-	bloom.Threshold = 1.1
+	bloom.Intensity = 0.6
+	bloom.Size = 28
+	bloom.Threshold = 1.05
 	bloom.Parent = Lighting
 
 	local color = Instance.new("ColorCorrectionEffect")
-	color.Saturation = 0.15
+	color.Name = "ZoneColor"
+	color.Saturation = 0.18
 	color.Contrast = 0.08
 	color.Brightness = 0.02
 	color.Parent = Lighting
 
 	local rays = Instance.new("SunRaysEffect")
-	rays.Intensity = 0.06
-	rays.Spread = 0.8
+	rays.Intensity = 0.08
+	rays.Spread = 0.7
 	rays.Parent = Lighting
 
 	Lighting.ClockTime = 14
-	Lighting.Brightness = 2.5
+	Lighting.Brightness = 2.6
+	Lighting.EnvironmentDiffuseScale = 0.7
+	Lighting.EnvironmentSpecularScale = 0.7
 end
 
 --------------------------------------------------------------------------------
@@ -758,6 +796,7 @@ function MapBuilder.Build()
 	mapFolder.Name = "Map"
 	table.clear(blockedSpots)
 
+	setupTerrain()
 	for index = 1, #Config.Zones do
 		buildZone(mapFolder, index)
 		buildBridgeAndGate(mapFolder, index)
@@ -790,9 +829,9 @@ end
 
 -- True if an orb at this position would sit inside an egg stand or portal.
 function MapBuilder.IsSpotBlocked(position: Vector3): boolean
-	local flat = Vector3.new(position.X, 0, position.Z)
+	local flat = V(position.X, 0, position.Z)
 	for _, spot in ipairs(blockedSpots) do
-		local center = Vector3.new(spot.Position.X, 0, spot.Position.Z)
+		local center = V(spot.Position.X, 0, spot.Position.Z)
 		if (flat - center).Magnitude < spot.Radius then
 			return true
 		end

@@ -5,7 +5,7 @@ This guide is a practical plan for that part.
 
 ## 1. Make it look like a hit before launch
 
-Every pet already has a generated 3D model, and the world has terrain, weather and lighting per zone. Custom art is still the biggest upgrade you can make.
+Every pet already has a cute generated 3D model with an outline, eggs have real shapes and patterns, and the world has terrain, weather, clouds and bright lighting per zone. Custom art is still the biggest upgrade you can make: games like Steal an Egg use pets sculpted in Blender, which code alone can't match.
 
 1. **Pet models.** Make or commission models for the pets, starting with Legendary and Mythic. Put each Model in `ReplicatedStorage > PetModels` with the exact pet name. No code changes are needed. To tweak a generated pet instead, edit its colours and extras in `src/Shared/PetStyles.lua`.
 2. **Icon (512x512).** One cute, high-contrast pet on a bright background, with no small text. This is what players see in search and on the home page.

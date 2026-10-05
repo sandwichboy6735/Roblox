@@ -154,8 +154,10 @@ local function track(model: Instance)
 		Fill = fill,
 		HPLabel = hpLabel,
 		ShakeUntil = 0,
-		LastHP = math.huge,
+		LastHP = 0,
 	}
+	local startHP = model:GetAttribute("HP")
+	info.LastHP = if type(startHP) == "number" then startHP else 0
 	tracked[model] = info
 	refresh(info)
 	model:GetAttributeChangedSignal("HP"):Connect(function()

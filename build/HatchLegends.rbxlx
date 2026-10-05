@@ -7,7 +7,7 @@
         <G>0.35</G>
         <B>0.4</B>
       </Color3>
-      <float name="Brightness">2.5</float>
+      <float name="Brightness">3</float>
       <float name="ClockTime">14</float>
       <float name="EnvironmentDiffuseScale">0.6</float>
       <float name="EnvironmentSpecularScale">0.6</float>
@@ -296,9 +296,11 @@ Config.Eggs = {
 	Basic = {
 		Name = "Basic Egg",
 		Zone = 1,
-		Cost = 100,
+		Cost = 250,
 		Currency = "Coins",
-		Color = Color3.fromRGB(230, 230, 210),
+		Color = Color3.fromRGB(250, 242, 215),
+		Pattern = "Spots", -- egg look: Spots / Stripes / Diamonds (see EggLooks)
+		PatternColor = Color3.fromRGB(110, 200, 90),
 		Pets = {
 			{ Pet = "Dog", Chance = 40 },
 			{ Pet = "Cat", Chance = 30 },
@@ -311,9 +313,11 @@ Config.Eggs = {
 	Candy = {
 		Name = "Candy Egg",
 		Zone = 2,
-		Cost = 4000,
+		Cost = 8000,
 		Currency = "Coins",
 		Color = Color3.fromRGB(255, 150, 200),
+		Pattern = "Stripes",
+		PatternColor = Color3.fromRGB(255, 255, 255),
 		Pets = {
 			{ Pet = "Gummy Bear", Chance = 40 },
 			{ Pet = "Lollipop Lamb", Chance = 30 },
@@ -326,9 +330,11 @@ Config.Eggs = {
 	Frost = {
 		Name = "Frost Egg",
 		Zone = 3,
-		Cost = 150000,
+		Cost = 320000,
 		Currency = "Coins",
 		Color = Color3.fromRGB(170, 220, 255),
+		Pattern = "Diamonds",
+		PatternColor = Color3.fromRGB(245, 252, 255),
 		Pets = {
 			{ Pet = "Penguin", Chance = 40 },
 			{ Pet = "Seal", Chance = 30 },
@@ -341,9 +347,12 @@ Config.Eggs = {
 	Lava = {
 		Name = "Lava Egg",
 		Zone = 4,
-		Cost = 4000000,
+		Cost = 9000000,
 		Currency = "Coins",
 		Color = Color3.fromRGB(255, 90, 40),
+		Pattern = "Spots",
+		PatternColor = Color3.fromRGB(255, 220, 60),
+		PatternNeon = true,
 		Pets = {
 			{ Pet = "Magma Crab", Chance = 40 },
 			{ Pet = "Ember Lizard", Chance = 30 },
@@ -356,9 +365,12 @@ Config.Eggs = {
 	Cosmic = {
 		Name = "Cosmic Egg",
 		Zone = 5,
-		Cost = 100000000,
+		Cost = 250000000,
 		Currency = "Coins",
 		Color = Color3.fromRGB(90, 60, 160),
+		Pattern = "Spots",
+		PatternColor = Color3.fromRGB(255, 120, 235),
+		PatternNeon = true,
 		Pets = {
 			{ Pet = "Moon Bunny", Chance = 40 },
 			{ Pet = "Star Pup", Chance = 30 },
@@ -374,6 +386,10 @@ Config.Eggs = {
 		Cost = 50,
 		Currency = "Gems",
 		Color = Color3.fromRGB(120, 255, 230),
+		Pattern = "Diamonds",
+		PatternColor = Color3.fromRGB(255, 220, 80),
+		PatternNeon = true,
+		Glass = true,
 		Pets = {
 			{ Pet = "Golden Dog", Chance = 50 },
 			{ Pet = "Diamond Cat", Chance = 30 },
@@ -386,9 +402,10 @@ Config.Eggs = {
 --------------------------------------------------------------------------------
 -- ZONES (in order). Zone 1 is the spawn. Cost = coins to unlock.
 --
--- Pacing (simulated solo player, ~1 orb/s, ~15 hatches per zone, no gifts):
--- zone 2 ~4 min, zone 3 ~11 min, zone 4 ~24 min, zone 5 ~45 min,
--- first rebirth ~65 min. Later rebirths take progressively longer.
+-- Pacing (simulated solo player collecting ~0.85 orbs/s while their pets break
+-- coin piles and chests, hatching when a pet pays for itself, no gifts):
+-- first egg ~40 s, zone 2 ~8 min, zone 3 ~18 min, zone 4 ~35 min,
+-- zone 5 ~80 min, first rebirth ~2.5 h. Later rebirths take longer.
 --------------------------------------------------------------------------------
 
 Config.Zones = {
@@ -397,6 +414,7 @@ Config.Zones = {
 		Cost = 0,
 		OrbValue = 5,
 		OrbCount = 50,
+		BreakableHP = 1, -- multiplies breakable HP here (see Config.Breakables)
 		Eggs = { "Basic" },
 		Theme = {
 			Ground = Color3.fromRGB(96, 170, 70),
@@ -409,9 +427,10 @@ Config.Zones = {
 	},
 	{
 		Name = "Candy Land",
-		Cost = 2500,
+		Cost = 10000,
 		OrbValue = 40,
 		OrbCount = 50,
+		BreakableHP = 2.2,
 		Eggs = { "Candy" },
 		Theme = {
 			Ground = Color3.fromRGB(255, 170, 210),
@@ -424,9 +443,10 @@ Config.Zones = {
 	},
 	{
 		Name = "Frozen Peaks",
-		Cost = 200000,
+		Cost = 700000,
 		OrbValue = 400,
 		OrbCount = 50,
+		BreakableHP = 4,
 		Eggs = { "Frost" },
 		Theme = {
 			Ground = Color3.fromRGB(225, 240, 255),
@@ -439,9 +459,10 @@ Config.Zones = {
 	},
 	{
 		Name = "Volcano",
-		Cost = 10000000,
+		Cost = 35000000,
 		OrbValue = 5000,
 		OrbCount = 50,
+		BreakableHP = 7,
 		Eggs = { "Lava" },
 		Theme = {
 			Ground = Color3.fromRGB(60, 50, 50),
@@ -454,9 +475,10 @@ Config.Zones = {
 	},
 	{
 		Name = "Space Station",
-		Cost = 450000000,
+		Cost = 1300000000,
 		OrbValue = 75000,
 		OrbCount = 50,
+		BreakableHP = 12,
 		Eggs = { "Cosmic" },
 		Theme = {
 			Ground = Color3.fromRGB(45, 40, 70),
@@ -490,11 +512,71 @@ Config.Orbs = {
 }
 
 --------------------------------------------------------------------------------
+-- BREAKABLES - coin piles, crates and chests in every zone. Click one and your
+-- equipped pets run over and break it. HP grows zone by zone (Zone.BreakableHP),
+-- so rarer, Golden and Rainbow pets matter: they break things much faster.
+-- Reward is counted in orbs: Reward 3 = worth three of the zone's coin orbs
+-- (before the player's coin multiplier).
+--------------------------------------------------------------------------------
+
+Config.Breakables = {
+	PerZone = 10, -- small breakables alive per zone with one player in it
+	ExtraPerPlayer = 3, -- more for each extra player in the zone
+	MaxPerZone = 22,
+	RespawnMin = 5, -- seconds
+	RespawnMax = 10,
+	PlayerDamage = 2, -- damage per second from the player alone (no pets yet)
+	PetDamage = 2, -- per equipped pet: PetDamage * sqrt(pet multiplier) per second
+	MaxDistance = 70, -- studs: pets give up if their owner walks further away
+	AutoTargetRange = 40, -- after a break, pets move on to the nearest one this close
+	Kinds = {
+		Pile = { Name = "Coin Pile", Weight = 68, HP = 25, Reward = 3, GemChance = 0.04, Gems = { 1, 1 } },
+		Crate = { Name = "Crate", Weight = 26, HP = 80, Reward = 11, GemChance = 0.1, Gems = { 1, 2 } },
+		Chest = { Name = "Treasure Chest", Weight = 6, HP = 300, Reward = 48, GemChance = 0.5, Gems = { 2, 4 } },
+	},
+	-- One per zone: a huge chest that takes teamwork (or a great team of pets).
+	-- Everyone who helps gets a share; anyone who did 3%+ also gets gems.
+	Giant = { Name = "Giant Chest", HP = 6000, Reward = 1100, Gems = { 15, 30 }, Respawn = 180, MinShare = 0.03 },
+}
+
+-- Damage per second one pet deals to breakables (Golden/Rainbow included).
+function Config.GetPetDamage(petType: string, tier: number?): number
+	return Config.Breakables.PetDamage * math.sqrt(Config.GetPetMultiplier(petType, tier))
+end
+
+-- Total damage per second of a team: the player plus their best `slots` pets.
+function Config.GetTeamDamage(pets: { { Type: string, Tier: number? } }, slots: number): number
+	local damages = {}
+	for _, pet in ipairs(pets) do
+		if Config.Pets[pet.Type] then
+			table.insert(damages, Config.GetPetDamage(pet.Type, pet.Tier))
+		end
+	end
+	table.sort(damages, function(a, b)
+		return a > b
+	end)
+	local total = Config.Breakables.PlayerDamage
+	for index = 1, math.min(#damages, slots) do
+		total += damages[index]
+	end
+	return total
+end
+
+function Config.GetBreakableHP(kind: string, zoneIndex: number): number
+	local spec = Config.Breakables.Kinds[kind] or (kind == "Giant" and Config.Breakables.Giant)
+	local zone = Config.Zones[zoneIndex]
+	if not spec or not zone then
+		return 1
+	end
+	return math.floor(spec.HP * (zone.BreakableHP or 1))
+end
+
+--------------------------------------------------------------------------------
 -- REBIRTH
 --------------------------------------------------------------------------------
 
 Config.Rebirth = {
-	BaseCost = 12000000000, -- 12B: reached in the last zone
+	BaseCost = 32000000000, -- 32B: reached in the last zone
 	CostGrowth = 1.8, -- cost = BaseCost * CostGrowth ^ (rebirths earned by playing)
 	MaxCost = 1e15, -- keeps costs below the 2^53 coin cap
 	MultiplierPerRebirth = 0.5, -- +50% coins per rebirth (permanent)
@@ -552,6 +634,8 @@ Config.Quests = {
 		{ Id = "Craft", Text = "Craft %d Golden or Rainbow pet", Stat = "PetsCrafted", Goal = 1, Reward = { Gems = 25 } },
 		{ Id = "BigHatch", Text = "Hatch %d eggs", Stat = "PetsHatched", Goal = 60, Reward = { Gems = 30 } },
 		{ Id = "BigOrbs", Text = "Collect %d orbs", Stat = "OrbsCollected", Goal = 800, Reward = { CoinMinutes = 12 } },
+		{ Id = "Break", Text = "Break %d coin piles or chests", Stat = "BreakablesBroken", Goal = 40, Reward = { Gems = 12 } },
+		{ Id = "BigBreak", Text = "Break %d coin piles or chests", Stat = "BreakablesBroken", Goal = 150, Reward = { CoinMinutes = 12 } },
 	},
 	BonusReward = { Gems = 40 }, -- for finishing all of today's quests
 }
@@ -613,6 +697,7 @@ Config.DataTemplate = {
 		PetsCrafted = 0,
 		OrbsCollected = 0,
 		GemOrbs = 0,
+		BreakablesBroken = 0,
 		Playtime = 0, -- seconds
 		RobuxSpent = 0,
 		Joins = 0,
@@ -624,7 +709,7 @@ Config.DataTemplate = {
 	Upgrades = { WalkSpeed = 0, Magnet = 0, CoinBoost = 0 },
 	Purchases = {}, -- processed receipt ids (dedupe)
 	Boosts = {}, -- { Luck = {Mult, ExpiresAt}, Coins = {...} }
-	Settings = { Music = true, SkipHatchAnimation = false },
+	Settings = { Music = true, SkipHatchAnimation = false, ShowGuide = true },
 	FirstJoin = 0,
 }
 
@@ -634,7 +719,8 @@ Config.DataTemplate = {
 
 -- Orbs a player is assumed to collect per second when pricing coin rewards.
 Config.Economy = {
-	ReferenceOrbsPerSecond = 1,
+	-- About 0.85 orbs/s walking plus what pets earn from breakables.
+	ReferenceOrbsPerSecond = 1.5,
 }
 
 -- Average coins per orb relative to a zone's OrbValue (normal, big, gem orbs).
@@ -752,6 +838,141 @@ return Config
       </Item>
       <Item class="ModuleScript" referent="5">
         <Properties>
+          <string name="Name">EggLooks</string>
+          <string name="Source"><![CDATA[--------------------------------------------------------------------------------
+-- EggLooks - builds an egg from parts: a real egg silhouette (wide bottom,
+-- tapered top) decorated with a pattern from Config.Eggs[key]:
+--   Pattern      = "Spots" | "Stripes" | "Diamonds"
+--   PatternColor = Color3 (defaults to a lighter shade of the egg)
+--   PatternNeon  = true to make the pattern glow
+--   Glass        = true for a see-through crystal shell
+-- Used by the server (egg stands) and the client (hatch animation), so the
+-- egg you hatch looks exactly like the one in the world.
+--------------------------------------------------------------------------------
+
+local EggLooks = {}
+
+local V = Vector3.new
+
+-- Two overlapping ellipsoids (unscaled, bottom of the egg at y = 0).
+local BOTTOM = { Center = 2.6, Radius = V(2.6, 2.6, 2.6) }
+local TOP = { Center = 3.3, Radius = V(2.45, 3.3, 2.45) }
+EggLooks.Height = 6.6
+
+-- Radius of the shell at height y, and the ellipsoid that forms it there.
+local function surfaceAt(y: number)
+	local best, bestRadius = BOTTOM, 0
+	for _, shape in ipairs({ BOTTOM, TOP }) do
+		local dy = (y - shape.Center) / shape.Radius.Y
+		if math.abs(dy) < 1 then
+			local r = shape.Radius.X * math.sqrt(1 - dy * dy)
+			if r > bestRadius then
+				best, bestRadius = shape, r
+			end
+		end
+	end
+	return bestRadius, best
+end
+
+-- A point on the shell plus the outward normal there.
+local function surfacePoint(y: number, angle: number): (Vector3, Vector3)
+	local r, shape = surfaceAt(y)
+	local p = V(math.cos(angle) * r, y, math.sin(angle) * r)
+	local a = shape.Radius
+	local n = V(p.X / (a.X * a.X), (y - shape.Center) / (a.Y * a.Y), p.Z / (a.Z * a.Z)).Unit
+	return p, n
+end
+
+local function newPart(model: Model, size: Vector3, cf: CFrame, color: Color3, material: Enum.Material, transparency: number?): Part
+	local p = Instance.new("Part")
+	p.Anchored = true
+	p.CanCollide = false
+	p.CanTouch = false
+	p.CanQuery = false
+	p.CastShadow = false
+	p.TopSurface = Enum.SurfaceType.Smooth
+	p.BottomSurface = Enum.SurfaceType.Smooth
+	p.Size = size
+	p.CFrame = cf
+	p.Color = color
+	p.Material = material
+	p.Transparency = transparency or 0
+	p.Parent = model
+	return p
+end
+
+local function ellipsoid(model: Model, size: Vector3, cf: CFrame, color: Color3, material: Enum.Material, transparency: number?): Part
+	local p = newPart(model, size, cf, color, material, transparency)
+	local mesh = Instance.new("SpecialMesh")
+	mesh.MeshType = Enum.MeshType.Sphere
+	mesh.Parent = p
+	return p
+end
+
+-- egg: a Config.Eggs entry. scale: 1 = 6.6 studs tall.
+-- Returns the model (pivot at the bottom of the egg) and its main shell part.
+function EggLooks.Build(egg, scale: number?): (Model, BasePart)
+	local s = scale or 1
+	local model = Instance.new("Model")
+	model.Name = "EggModel"
+
+	local shellMaterial = if egg.Glass then Enum.Material.Glass else Enum.Material.SmoothPlastic
+	local shellTransparency = if egg.Glass then 0.15 else 0
+	local main = ellipsoid(model, TOP.Radius * 2 * s, CFrame.new(0, TOP.Center * s, 0), egg.Color, shellMaterial, shellTransparency)
+	main.Name = "Egg"
+	main.CastShadow = true
+	ellipsoid(model, BOTTOM.Radius * 2 * s, CFrame.new(0, BOTTOM.Center * s, 0), egg.Color, shellMaterial, shellTransparency).Name = "Shell"
+
+	if egg.Glass then
+		-- a glowing core makes crystal eggs read from far away
+		local core = ellipsoid(model, V(2.6, 3.4, 2.6) * s, CFrame.new(0, 3 * s, 0), egg.PatternColor or egg.Color, Enum.Material.Neon)
+		core.Name = "Core"
+	end
+
+	local patternColor = egg.PatternColor or egg.Color:Lerp(Color3.new(1, 1, 1), 0.55)
+	local patternMaterial = if egg.PatternNeon then Enum.Material.Neon else Enum.Material.SmoothPlastic
+	local pattern = egg.Pattern or "Spots"
+	local rng = Random.new(#egg.Name * 97 + #pattern)
+
+	if pattern == "Stripes" then
+		for _, y in ipairs({ 1.7, 3.0, 4.4, 5.6 }) do
+			local r = surfaceAt(y)
+			newPart(model, V(0.42, (r + 0.06) * 2, (r + 0.06) * 2) * s, CFrame.new(0, y * s, 0) * CFrame.Angles(0, 0, math.rad(90)), patternColor, patternMaterial).Shape = Enum.PartType.Cylinder
+		end
+	elseif pattern == "Diamonds" then
+		local count = 12
+		for i = 1, count do
+			local angle = (i / count) * math.pi * 2
+			local p, n = surfacePoint(3.0, angle)
+			local cf = CFrame.lookAlong(p * s, n) * CFrame.Angles(0, 0, math.rad(45))
+			newPart(model, V(0.95, 0.95, 0.3) * s, cf, patternColor, patternMaterial)
+		end
+		for _, y in ipairs({ 2.25, 3.75 }) do
+			local r = surfaceAt(y)
+			newPart(model, V(0.18, (r + 0.05) * 2, (r + 0.05) * 2) * s, CFrame.new(0, y * s, 0) * CFrame.Angles(0, 0, math.rad(90)), patternColor, patternMaterial).Shape = Enum.PartType.Cylinder
+		end
+	else
+		-- Spots, spread evenly round the egg (golden-angle spiral).
+		for i = 1, 13 do
+			local y = 0.9 + (i / 13) * 4.9
+			local angle = i * 2.39996 + rng:NextNumber(-0.2, 0.2)
+			local p, n = surfacePoint(y, angle)
+			local size = rng:NextNumber(0.75, 1.25)
+			ellipsoid(model, V(size, size, 0.3) * s, CFrame.lookAlong((p - n * 0.04) * s, n), patternColor, patternMaterial)
+		end
+	end
+
+	model.PrimaryPart = main
+	model.WorldPivot = CFrame.new()
+	return model, main
+end
+
+return EggLooks
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="6">
+        <Properties>
           <string name="Name">PetStyles</string>
           <string name="Source"><![CDATA[--------------------------------------------------------------------------------
 -- PetStyles - how each pet looks (used by the client's PetBuilder).
@@ -780,11 +1001,11 @@ local WHITE = rgb(245, 245, 250)
 local Pets = {
 	-- Grassy Meadow
 	["Dog"] = { Archetype = "Dog", Primary = rgb(205, 150, 90), Secondary = rgb(248, 228, 195), Accent = rgb(110, 70, 40) },
-	["Cat"] = { Archetype = "Cat", Primary = rgb(140, 140, 152), Secondary = rgb(235, 235, 240), Accent = rgb(255, 160, 185) },
-	["Bunny"] = { Archetype = "Bunny", Primary = WHITE, Secondary = rgb(255, 225, 230), Accent = rgb(255, 160, 185) },
+	["Cat"] = { Archetype = "Cat", Primary = rgb(140, 170, 235), Secondary = rgb(238, 244, 255), Accent = rgb(255, 140, 185) },
+	["Bunny"] = { Archetype = "Bunny", Primary = rgb(255, 236, 246), Secondary = rgb(255, 205, 225), Accent = rgb(255, 120, 175) },
 	["Fox"] = { Archetype = "Fox", Primary = rgb(235, 115, 40), Secondary = WHITE, Accent = rgb(50, 35, 35) },
 	["Deer"] = { Archetype = "Deer", Primary = rgb(160, 105, 60), Secondary = rgb(245, 225, 195), Accent = rgb(120, 85, 55), Extras = { "Spots" } },
-	["Unicorn"] = { Archetype = "Unicorn", Primary = rgb(255, 245, 252), Secondary = rgb(255, 170, 225), Accent = GOLD, Extras = { "Glow" } },
+	["Unicorn"] = { Archetype = "Unicorn", Primary = rgb(255, 238, 250), Secondary = rgb(255, 140, 215), Accent = GOLD, Extras = { "Glow" } },
 
 	-- Candy Land
 	["Gummy Bear"] = { Archetype = "Bear", Primary = rgb(255, 70, 85), Secondary = rgb(255, 140, 150), Accent = rgb(200, 40, 60), Material = "Glass", Transparency = 0.15 },
@@ -796,11 +1017,11 @@ local Pets = {
 
 	-- Frozen Peaks
 	["Penguin"] = { Archetype = "Penguin", Primary = BLACK, Secondary = WHITE, Accent = rgb(255, 150, 40) },
-	["Seal"] = { Archetype = "Seal", Primary = rgb(170, 182, 205), Secondary = rgb(225, 230, 240), Accent = BLACK },
-	["Snow Owl"] = { Archetype = "Owl", Primary = WHITE, Secondary = rgb(205, 218, 235), Accent = rgb(255, 195, 50) },
+	["Seal"] = { Archetype = "Seal", Primary = rgb(150, 192, 240), Secondary = rgb(228, 240, 255), Accent = BLACK },
+	["Snow Owl"] = { Archetype = "Owl", Primary = rgb(232, 244, 255), Secondary = rgb(170, 210, 250), Accent = rgb(255, 195, 50) },
 	["Ice Wolf"] = { Archetype = "Wolf", Primary = rgb(150, 215, 255), Secondary = WHITE, Accent = rgb(60, 130, 220), Material = "Ice" },
 	["Frost Dragon"] = { Archetype = "Dragon", Primary = rgb(80, 175, 255), Secondary = rgb(220, 245, 255), Accent = rgb(40, 90, 200), Extras = { "Glow" } },
-	["Aurora Yeti"] = { Archetype = "Bear", Primary = WHITE, Secondary = rgb(200, 240, 255), Accent = rgb(120, 255, 220), Extras = { "Aurora", "Glow" } },
+	["Aurora Yeti"] = { Archetype = "Bear", Primary = rgb(225, 250, 255), Secondary = rgb(200, 240, 255), Accent = rgb(120, 255, 220), Extras = { "Aurora", "Glow" } },
 
 	-- Volcano
 	["Magma Crab"] = { Archetype = "Crab", Primary = rgb(200, 60, 30), Secondary = rgb(255, 150, 40), Accent = BLACK },
@@ -811,7 +1032,7 @@ local Pets = {
 	["Phoenix King"] = { Archetype = "Phoenix", Primary = rgb(255, 185, 40), Secondary = rgb(255, 80, 20), Accent = rgb(255, 245, 200), Extras = { "Crown", "Fire", "Glow" } },
 
 	-- Space Station
-	["Moon Bunny"] = { Archetype = "Bunny", Primary = rgb(220, 222, 240), Secondary = rgb(175, 175, 205), Accent = rgb(255, 235, 140), Extras = { "Helmet" } },
+	["Moon Bunny"] = { Archetype = "Bunny", Primary = rgb(220, 205, 255), Secondary = rgb(170, 150, 235), Accent = rgb(255, 235, 140), Extras = { "Helmet" } },
 	["Star Pup"] = { Archetype = "Dog", Primary = rgb(255, 235, 120), Secondary = WHITE, Accent = rgb(255, 180, 40), Extras = { "Helmet", "Antenna" } },
 	["Nebula Cat"] = { Archetype = "Cat", Primary = rgb(130, 75, 215), Secondary = rgb(255, 120, 225), Accent = rgb(90, 230, 255), Extras = { "Spots", "Glow" } },
 	["Galaxy Wolf"] = { Archetype = "Wolf", Primary = rgb(40, 32, 110), Secondary = rgb(120, 200, 255), Accent = rgb(220, 130, 255), Extras = { "Spots", "Glow" } },
@@ -822,7 +1043,7 @@ local Pets = {
 	["Golden Dog"] = { Archetype = "Dog", Primary = GOLD, Secondary = rgb(255, 235, 150), Accent = rgb(220, 160, 30), Material = "Foil" },
 	["Diamond Cat"] = { Archetype = "Cat", Primary = rgb(185, 240, 255), Secondary = rgb(235, 252, 255), Accent = rgb(120, 200, 255), Material = "Glass", Transparency = 0.2 },
 	["Crystal Dragon"] = { Archetype = "Dragon", Primary = rgb(195, 255, 248), Secondary = rgb(150, 220, 255), Accent = rgb(255, 255, 255), Material = "Glass", Transparency = 0.2, Extras = { "Glow" } },
-	["Celestial Capybara"] = { Archetype = "Capybara", Primary = rgb(255, 252, 232), Secondary = rgb(255, 230, 160), Accent = GOLD, Extras = { "Halo", "AngelWings", "Glow" } },
+	["Celestial Capybara"] = { Archetype = "Capybara", Primary = rgb(255, 240, 200), Secondary = rgb(255, 230, 160), Accent = GOLD, Extras = { "Halo", "AngelWings", "Glow" } },
 
 	-- Exclusive
 	["Golden Capybara"] = { Archetype = "Capybara", Primary = GOLD, Secondary = rgb(255, 235, 160), Accent = rgb(200, 140, 20), Material = "Foil", Extras = { "Crown" } },
@@ -871,7 +1092,7 @@ return PetStyles
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="6">
+      <Item class="ModuleScript" referent="7">
         <Properties>
           <string name="Name">Remotes</string>
           <string name="Source"><![CDATA[-- Central registry of RemoteEvents / RemoteFunctions.
@@ -885,6 +1106,7 @@ local DEFINITIONS: { [string]: string } = {
 	DataLoaded = "RemoteEvent",
 	DataChanged = "RemoteEvent",
 	Notify = "RemoteEvent",
+	BreakableBroken = "RemoteEvent",
 
 	-- Client -> Server
 	RequestData = "RemoteEvent",
@@ -941,7 +1163,7 @@ return Remotes
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="7">
+      <Item class="ModuleScript" referent="8">
         <Properties>
           <string name="Name">Signal</string>
           <string name="Source"><![CDATA[--!strict
@@ -1016,7 +1238,7 @@ return Signal
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="8">
+      <Item class="ModuleScript" referent="9">
         <Properties>
           <string name="Name">Util</string>
           <string name="Source"><![CDATA[-- General helpers shared by server and client.
@@ -1211,11 +1433,11 @@ return Util
       </Item>
     </Item>
   </Item>
-  <Item class="ServerScriptService" referent="9">
+  <Item class="ServerScriptService" referent="10">
     <Properties>
       <string name="Name">ServerScriptService</string>
     </Properties>
-    <Item class="ModuleScript" referent="10">
+    <Item class="ModuleScript" referent="11">
       <Properties>
         <string name="Name">Codes</string>
         <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -1236,7 +1458,7 @@ return {
 ]]></string>
       </Properties>
     </Item>
-    <Item class="Script" referent="11">
+    <Item class="Script" referent="12">
       <Properties>
         <string name="Name">Server</string>
         <token name="RunContext">0</token>
@@ -1272,6 +1494,7 @@ local START_ORDER = {
 	"UpgradeService",
 	"ShopService",
 	"CollectibleService",
+	"BreakableService",
 	"LeaderboardService",
 	"PlayerService",
 }
@@ -1307,11 +1530,634 @@ end)()))
 ]]></string>
       </Properties>
     </Item>
-    <Item class="Folder" referent="12">
+    <Item class="Folder" referent="13">
       <Properties>
         <string name="Name">Services</string>
       </Properties>
-      <Item class="ModuleScript" referent="13">
+      <Item class="ModuleScript" referent="14">
+        <Properties>
+          <string name="Name">BreakableLooks</string>
+          <string name="Source"><![CDATA[--------------------------------------------------------------------------------
+-- BreakableLooks - builds the coin piles, crates and chests from parts.
+-- Every model is built around the origin with the ground at y = 0, so the
+-- caller only needs to PivotTo the spot on the ground.
+--------------------------------------------------------------------------------
+
+local BreakableLooks = {}
+
+local V = Vector3.new
+local rgb = Color3.fromRGB
+
+local GOLD = rgb(255, 200, 40)
+local GOLD_DARK = rgb(225, 150, 25)
+local WOOD = rgb(196, 132, 70)
+local WOOD_DARK = rgb(132, 82, 42)
+
+type Builder = { Model: Model, Scale: number }
+
+local function add(b: Builder, shape: string, size: Vector3, cf: CFrame, color: Color3, props: { [string]: any }?): BasePart
+	local p = Instance.new("Part")
+	p.Anchored = true
+	p.CanCollide = false
+	p.CanTouch = false
+	p.CanQuery = false
+	p.CastShadow = false
+	p.TopSurface = Enum.SurfaceType.Smooth
+	p.BottomSurface = Enum.SurfaceType.Smooth
+	p.Material = Enum.Material.SmoothPlastic
+	p.Color = color
+	local s = b.Scale
+	if shape == "Ball" then
+		p.Shape = Enum.PartType.Ball
+	elseif shape == "Cylinder" then
+		p.Shape = Enum.PartType.Cylinder
+	elseif shape == "Ellipsoid" then
+		local mesh = Instance.new("SpecialMesh")
+		mesh.MeshType = Enum.MeshType.Sphere
+		mesh.Parent = p
+	end
+	p.Size = size * s
+	p.CFrame = CFrame.new(cf.Position * s) * cf.Rotation
+	for key, value in pairs(props or {}) do
+		(p :: any)[key] = value
+	end
+	p.Parent = b.Model
+	return p
+end
+
+-- Invisible box that receives clicks (ClickDetector) for the whole model.
+local function hitbox(b: Builder, size: Vector3, centerY: number): BasePart
+	local box = add(b, "Block", size, CFrame.new(0, centerY, 0), Color3.new(1, 1, 1), { Transparency = 1, CanQuery = true, CanCollide = true })
+	box.Name = "Hitbox"
+	b.Model.PrimaryPart = box
+	return box
+end
+
+local function coin(b: Builder, position: Vector3, tilt: number, yaw: number)
+	-- Cylinder parts lie along X; rotate so the coin's face points up-ish.
+	add(b, "Cylinder", V(0.28, 1.5, 1.5), CFrame.new(position) * CFrame.Angles(0, yaw, math.rad(90) + tilt), GOLD, { Reflectance = 0.12 })
+end
+
+local function buildPile(b: Builder, rng: Random, accent: Color3): number
+	add(b, "Ellipsoid", V(4.6, 2.4, 4.6), CFrame.new(0, 0.55, 0), GOLD_DARK)
+	for i = 1, 11 do
+		local angle = i * 2.39 + rng:NextNumber(0, 0.4)
+		local r = math.sqrt(i / 11) * 1.75
+		local y = 0.55 + 1.2 * math.sqrt(math.max(0, 1 - (r / 2.3) ^ 2)) + 0.05
+		coin(b, V(math.cos(angle) * r, y, math.sin(angle) * r), rng:NextNumber(-0.5, 0.5), rng:NextNumber(0, math.pi * 2))
+	end
+	-- a couple of gems poking out of the top
+	for i = 1, 2 do
+		local angle = i * 3.1
+		add(b, "Block", V(0.6, 0.6, 0.6), CFrame.new(math.cos(angle) * 0.6, 1.85, math.sin(angle) * 0.6) * CFrame.Angles(math.rad(45), 0, math.rad(45)), accent, { Material = Enum.Material.Glass, Transparency = 0.1 })
+	end
+	hitbox(b, V(4.8, 2.9, 4.8), 1.45)
+	return 2.5
+end
+
+local function buildCrate(b: Builder): number
+	local body = add(b, "Block", V(3.6, 3.6, 3.6), CFrame.new(0, 1.8, 0), WOOD, { CastShadow = true })
+	body.Name = "Body"
+	local e = 0.36
+	for _, y in ipairs({ 0.18, 3.42 }) do
+		for _, z in ipairs({ -1.8, 1.8 }) do
+			add(b, "Block", V(3.7, e, e), CFrame.new(0, y, z), WOOD_DARK)
+		end
+		for _, x in ipairs({ -1.8, 1.8 }) do
+			add(b, "Block", V(e, e, 3.7), CFrame.new(x, y, 0), WOOD_DARK)
+		end
+	end
+	for _, x in ipairs({ -1.8, 1.8 }) do
+		for _, z in ipairs({ -1.8, 1.8 }) do
+			add(b, "Block", V(e, 3.6, e), CFrame.new(x, 1.8, z), WOOD_DARK)
+		end
+	end
+	-- diagonal braces on two faces
+	for _, z in ipairs({ -1.82, 1.82 }) do
+		add(b, "Block", V(0.4, 4.6, 0.2), CFrame.new(0, 1.8, z) * CFrame.Angles(0, 0, math.rad(45)), WOOD_DARK)
+	end
+	hitbox(b, V(3.9, 3.9, 3.9), 1.95)
+	return 2.4
+end
+
+local function buildChest(b: Builder, glow: boolean): number
+	local base = add(b, "Block", V(4.6, 2.4, 3.2), CFrame.new(0, 1.2, 0), WOOD, { CastShadow = true })
+	base.Name = "Body"
+	-- Half-round lid: a cylinder along X, half of it hidden inside the base.
+	add(b, "Cylinder", V(4.6, 3.2, 3.2), CFrame.new(0, 2.4, 0), rgb(214, 146, 78), { CastShadow = true })
+	local bandMat = if glow then Enum.Material.Neon else Enum.Material.SmoothPlastic
+	local bandProps = { Material = bandMat, Reflectance = if glow then 0 else 0.15 }
+	add(b, "Block", V(4.75, 0.32, 3.35), CFrame.new(0, 2.4, 0), GOLD, bandProps)
+	for _, x in ipairs({ -1.55, 1.55 }) do
+		add(b, "Block", V(0.42, 2.45, 3.3), CFrame.new(x, 1.2, 0), GOLD, bandProps)
+		add(b, "Cylinder", V(0.44, 3.32, 3.32), CFrame.new(x, 2.4, 0), GOLD, bandProps)
+	end
+	add(b, "Block", V(1, 1.1, 0.3), CFrame.new(0, 2.25, -1.68), GOLD, bandProps)
+	add(b, "Block", V(0.22, 0.45, 0.1), CFrame.new(0, 2.15, -1.86), rgb(40, 28, 20))
+	hitbox(b, V(4.9, 4.2, 3.6), 2.1)
+	return 2.9
+end
+
+-- kind: "Pile" | "Crate" | "Chest" | "Giant". Returns the model and its radius.
+function BreakableLooks.Build(kind: string, accent: Color3, rng: Random): (Model, number)
+	local model = Instance.new("Model")
+	model.Name = kind
+	local b: Builder = { Model = model, Scale = 1 }
+	local radius
+	if kind == "Pile" then
+		radius = buildPile(b, rng, accent)
+	elseif kind == "Crate" then
+		radius = buildCrate(b)
+	elseif kind == "Giant" then
+		b.Scale = 2.6
+		radius = buildChest(b, true) * b.Scale
+		-- spilled coins around the giant chest
+		b.Scale = 1
+		for i = 1, 14 do
+			local angle = i * 0.45 - 1.2
+			coin(b, V(math.cos(angle) * 6.2, 0.15, -math.abs(math.sin(angle)) * 5.2 - 0.8), rng:NextNumber(-0.25, 0.25), rng:NextNumber(0, 6))
+		end
+		local hit = model.PrimaryPart :: BasePart
+		local light = Instance.new("PointLight")
+		light.Color = GOLD
+		light.Range = 18
+		light.Brightness = 1.6
+		light.Shadows = false
+		light.Parent = hit
+		local sparkle = Instance.new("ParticleEmitter")
+		sparkle.Color = ColorSequence.new(rgb(255, 235, 140))
+		sparkle.LightEmission = 1
+		sparkle.Rate = 8
+		sparkle.Lifetime = NumberRange.new(0.8, 1.4)
+		sparkle.Speed = NumberRange.new(1, 3)
+		sparkle.SpreadAngle = Vector2.new(180, 180)
+		sparkle.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.5), NumberSequenceKeypoint.new(1, 0) })
+		sparkle.Parent = hit
+	else
+		radius = buildChest(b, false)
+	end
+	model.WorldPivot = CFrame.new()
+	return model, radius
+end
+
+return BreakableLooks
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="15">
+        <Properties>
+          <string name="Name">BreakableService</string>
+          <string name="Source"><![CDATA[--------------------------------------------------------------------------------
+-- BreakableService - coin piles, crates and chests that equipped pets break.
+--
+-- Players click a breakable (ClickDetector) to send their pets at it. Damage
+-- is worked out here every tick from the player's equipped pets, so clients
+-- can't fake it. Rewards are split by damage dealt, which makes helping on a
+-- Giant Chest worthwhile. When a breakable pops, pets move on to the nearest
+-- one close to their owner.
+--
+-- Clients read: player attribute "BreakTarget" (breakable name or ""), and
+-- each breakable model's attributes Kind, Zone, HP, MaxHP, Radius.
+--------------------------------------------------------------------------------
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Workspace = game:GetService("Workspace")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared.Config)
+local Remotes = require(Shared.Remotes)
+
+local DataService = require(script.Parent.DataService)
+local EconomyService = require(script.Parent.EconomyService)
+local MapBuilder = require(script.Parent.MapBuilder)
+local PetService = require(script.Parent.PetService)
+local BreakableLooks = require(script.Parent.BreakableLooks)
+
+local BreakableService = {}
+
+local TICK = 0.25
+local ARRIVE_DELAY = 0.6 -- pets need a moment to run over before they hit
+local MIN_GAP = 8 -- studs between breakables
+
+type Record = {
+	Id: string,
+	Model: Model,
+	Kind: string,
+	Zone: number,
+	HP: number,
+	MaxHP: number,
+	Position: Vector3,
+	Radius: number,
+	Damage: { [Player]: number },
+}
+
+local records: { [string]: Record } = {}
+local liveCount: { [number]: number } = {} -- small breakables alive per zone
+local pending: { [number]: number } = {} -- small breakables waiting to respawn
+local targets: { [Player]: Record } = {}
+local targetSince: { [Player]: number } = {}
+local hinted: { [Player]: boolean } = {}
+local folder: Folder
+local nextId = 0
+local rng = Random.new()
+local groundParams = RaycastParams.new()
+groundParams.FilterType = Enum.RaycastFilterType.Include
+groundParams.FilterDescendantsInstances = { Workspace.Terrain }
+
+local function notify(player: Player, message: string, kind: string?)
+	Remotes.Get("Notify"):FireClient(player, message, kind or "info")
+end
+
+local function rootOf(player: Player): BasePart?
+	local character = player.Character
+	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+	if not character or (humanoid and humanoid.Health <= 0) then
+		return nil
+	end
+	return character:FindFirstChild("HumanoidRootPart") :: BasePart?
+end
+
+local function flatDistance(a: Vector3, b: Vector3): number
+	return ((a - b) * Vector3.new(1, 0, 1)).Magnitude
+end
+
+--------------------------------------------------------------------------------
+-- Damage
+--------------------------------------------------------------------------------
+
+-- Damage per second of a player's team (the player plus their equipped pets).
+function BreakableService.GetDamage(player: Player): number
+	local profile = DataService:GetProfile(player)
+	if not profile then
+		return 0
+	end
+	local equipped = {}
+	for _, petData in ipairs(profile.Data.Pets) do
+		if petData.Equipped then
+			table.insert(equipped, petData)
+		end
+	end
+	return Config.GetTeamDamage(equipped, PetService.GetSlotCount(player))
+end
+
+--------------------------------------------------------------------------------
+-- Spawning
+--------------------------------------------------------------------------------
+
+local function pickKind(): string
+	local total = 0
+	for _, spec in pairs(Config.Breakables.Kinds) do
+		total += spec.Weight
+	end
+	local roll = rng:NextNumber(0, total)
+	local names = {}
+	for name in pairs(Config.Breakables.Kinds) do
+		table.insert(names, name)
+	end
+	table.sort(names)
+	for _, name in ipairs(names) do
+		roll -= Config.Breakables.Kinds[name].Weight
+		if roll <= 0 then
+			return name
+		end
+	end
+	return names[1]
+end
+
+local function groundY(x: number, z: number): number
+	local hit = Workspace:Raycast(Vector3.new(x, 60, z), Vector3.new(0, -120, 0), groundParams)
+	return if hit then hit.Position.Y else 0
+end
+
+local function spotIsFree(position: Vector3, radius: number): boolean
+	if MapBuilder.IsSpotBlocked(position) then
+		return false
+	end
+	for _, record in pairs(records) do
+		if flatDistance(record.Position, position) < record.Radius + radius + MIN_GAP then
+			return false
+		end
+	end
+	return true
+end
+
+local function place(kind: string, zoneIndex: number, position: Vector3?): Record?
+	local zone = Config.Zones[zoneIndex]
+	local bounds = MapBuilder.GetZoneBounds(zoneIndex)
+	if not zone or not bounds then
+		return nil
+	end
+	local model, radius = BreakableLooks.Build(kind, zone.Theme.Accent, rng)
+
+	local spot = position
+	if not spot then
+		for _ = 1, 12 do
+			local candidate = Vector3.new(rng:NextNumber(bounds.MinX + 4, bounds.MaxX - 4), 0, rng:NextNumber(bounds.MinZ + 4, bounds.MaxZ - 4))
+			if spotIsFree(candidate, radius) then
+				spot = candidate
+				break
+			end
+		end
+	end
+	if not spot then
+		model:Destroy()
+		return nil
+	end
+	local ground = groundY(spot.X, spot.Z)
+	local finalPosition = Vector3.new(spot.X, ground, spot.Z)
+	model:PivotTo(CFrame.new(finalPosition) * CFrame.Angles(0, rng:NextNumber(0, math.pi * 2), 0))
+
+	nextId += 1
+	local id = "B" .. nextId
+	local maxHP = Config.GetBreakableHP(kind, zoneIndex)
+	model.Name = id
+	model:SetAttribute("Kind", kind)
+	model:SetAttribute("Zone", zoneIndex)
+	model:SetAttribute("HP", maxHP)
+	model:SetAttribute("MaxHP", maxHP)
+	model:SetAttribute("Radius", radius)
+
+	local record: Record = {
+		Id = id,
+		Model = model,
+		Kind = kind,
+		Zone = zoneIndex,
+		HP = maxHP,
+		MaxHP = maxHP,
+		Position = finalPosition,
+		Radius = radius,
+		Damage = {},
+	}
+
+	local clicker = Instance.new("ClickDetector")
+	clicker.MaxActivationDistance = Config.Breakables.MaxDistance
+	clicker.Parent = model.PrimaryPart
+	clicker.MouseClick:Connect(function(player)
+		BreakableService.SetTarget(player, record)
+	end)
+
+	records[id] = record
+	model.Parent = folder
+	return record
+end
+
+local function spawnSmall(zoneIndex: number)
+	if place(pickKind(), zoneIndex, nil) then
+		liveCount[zoneIndex] = (liveCount[zoneIndex] or 0) + 1
+	end
+end
+
+local function spawnGiant(zoneIndex: number)
+	place("Giant", zoneIndex, MapBuilder.GetGiantChestSpot(zoneIndex))
+end
+
+-- Keeps each zone stocked: more breakables when more players stand in it.
+local function rebalance()
+	local playersIn: { [number]: number } = {}
+	for _, player in ipairs(Players:GetPlayers()) do
+		local root = rootOf(player)
+		local zoneIndex = root and MapBuilder.GetZoneAt(root.Position)
+		if zoneIndex then
+			playersIn[zoneIndex] = (playersIn[zoneIndex] or 0) + 1
+		end
+	end
+	local settings = Config.Breakables
+	for zoneIndex in ipairs(Config.Zones) do
+		local extra = math.max(0, (playersIn[zoneIndex] or 0) - 1)
+		local target = math.min(settings.PerZone + extra * settings.ExtraPerPlayer, settings.MaxPerZone)
+		local missing = target - (liveCount[zoneIndex] or 0) - (pending[zoneIndex] or 0)
+		for _ = 1, math.min(missing, 4) do
+			spawnSmall(zoneIndex)
+		end
+	end
+end
+
+--------------------------------------------------------------------------------
+-- Targeting
+--------------------------------------------------------------------------------
+
+local function clearTarget(player: Player)
+	targets[player] = nil
+	targetSince[player] = nil
+	if player.Parent then
+		player:SetAttribute("BreakTarget", "")
+	end
+end
+
+function BreakableService.SetTarget(player: Player, record: Record)
+	if records[record.Id] ~= record then
+		return
+	end
+	local profile = DataService:GetProfile(player)
+	local root = rootOf(player)
+	if not profile or not root then
+		return
+	end
+	if record.Zone > profile.Data.ZonesUnlocked then
+		notify(player, "Unlock " .. Config.Zones[record.Zone].Name .. " first!", "error")
+		return
+	end
+	if flatDistance(root.Position, record.Position) > Config.Breakables.MaxDistance then
+		return
+	end
+	if targets[player] == record then
+		return
+	end
+	targets[player] = record
+	targetSince[player] = os.clock()
+	player:SetAttribute("BreakTarget", record.Id)
+
+	if not hinted[player] then
+		local anyEquipped = false
+		for _, petData in ipairs(profile.Data.Pets) do
+			if petData.Equipped then
+				anyEquipped = true
+				break
+			end
+		end
+		if not anyEquipped then
+			hinted[player] = true
+			notify(player, "Hatch an egg! Pets break things MUCH faster than you can.", "info")
+		end
+	end
+end
+
+-- After a break, send the player's pets to the nearest breakable close by.
+local function retarget(player: Player, zoneIndex: number)
+	local root = rootOf(player)
+	if not root then
+		clearTarget(player)
+		return
+	end
+	local best, bestDistance = nil, Config.Breakables.AutoTargetRange
+	for _, record in pairs(records) do
+		if record.Zone == zoneIndex then
+			local distance = flatDistance(record.Position, root.Position)
+			if distance < bestDistance then
+				best, bestDistance = record, distance
+			end
+		end
+	end
+	if best then
+		BreakableService.SetTarget(player, best)
+	else
+		clearTarget(player)
+	end
+end
+
+--------------------------------------------------------------------------------
+-- Breaking
+--------------------------------------------------------------------------------
+
+local function rollGems(range: { number }): number
+	return rng:NextInteger(range[1], range[2])
+end
+
+local function breakRecord(record: Record)
+	records[record.Id] = nil
+	local isGiant = record.Kind == "Giant"
+	local spec = if isGiant then Config.Breakables.Giant else Config.Breakables.Kinds[record.Kind]
+	local zone = Config.Zones[record.Zone]
+	record.Model:Destroy()
+
+	-- The biggest contributor gets the gem roll on small breakables.
+	local topPlayer, topDamage = nil, 0
+	for player, damage in pairs(record.Damage) do
+		if damage > topDamage then
+			topPlayer, topDamage = player, damage
+		end
+	end
+
+	for player, damage in pairs(record.Damage) do
+		local profile = DataService:GetProfile(player)
+		if profile and player.Parent then
+			local share = math.clamp(damage / record.MaxHP, 0, 1)
+			local coinShare = share
+			local gems = 0
+			if isGiant then
+				if share >= spec.MinShare then
+					-- Helping out pays: everyone gets a solid base plus their share.
+					coinShare = 0.3 + 0.7 * share
+					gems = rollGems(spec.Gems)
+				end
+			elseif player == topPlayer and rng:NextNumber() < spec.GemChance then
+				gems = rollGems(spec.Gems)
+			end
+			local coins = 0
+			if coinShare > 0 then
+				coins = EconomyService.AddCoins(player, spec.Reward * zone.OrbValue * coinShare, true)
+			end
+			if gems > 0 then
+				EconomyService.AddGems(player, gems)
+			end
+			if share >= 0.25 or (isGiant and share >= spec.MinShare) then
+				profile.Data.Stats.BreakablesBroken += 1
+				DataService:Replicate(player, { Stats = profile.Data.Stats })
+			end
+			Remotes.Get("BreakableBroken"):FireClient(player, record.Position, coins, gems, record.Kind)
+		end
+	end
+
+	for player, target in pairs(targets) do
+		if target == record then
+			retarget(player, record.Zone)
+		end
+	end
+
+	if isGiant then
+		task.delay(Config.Breakables.Giant.Respawn, spawnGiant, record.Zone)
+	else
+		liveCount[record.Zone] = math.max(0, (liveCount[record.Zone] or 1) - 1)
+		pending[record.Zone] = (pending[record.Zone] or 0) + 1
+		task.delay(rng:NextNumber(Config.Breakables.RespawnMin, Config.Breakables.RespawnMax), function()
+			pending[record.Zone] -= 1
+			spawnSmall(record.Zone)
+		end)
+	end
+end
+
+local function tick(dt: number)
+	local now = os.clock()
+	for player, record in pairs(targets) do
+		local profile = DataService:GetProfile(player)
+		local root = rootOf(player)
+		if records[record.Id] ~= record or not profile or not root or record.Zone > profile.Data.ZonesUnlocked or flatDistance(root.Position, record.Position) > Config.Breakables.MaxDistance then
+			clearTarget(player)
+		elseif now - (targetSince[player] or now) >= ARRIVE_DELAY then
+			local damage = math.min(BreakableService.GetDamage(player) * dt, record.HP)
+			record.Damage[player] = (record.Damage[player] or 0) + damage
+			record.HP -= damage
+			if record.HP <= 0.001 then
+				breakRecord(record)
+			else
+				record.Model:SetAttribute("HP", math.ceil(record.HP))
+			end
+		end
+	end
+end
+
+--------------------------------------------------------------------------------
+-- Init
+--------------------------------------------------------------------------------
+
+function BreakableService.Init()
+	local existing = Workspace:FindFirstChild("Breakables")
+	if existing then
+		existing:Destroy()
+	end
+	folder = Instance.new("Folder")
+	folder.Name = "Breakables"
+	folder.Parent = Workspace
+
+	for zoneIndex in ipairs(Config.Zones) do
+		spawnGiant(zoneIndex)
+		for _ = 1, Config.Breakables.PerZone do
+			spawnSmall(zoneIndex)
+		end
+	end
+
+	task.spawn(function()
+		local last = os.clock()
+		while true do
+			task.wait(TICK)
+			local now = os.clock()
+			tick(math.min(now - last, 1))
+			last = now
+		end
+	end)
+	task.spawn(function()
+		while true do
+			task.wait(3)
+			rebalance()
+		end
+	end)
+
+	local function watch(player: Player)
+		player:SetAttribute("BreakTarget", "")
+		player.CharacterAdded:Connect(function()
+			clearTarget(player)
+		end)
+	end
+	for _, player in ipairs(Players:GetPlayers()) do
+		watch(player)
+	end
+	Players.PlayerAdded:Connect(watch)
+	Players.PlayerRemoving:Connect(function(player)
+		targets[player] = nil
+		targetSince[player] = nil
+		hinted[player] = nil
+		for _, record in pairs(records) do
+			record.Damage[player] = nil
+		end
+	end)
+end
+
+return BreakableService
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="16">
         <Properties>
           <string name="Name">CollectibleService</string>
           <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -1585,7 +2431,7 @@ return CollectibleService
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="14">
+      <Item class="ModuleScript" referent="17">
         <Properties>
           <string name="Name">ComplianceService</string>
           <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -1646,7 +2492,7 @@ return ComplianceService
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="15">
+      <Item class="ModuleScript" referent="18">
         <Properties>
           <string name="Name">DataService</string>
           <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -2106,7 +2952,7 @@ return DataService
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="16">
+      <Item class="ModuleScript" referent="19">
         <Properties>
           <string name="Name">EconomyService</string>
           <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -2375,7 +3221,7 @@ return EconomyService
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="17">
+      <Item class="ModuleScript" referent="20">
         <Properties>
           <string name="Name">EventService</string>
           <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -2466,7 +3312,7 @@ return EventService
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="18">
+      <Item class="ModuleScript" referent="21">
         <Properties>
           <string name="Name">GamepassService</string>
           <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -2640,7 +3486,7 @@ return GamepassService
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="19">
+      <Item class="ModuleScript" referent="22">
         <Properties>
           <string name="Name">LeaderboardService</string>
           <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -2889,7 +3735,7 @@ return LeaderboardService
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="20">
+      <Item class="ModuleScript" referent="23">
         <Properties>
           <string name="Name">MapBuilder</string>
           <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -2912,6 +3758,7 @@ local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared.Config)
 local Util = require(Shared.Util)
 
+local EggLooks = require(Shared.EggLooks)
 local MapDecor = require(script.Parent.MapDecor)
 
 local MapBuilder = {}
@@ -2945,9 +3792,9 @@ local TERRAIN = {
 }
 
 local MATERIAL_COLORS = {
-	{ Enum.Material.Grass, rgb(104, 178, 64) },
-	{ Enum.Material.LeafyGrass, rgb(72, 140, 52) },
-	{ Enum.Material.Ground, rgb(160, 122, 84) },
+	{ Enum.Material.Grass, rgb(112, 202, 72) },
+	{ Enum.Material.LeafyGrass, rgb(82, 168, 60) },
+	{ Enum.Material.Ground, rgb(226, 186, 122) },
 	{ Enum.Material.Rock, rgb(128, 122, 118) },
 	{ Enum.Material.Cobblestone, rgb(176, 168, 158) },
 	{ Enum.Material.Salt, rgb(255, 190, 222) },
@@ -3029,12 +3876,12 @@ local function billboard(adornee: BasePart, title: string, subtitle: string?, co
 	titleLabel.Name = "Title"
 	titleLabel.BackgroundTransparency = 1
 	titleLabel.Size = UDim2.new(1, 0, 0.55, 0)
-	titleLabel.Font = Enum.Font.FredokaOne
+	titleLabel.Font = Enum.Font.LuckiestGuy
 	titleLabel.Text = title
 	titleLabel.TextColor3 = color or Color3.new(1, 1, 1)
 	titleLabel.TextScaled = true
-	titleLabel.TextStrokeTransparency = 0.2
-	titleLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+	titleLabel.TextStrokeTransparency = 0
+	titleLabel.TextStrokeColor3 = rgb(30, 22, 40)
 	titleLabel.Parent = gui
 
 	local subLabel = Instance.new("TextLabel")
@@ -3042,7 +3889,8 @@ local function billboard(adornee: BasePart, title: string, subtitle: string?, co
 	subLabel.BackgroundTransparency = 1
 	subLabel.Position = UDim2.new(0, 0, 0.55, 0)
 	subLabel.Size = UDim2.new(1, 0, 0.45, 0)
-	subLabel.Font = Enum.Font.GothamBold
+	subLabel.Font = Enum.Font.FredokaOne
+	subLabel.RichText = true
 	subLabel.Text = subtitle or ""
 	subLabel.TextColor3 = rgb(255, 235, 150)
 	subLabel.TextScaled = true
@@ -3064,6 +3912,9 @@ local function isReserved(zoneIndex: number, localX: number, z: number): boolean
 	end
 	if math.abs(localX) < 8 and z < 0 and z > -42 then
 		return true
+	end
+	if math.abs(localX - 44) < 13 and math.abs(z - 36) < 13 then
+		return true -- Giant Chest
 	end
 	if zoneIndex == 1 then
 		if z < -70 then
@@ -3213,17 +4064,17 @@ local function buildBridgeAndGate(mapFolder: Folder, index: number)
 				Size = V(1.9, 1, BRIDGE_WIDTH),
 				Position = V(gapCenter - deckLength / 2 + 1 + i * 2, -0.5, 0),
 				Color = if i % 2 == 0 then rgb(150, 105, 65) else rgb(135, 95, 58),
-				Material = Enum.Material.WoodPlanks,
+				Material = Enum.Material.SmoothPlastic,
 			}, bridges)
 		end
-		part({ Name = "Bridge" .. index, Size = V(deckLength, 1, BRIDGE_WIDTH), Position = V(gapCenter, -1.5, 0), Color = rgb(110, 80, 50), Material = Enum.Material.Wood }, bridges)
+		part({ Name = "Bridge" .. index, Size = V(deckLength, 1, BRIDGE_WIDTH), Position = V(gapCenter, -1.5, 0), Color = rgb(110, 80, 50), Material = Enum.Material.SmoothPlastic }, bridges)
 	end
 	for _, side in ipairs({ -1, 1 }) do
 		local z = side * (BRIDGE_WIDTH / 2 + 0.5)
 		part({ Name = "Rail", Size = V(deckLength, WALL_HEIGHT, 1), Position = V(gapCenter, WALL_HEIGHT / 2, z), Transparency = 1, CastShadow = false }, bridges)
-		part({ Name = "Handrail", Size = V(deckLength, 0.5, 0.6), Position = V(gapCenter, 3, z), Color = theme.Trim, Material = Enum.Material.Wood }, bridges)
+		part({ Name = "Handrail", Size = V(deckLength, 0.5, 0.6), Position = V(gapCenter, 3, z), Color = theme.Trim, Material = Enum.Material.SmoothPlastic }, bridges)
 		for x = gapCenter - deckLength / 2 + 1, gapCenter + deckLength / 2 - 1, 4 do
-			part({ Name = "Post", Size = V(0.6, 3, 0.6), Position = V(x, 1.5, z), Color = theme.Trim, Material = Enum.Material.Wood }, bridges)
+			part({ Name = "Post", Size = V(0.6, 3, 0.6), Position = V(x, 1.5, z), Color = theme.Trim, Material = Enum.Material.SmoothPlastic }, bridges)
 		end
 	end
 
@@ -3233,7 +4084,7 @@ local function buildBridgeAndGate(mapFolder: Folder, index: number)
 	gates.Parent = mapFolder
 	local archX = gapCenter + gapWidth / 2 - 2
 	local stone = if isSpace then rgb(80, 70, 120) else rgb(150, 145, 140)
-	local stoneMat = if isSpace then Enum.Material.Metal else Enum.Material.Cobblestone
+	local stoneMat = if isSpace then Enum.Material.Metal else Enum.Material.SmoothPlastic
 	for _, side in ipairs({ -1, 1 }) do
 		part({ Name = "Pillar", Size = V(5, 24, 5), Position = V(archX, 12, side * (BRIDGE_WIDTH / 2 + 2.5)), Color = stone, Material = stoneMat }, gates)
 		part({ Name = "PillarCap", Size = V(6, 1.5, 6), Position = V(archX, 24.75, side * (BRIDGE_WIDTH / 2 + 2.5)), Color = theme.Trim, Material = stoneMat }, gates)
@@ -3254,55 +4105,62 @@ local function buildBridgeAndGate(mapFolder: Folder, index: number)
 		CastShadow = false,
 	}, gates)
 	gate:SetAttribute("Zone", index + 1)
-	billboard(gate, nextZone.Name, "Unlock: " .. Util.FormatNumber(nextZone.Cost) .. " Coins", theme.Accent, UDim2.fromOffset(320, 110), 15)
+	billboard(gate, nextZone.Name, "Walk in to unlock: " .. Util.FormatNumber(nextZone.Cost) .. " Coins", theme.Accent, UDim2.fromOffset(340, 110), 15)
 end
 
-local function buildEggStand(parent: Instance, eggKey: string, egg, position: Vector3, trim: Color3)
+-- Nest colours per theme: { twigs, straw }.
+local NEST_COLORS = {
+	Trees = { rgb(150, 100, 55), rgb(225, 185, 95) },
+	Candy = { rgb(255, 205, 140), rgb(255, 120, 175) },
+	Ice = { rgb(170, 215, 255), rgb(240, 250, 255) },
+	Rock = { rgb(55, 42, 42), rgb(255, 120, 40) },
+	Crystal = { rgb(105, 105, 140), rgb(150, 100, 255) },
+}
+
+local function buildEggStand(parent: Instance, eggKey: string, egg, position: Vector3, trim: Color3, decor: string)
 	local model = Instance.new("Model")
 	model.Name = eggKey
 	model:SetAttribute("EggId", eggKey)
 
-	cylinder(model, position, 1.2, 7, trim:Lerp(rgb(60, 60, 70), 0.55), Enum.Material.Cobblestone)
-	cylinder(model, position + V(0, 1.2, 0), 0.25, 7.2, egg.Color, Enum.Material.Neon, { CastShadow = false })
-	cylinder(model, position + V(0, 1.2, 0), 1.2, 3.6, rgb(245, 245, 250), Enum.Material.Marble)
-	cylinder(model, position + V(0, 2.4, 0), 0.25, 3.9, egg.Color, Enum.Material.Neon, { CastShadow = false })
+	-- Chunky toy pedestal with glowing trims
+	cylinder(model, position, 1.2, 7, trim:Lerp(rgb(60, 60, 70), 0.3), Enum.Material.SmoothPlastic)
+	cylinder(model, position + V(0, 1.2, 0), 0.3, 7.25, egg.Color, Enum.Material.Neon, { CastShadow = false })
+	cylinder(model, position + V(0, 1.2, 0), 1.2, 4.3, rgb(250, 250, 255), Enum.Material.SmoothPlastic)
+	cylinder(model, position + V(0, 2.4, 0), 0.25, 4.55, egg.Color, Enum.Material.Neon, { CastShadow = false })
 	for i = 0, 3 do
 		local angle = math.rad(45 + i * 90)
 		local p = position + V(math.cos(angle) * 5.6, 1.2, math.sin(angle) * 5.6)
-		cylinder(model, p, 4, 0.45, rgb(230, 230, 240), Enum.Material.Marble)
-		local orb = part({ Name = "Lamp", Shape = Enum.PartType.Ball, Size = V(1.1, 1.1, 1.1), Position = p + V(0, 4.5, 0), Color = egg.Color, Material = Enum.Material.Neon, CastShadow = false }, model)
+		cylinder(model, p, 4, 0.45, rgb(250, 250, 255), Enum.Material.SmoothPlastic)
+		local orb = part({ Name = "Lamp", Shape = Enum.PartType.Ball, Size = V(1.2, 1.2, 1.2), Position = p + V(0, 4.55, 0), Color = egg.Color, Material = Enum.Material.Neon, CastShadow = false }, model)
 		orb.CanCollide = false
 	end
 
-	-- Block + sphere mesh gives a taller-than-wide egg (Ball parts are always round).
-	local eggPart = part({
-		Name = "Egg",
-		Size = V(5, 6.5, 5),
-		Position = position + V(0, 2.65 + 3.25, 0),
-		Color = egg.Color,
-		Material = Enum.Material.SmoothPlastic,
-		CanCollide = false,
-	}, model)
-	local eggMesh = Instance.new("SpecialMesh")
-	eggMesh.MeshType = Enum.MeshType.Sphere
-	eggMesh.Parent = eggPart
-	eggPart:SetAttribute("EggId", eggKey)
+	-- Nest of twigs around the egg's base
+	local nest = NEST_COLORS[decor] or NEST_COLORS.Trees
+	local nestRng = Random.new(#eggKey * 31)
+	for i = 1, 18 do
+		local angle = (i / 18) * math.pi * 2
+		local center = position + V(math.cos(angle) * 2.55, 2.85 + nestRng:NextNumber(-0.1, 0.25), math.sin(angle) * 2.55)
+		part({
+			Name = "Twig",
+			Shape = Enum.PartType.Cylinder,
+			Size = V(2.1, 0.5, 0.5),
+			CFrame = CFrame.new(center) * CFrame.Angles(0, -(angle + math.pi / 2), 0) * CFrame.Angles(nestRng:NextNumber(-0.3, 0.3), 0, nestRng:NextNumber(-0.25, 0.25)),
+			Color = if i % 3 == 0 then nest[2] else nest[1],
+			Material = Enum.Material.SmoothPlastic,
+			CanCollide = false,
+			CastShadow = false,
+		}, model)
+	end
 
-	local spots = part({
-		Name = "Spots",
-		Shape = Enum.PartType.Ball,
-		Size = V(5.15, 5.15, 5.15),
-		Position = eggPart.Position + V(0, -0.65, 0),
-		Color = egg.Color:Lerp(Color3.new(1, 1, 1), 0.45),
-		Material = Enum.Material.SmoothPlastic,
-		Transparency = 0.5,
-		CanCollide = false,
-		CastShadow = false,
-	}, model)
-	spots.CanQuery = false
+	-- The egg itself (shared look with the hatch animation)
+	local eggModel, eggPart = EggLooks.Build(egg)
+	eggModel:PivotTo(CFrame.new(position + V(0, 2.55, 0)))
+	eggPart:SetAttribute("EggId", eggKey)
+	eggModel.Parent = model
 
 	-- An invisible sphere inside the egg blocks players without square corners.
-	local collider = part({ Name = "Collider", Shape = Enum.PartType.Ball, Size = V(5, 5, 5), Position = eggPart.Position, Transparency = 1, CastShadow = false }, model)
+	local collider = part({ Name = "Collider", Shape = Enum.PartType.Ball, Size = V(5, 5, 5), Position = eggPart.Position - V(0, 0.4, 0), Transparency = 1, CastShadow = false }, model)
 	collider.CanQuery = false
 
 	local sparkles = Instance.new("ParticleEmitter")
@@ -3315,10 +4173,32 @@ local function buildEggStand(parent: Instance, eggKey: string, egg, position: Ve
 	sparkles.SpreadAngle = Vector2.new(180, 180)
 	sparkles.Parent = eggPart
 
+	-- Soft light pillar rising from the egg (visible from across the zone)
+	local base = Instance.new("Attachment")
+	base.Name = "PillarBase"
+	base.Position = V(0, 2.6, 0)
+	base.Parent = eggPart
+	local top = Instance.new("Attachment")
+	top.Name = "PillarTop"
+	top.Position = V(0, 30, 0)
+	top.Parent = eggPart
+	local pillar = Instance.new("Beam")
+	pillar.Name = "LightPillar"
+	pillar.Attachment0 = base
+	pillar.Attachment1 = top
+	pillar.Color = ColorSequence.new(egg.Color:Lerp(Color3.new(1, 1, 1), 0.3))
+	pillar.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.6), NumberSequenceKeypoint.new(1, 1) })
+	pillar.Width0 = 5
+	pillar.Width1 = 3
+	pillar.LightEmission = 1
+	pillar.FaceCamera = true
+	pillar.Segments = 1
+	pillar.Parent = eggPart
+
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.Name = "HatchPrompt"
-	prompt.ActionText = "Open"
-	prompt.ObjectText = egg.Name
+	prompt.ActionText = "Hatch"
+	prompt.ObjectText = egg.Name .. " - " .. Util.FormatNumber(egg.Cost) .. (if egg.Currency == "Gems" then " Gems" else " Coins")
 	prompt.KeyboardKeyCode = Enum.KeyCode.E
 	prompt.HoldDuration = 0
 	prompt.MaxActivationDistance = 14
@@ -3340,10 +4220,10 @@ local function buildRebirthPortal(parent: Instance, position: Vector3)
 	model.Name = "RebirthPortal"
 	local purple = rgb(180, 90, 255)
 
-	cylinder(model, position, 1, 9, rgb(45, 35, 70), Enum.Material.Marble)
+	cylinder(model, position, 1, 9, rgb(45, 35, 70), Enum.Material.SmoothPlastic)
 	cylinder(model, position + V(0, 1, 0), 0.3, 9.3, purple, Enum.Material.Neon, { CastShadow = false })
 	for _, side in ipairs({ -1, 1 }) do
-		part({ Name = "Pillar", Size = V(2.2, 15, 2.2), Position = position + V(side * 7.5, 8.5, 0), Color = rgb(60, 45, 95), Material = Enum.Material.Marble }, model)
+		part({ Name = "Pillar", Size = V(2.2, 15, 2.2), Position = position + V(side * 7.5, 8.5, 0), Color = rgb(60, 45, 95), Material = Enum.Material.SmoothPlastic }, model)
 		local top = part({ Name = "Crystal", Size = V(1.4, 3, 1.4), CFrame = CFrame.new(position + V(side * 7.5, 17.6, 0)) * CFrame.Angles(0, math.rad(45), 0), Color = purple, Material = Enum.Material.Neon, CastShadow = false }, model)
 		top.CanCollide = false
 	end
@@ -3404,9 +4284,9 @@ end
 local function buildLeaderboard(parent: Instance, key: string, title: string, position: Vector3)
 	local wood = rgb(110, 80, 55)
 	for _, side in ipairs({ -1, 1 }) do
-		part({ Name = "Post", Size = V(1.4, 17, 1.4), Position = position + V(side * 11.8, 8.5, 0.6), Color = wood, Material = Enum.Material.Wood }, parent)
+		part({ Name = "Post", Size = V(1.4, 17, 1.4), Position = position + V(side * 11.8, 8.5, 0.6), Color = wood, Material = Enum.Material.SmoothPlastic }, parent)
 	end
-	part({ Name = "Roof", Size = V(26, 1.2, 4), Position = position + V(0, 17.4, 0.6), Color = rgb(170, 60, 50), Material = Enum.Material.WoodPlanks }, parent)
+	part({ Name = "Roof", Size = V(26, 1.2, 4), Position = position + V(0, 17.4, 0.6), Color = rgb(170, 60, 50), Material = Enum.Material.SmoothPlastic }, parent)
 
 	local board = part({
 		Name = key,
@@ -3471,10 +4351,10 @@ local function buildPlaza(zoneModel: Model, cx: number)
 
 	-- Fountain at the west end of the plaza
 	local fountain = center + V(-12, 0, 0)
-	cylinder(plaza, fountain, 1.6, 7, rgb(205, 200, 195), Enum.Material.Marble)
+	cylinder(plaza, fountain, 1.6, 7, rgb(205, 200, 195), Enum.Material.SmoothPlastic)
 	cylinder(plaza, fountain + V(0, 1.2, 0), 0.5, 6.2, rgb(80, 170, 255), Enum.Material.Glass, { Transparency = 0.25, Reflectance = 0.25, CanCollide = false })
-	cylinder(plaza, fountain + V(0, 1.6, 0), 4, 0.9, rgb(225, 220, 215), Enum.Material.Marble)
-	local bowl = cylinder(plaza, fountain + V(0, 5.4, 0), 0.8, 2.8, rgb(225, 220, 215), Enum.Material.Marble)
+	cylinder(plaza, fountain + V(0, 1.6, 0), 4, 0.9, rgb(225, 220, 215), Enum.Material.SmoothPlastic)
+	local bowl = cylinder(plaza, fountain + V(0, 5.4, 0), 0.8, 2.8, rgb(225, 220, 215), Enum.Material.SmoothPlastic)
 	cylinder(plaza, fountain + V(0, 6.0, 0), 0.25, 2.4, rgb(80, 170, 255), Enum.Material.Glass, { Transparency = 0.25, CanCollide = false })
 	local spray = Instance.new("ParticleEmitter")
 	spray.Color = ColorSequence.new(rgb(200, 235, 255))
@@ -3514,10 +4394,10 @@ local function buildPlaza(zoneModel: Model, cx: number)
 
 	-- Welcome sign
 	for _, side in ipairs({ -1, 1 }) do
-		part({ Name = "SignPost", Size = V(0.6, 6, 0.6), Position = center + V(2, 3, -14 + side * 3.5), Color = rgb(120, 85, 55), Material = Enum.Material.Wood }, plaza)
+		part({ Name = "SignPost", Size = V(0.6, 6, 0.6), Position = center + V(2, 3, -14 + side * 3.5), Color = rgb(120, 85, 55), Material = Enum.Material.SmoothPlastic }, plaza)
 	end
-	local signBoard = part({ Name = "WelcomeSign", Size = V(0.5, 3, 8), Position = center + V(2, 5.5, -14), Color = rgb(150, 110, 70), Material = Enum.Material.WoodPlanks }, plaza)
-	billboard(signBoard, "Welcome to " .. Config.GameName .. "!", "Collect orbs  >  Hatch eggs  >  Unlock zones  >  Rebirth!", rgb(255, 230, 120), UDim2.fromOffset(420, 120), 4)
+	local signBoard = part({ Name = "WelcomeSign", Size = V(0.5, 3, 8), Position = center + V(2, 5.5, -14), Color = rgb(150, 110, 70), Material = Enum.Material.SmoothPlastic }, plaza)
+	billboard(signBoard, "Welcome to " .. Config.GameName .. "!", "Collect coins > Hatch pets > Break chests > Unlock zones", rgb(255, 230, 120), UDim2.fromOffset(420, 120), 4)
 
 	-- Spawn pad (players face +X, toward the zone)
 	local spawn = Instance.new("SpawnLocation")
@@ -3526,7 +4406,7 @@ local function buildPlaza(zoneModel: Model, cx: number)
 	spawn.Size = V(10, 0.4, 10)
 	spawn.CFrame = CFrame.lookAt(center + V(4, 0.2, 0), center + V(10, 0.2, 0))
 	spawn.Color = rgb(255, 255, 255)
-	spawn.Material = Enum.Material.Marble
+	spawn.Material = Enum.Material.SmoothPlastic
 	spawn.Neutral = true
 	spawn.Duration = 0
 	spawn.TopSurface = Enum.SurfaceType.Smooth
@@ -3582,6 +4462,8 @@ local function buildZone(mapFolder: Folder, index: number)
 		end
 	end
 	MapDecor.Backdrop(theme.Decor, decor, V(cx, 0, 0), rng)
+	MapDecor.Clouds(theme.Decor, decor, V(cx, 0, 0), rng)
+	table.insert(blockedSpots, { Position = V(cx + 44, 0, 36), Radius = 9 })
 
 	-- Egg stands
 	local stands = Instance.new("Folder")
@@ -3595,15 +4477,15 @@ local function buildZone(mapFolder: Folder, index: number)
 	end
 	for i, entry in ipairs(eggsHere) do
 		local offset = (i - (#eggsHere + 1) / 2) * 26
-		buildEggStand(stands, entry.Key, entry.Egg, V(cx + offset, 0, -42), theme.Trim)
+		buildEggStand(stands, entry.Key, entry.Egg, V(cx + offset, 0, -42), theme.Trim, theme.Decor)
 	end
 
 	-- Zone sign at the entrance
 	local signPos = V(cx - HALF + 14, 0, -16)
 	for _, dz in ipairs({ -3, 3 }) do
-		part({ Name = "SignPost", Size = V(0.7, 7, 0.7), Position = signPos + V(0, 3.5, dz), Color = theme.Trim, Material = Enum.Material.Wood }, zoneModel)
+		part({ Name = "SignPost", Size = V(0.7, 7, 0.7), Position = signPos + V(0, 3.5, dz), Color = theme.Trim, Material = Enum.Material.SmoothPlastic }, zoneModel)
 	end
-	local sign = part({ Name = "ZoneSign", Size = V(0.6, 3.2, 7.5), Position = signPos + V(0, 6.2, 0), Color = theme.Trim:Lerp(rgb(255, 255, 255), 0.2), Material = Enum.Material.WoodPlanks }, zoneModel)
+	local sign = part({ Name = "ZoneSign", Size = V(0.6, 3.2, 7.5), Position = signPos + V(0, 6.2, 0), Color = theme.Trim:Lerp(rgb(255, 255, 255), 0.2), Material = Enum.Material.SmoothPlastic }, zoneModel)
 	billboard(sign, zone.Name, "Zone " .. index, theme.Accent, UDim2.fromOffset(260, 90), 4.5)
 
 	if index == 1 then
@@ -3656,16 +4538,16 @@ local function setupLighting()
 	atmosphere.Parent = Lighting
 
 	local bloom = Instance.new("BloomEffect")
-	bloom.Intensity = 0.6
-	bloom.Size = 28
-	bloom.Threshold = 1.05
+	bloom.Intensity = 0.85
+	bloom.Size = 24
+	bloom.Threshold = 1.1
 	bloom.Parent = Lighting
 
 	local color = Instance.new("ColorCorrectionEffect")
 	color.Name = "ZoneColor"
-	color.Saturation = 0.18
-	color.Contrast = 0.08
-	color.Brightness = 0.02
+	color.Saturation = 0.3
+	color.Contrast = 0.12
+	color.Brightness = 0.03
 	color.Parent = Lighting
 
 	local rays = Instance.new("SunRaysEffect")
@@ -3674,7 +4556,7 @@ local function setupLighting()
 	rays.Parent = Lighting
 
 	Lighting.ClockTime = 14
-	Lighting.Brightness = 2.6
+	Lighting.Brightness = 3
 	Lighting.EnvironmentDiffuseScale = 0.7
 	Lighting.EnvironmentSpecularScale = 0.7
 end
@@ -3740,6 +4622,16 @@ function MapBuilder.IsSpotBlocked(position: Vector3): boolean
 	return false
 end
 
+-- Keeps orbs and breakables out of a circle (e.g. around a Giant Chest).
+function MapBuilder.BlockSpot(position: Vector3, radius: number)
+	table.insert(blockedSpots, { Position = position, Radius = radius })
+end
+
+-- Where each zone's Giant Chest sits (kept clear of stands, portal and plaza).
+function MapBuilder.GetGiantChestSpot(index: number): Vector3
+	return V(zoneCenterX(index) + 44, 0, 36)
+end
+
 function MapBuilder.GetEggStandPosition(eggKey: string): Vector3?
 	return eggStandPositions[eggKey]
 end
@@ -3752,7 +4644,7 @@ return MapBuilder
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="21">
+      <Item class="ModuleScript" referent="24">
         <Properties>
           <string name="Name">MapDecor</string>
           <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -3838,13 +4730,16 @@ local FLOWER_COLORS = { rgb(255, 120, 170), rgb(255, 225, 80), rgb(255, 255, 255
 
 local function tree(parent: Instance, pos: Vector3, rng: Random)
 	local h = rng:NextNumber(7, 10)
-	pillar(parent, pos - V(0, 0.5, 0), h, rng:NextNumber(0.7, 1), rgb(120, 85, 55), Enum.Material.Wood)
+	pillar(parent, pos - V(0, 0.5, 0), h, rng:NextNumber(0.7, 1), rgb(120, 85, 55), Enum.Material.SmoothPlastic)
 	local green = pick(LEAF_GREENS, rng)
 	local top = pos + V(0, h, 0)
-	ball(parent, top + V(0, 1, 0), rng:NextNumber(6.5, 8), green, Enum.Material.Grass)
+	local crown = rng:NextNumber(6.5, 8)
+	ball(parent, top + V(0, 1, 0), crown, green, Enum.Material.SmoothPlastic)
+	-- lighter "sunlit" puff on top gives the toy cel-shaded look
+	ball(parent, top + V(-0.7, 1 + crown * 0.28, -0.7), crown * 0.62, green:Lerp(rgb(235, 255, 160), 0.35), Enum.Material.SmoothPlastic, { CastShadow = false })
 	for i = 1, 3 do
 		local angle = i * 2.1 + rng:NextNumber(0, 1)
-		ball(parent, top + V(math.cos(angle) * 2.2, rng:NextNumber(-1.2, 0), math.sin(angle) * 2.2), rng:NextNumber(4.5, 6), green:Lerp(rgb(40, 110, 40), rng:NextNumber(0, 0.3)), Enum.Material.Grass)
+		ball(parent, top + V(math.cos(angle) * 2.2, rng:NextNumber(-1.2, 0), math.sin(angle) * 2.2), rng:NextNumber(4.5, 6), green:Lerp(rgb(40, 110, 40), rng:NextNumber(0, 0.3)), Enum.Material.SmoothPlastic)
 	end
 	-- a few apples / blossoms
 	if rng:NextNumber() < 0.5 then
@@ -3869,7 +4764,7 @@ end
 local function bush(parent: Instance, pos: Vector3, rng: Random)
 	local green = pick(LEAF_GREENS, rng)
 	for i = 1, 3 do
-		ball(parent, pos + V((i - 2) * 1.4, rng:NextNumber(0.6, 1.2), rng:NextNumber(-0.6, 0.6)), rng:NextNumber(2.4, 3.2), green, Enum.Material.Grass)
+		ball(parent, pos + V((i - 2) * 1.4, rng:NextNumber(0.6, 1.2), rng:NextNumber(-0.6, 0.6)), rng:NextNumber(2.4, 3.2), green, Enum.Material.SmoothPlastic)
 	end
 	if rng:NextNumber() < 0.6 then
 		local berry = pick(FLOWER_COLORS, rng)
@@ -3969,16 +4864,16 @@ end
 
 local function pineTree(parent: Instance, pos: Vector3, rng: Random)
 	local s = rng:NextNumber(0.85, 1.25)
-	pillar(parent, pos - V(0, 0.5, 0), 3 * s, 0.6 * s, rgb(100, 70, 50), Enum.Material.Wood)
+	pillar(parent, pos - V(0, 0.5, 0), 3 * s, 0.6 * s, rgb(100, 70, 50), Enum.Material.SmoothPlastic)
 	local green = rgb(40, 110, 70)
 	local y = 2.4 * s
 	for i, radius in ipairs({ 3.6, 2.8, 1.9, 1.0 }) do
 		local r = radius * s
-		pillar(parent, pos + V(0, y, 0), 1.8 * s, r, green, Enum.Material.Grass)
-		pillar(parent, pos + V(0, y + 1.8 * s, 0), 0.35 * s, r * 0.85, rgb(245, 250, 255), Enum.Material.Snow, { CastShadow = false })
+		pillar(parent, pos + V(0, y, 0), 1.8 * s, r, green, Enum.Material.SmoothPlastic)
+		pillar(parent, pos + V(0, y + 1.8 * s, 0), 0.35 * s, r * 0.85, rgb(245, 250, 255), Enum.Material.SmoothPlastic, { CastShadow = false })
 		y += 1.55 * s
 		if i == 4 then
-			ball(parent, pos + V(0, y + 0.5 * s, 0), 0.9 * s, rgb(245, 250, 255), Enum.Material.Snow)
+			ball(parent, pos + V(0, y + 0.5 * s, 0), 0.9 * s, rgb(245, 250, 255), Enum.Material.SmoothPlastic)
 		end
 	end
 end
@@ -3987,9 +4882,9 @@ local function snowman(parent: Instance, pos: Vector3, rng: Random)
 	local yaw = rng:NextNumber(-0.6, 0.6)
 	local base = CFrame.new(pos) * CFrame.Angles(0, yaw, 0)
 	local white = rgb(248, 250, 255)
-	ball(parent, (base * CFrame.new(0, 1.6, 0)).Position, 3.4, white, Enum.Material.Snow)
-	ball(parent, (base * CFrame.new(0, 3.9, 0)).Position, 2.5, white, Enum.Material.Snow)
-	ball(parent, (base * CFrame.new(0, 5.6, 0)).Position, 1.8, white, Enum.Material.Snow)
+	ball(parent, (base * CFrame.new(0, 1.6, 0)).Position, 3.4, white, Enum.Material.SmoothPlastic)
+	ball(parent, (base * CFrame.new(0, 3.9, 0)).Position, 2.5, white, Enum.Material.SmoothPlastic)
+	ball(parent, (base * CFrame.new(0, 5.6, 0)).Position, 1.8, white, Enum.Material.SmoothPlastic)
 	for _, x in ipairs({ -0.35, 0.35 }) do
 		ball(parent, (base * CFrame.new(x, 5.85, -0.8)).Position, 0.25, rgb(25, 25, 30), Enum.Material.SmoothPlastic)
 	end
@@ -4000,14 +4895,14 @@ local function snowman(parent: Instance, pos: Vector3, rng: Random)
 	-- hat + scarf
 	pillar(parent, (base * CFrame.new(0, 6.3, 0)).Position, 0.2, 1.1, rgb(30, 30, 40), Enum.Material.SmoothPlastic)
 	pillar(parent, (base * CFrame.new(0, 6.5, 0)).Position, 1.1, 0.7, rgb(30, 30, 40), Enum.Material.SmoothPlastic)
-	pillar(parent, (base * CFrame.new(0, 4.75, 0)).Position, 0.45, 1.05, rgb(220, 40, 50), Enum.Material.Fabric)
+	pillar(parent, (base * CFrame.new(0, 4.75, 0)).Position, 0.45, 1.05, rgb(220, 40, 50), Enum.Material.SmoothPlastic)
 	-- stick arms
 	for _, side in ipairs({ -1, 1 }) do
 		part({
 			Size = V(2.2, 0.18, 0.18),
 			CFrame = base * CFrame.new(side * 2.0, 4.3, 0) * CFrame.Angles(0, 0, math.rad(25 * side)),
 			Color = rgb(110, 75, 45),
-			Material = Enum.Material.Wood,
+			Material = Enum.Material.SmoothPlastic,
 		}, parent)
 	end
 end
@@ -4031,7 +4926,7 @@ end
 --------------------------------------------------------------------------------
 
 local function torch(parent: Instance, pos: Vector3, _rng: Random)
-	pillar(parent, pos, 5, 0.7, rgb(60, 55, 55), Enum.Material.Basalt)
+	pillar(parent, pos, 5, 0.7, rgb(60, 55, 55), Enum.Material.SmoothPlastic)
 	local bowl = pillar(parent, pos + V(0, 5, 0), 0.8, 1.2, rgb(45, 40, 40), Enum.Material.Metal)
 	local fire = Instance.new("Fire")
 	fire.Size = 5
@@ -4063,7 +4958,7 @@ local function obsidian(parent: Instance, pos: Vector3, rng: Random)
 end
 
 local function vent(parent: Instance, pos: Vector3, _rng: Random)
-	local cone = pillar(parent, pos - V(0, 0.4, 0), 1.6, 2.2, rgb(70, 50, 45), Enum.Material.Basalt)
+	local cone = pillar(parent, pos - V(0, 0.4, 0), 1.6, 2.2, rgb(70, 50, 45), Enum.Material.SmoothPlastic)
 	pillar(parent, pos + V(0, 1.2, 0), 0.1, 1.2, rgb(255, 110, 30), Enum.Material.Neon, { CastShadow = false })
 	local smoke = Instance.new("Smoke")
 	smoke.Color = rgb(90, 80, 80)
@@ -4108,7 +5003,7 @@ local function floatingRock(parent: Instance, pos: Vector3, rng: Random)
 		Size = V(size, size * 0.6, size * 0.9),
 		CFrame = CFrame.new(pos + V(0, y, 0)) * CFrame.Angles(0, rng:NextNumber(0, math.pi), math.rad(rng:NextNumber(-12, 12))),
 		Color = rgb(70, 60, 100),
-		Material = Enum.Material.Slate,
+		Material = Enum.Material.SmoothPlastic,
 		CanCollide = false,
 	}, parent)
 	local color = pick(NEON_SPACE, rng)
@@ -4274,9 +5169,43 @@ function MapDecor.Backdrop(themeName: string, parent: Instance, center: Vector3,
 			CastShadow = false,
 		}, parent)
 		ball(parent, center + V(-170, 110, -260), 60, rgb(90, 170, 255), Enum.Material.SmoothPlastic, { CanCollide = false, CastShadow = false })
-		ball(parent, center + V(200, 90, 240), 40, rgb(210, 210, 230), Enum.Material.Slate, { CanCollide = false, CastShadow = false })
+		ball(parent, center + V(200, 90, 240), 40, rgb(210, 210, 230), Enum.Material.SmoothPlastic, { CanCollide = false, CastShadow = false })
 		for i = -2, 2 do
 			Terrain:FillBall(north + V(i * 45, -25, rng:NextNumber(-20, 10)), rng:NextNumber(35, 48), Enum.Material.Slate)
+		end
+	end
+end
+
+-- Puffy cartoon clouds: clusters of white balls high above the zone.
+local CLOUD_COLORS = {
+	Trees = rgb(255, 255, 255),
+	Candy = rgb(255, 228, 244),
+	Ice = rgb(240, 247, 255),
+	Rock = rgb(92, 78, 78),
+}
+
+function MapDecor.Clouds(themeName: string, parent: Instance, center: Vector3, rng: Random)
+	local color = CLOUD_COLORS[themeName]
+	if not color then
+		return -- no clouds in space
+	end
+	local folder = Instance.new("Folder")
+	folder.Name = "Clouds"
+	folder.Parent = parent
+	for i = 1, 7 do
+		local angle = (i / 7) * math.pi * 2 + rng:NextNumber(-0.3, 0.3)
+		local distance = rng:NextNumber(40, 150)
+		local base = center + V(math.cos(angle) * distance, rng:NextNumber(75, 115), math.sin(angle) * distance)
+		local width = rng:NextNumber(26, 44)
+		for j = 1, rng:NextInteger(5, 7) do
+			local t = (j - 1) / 6 - 0.5
+			local size = rng:NextNumber(12, 20) * (1 - math.abs(t) * 0.8)
+			ball(folder, base + V(t * width, rng:NextNumber(-1, 3) + size * 0.15, rng:NextNumber(-6, 6)), size, color, Enum.Material.SmoothPlastic, {
+				CanCollide = false,
+				CanQuery = false,
+				CanTouch = false,
+				CastShadow = false,
+			})
 		end
 	end
 end
@@ -4285,7 +5214,7 @@ return MapDecor
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="22">
+      <Item class="ModuleScript" referent="25">
         <Properties>
           <string name="Name">PetService</string>
           <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -4746,7 +5675,7 @@ return PetService
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="23">
+      <Item class="ModuleScript" referent="26">
         <Properties>
           <string name="Name">PlayerService</string>
           <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -4765,7 +5694,7 @@ local EconomyService = require(script.Parent.EconomyService)
 
 local PlayerService = {}
 
-local ALLOWED_SETTINGS = { Music = true, SkipHatchAnimation = true }
+local ALLOWED_SETTINGS = { Music = true, SkipHatchAnimation = true, ShowGuide = true }
 
 local function setupLeaderstats(player: Player, data)
 	if player:FindFirstChild("leaderstats") then
@@ -4795,7 +5724,7 @@ function PlayerService.Init()
 				return
 			end
 			if profile.Data.Stats.Joins <= 1 then
-				Remotes.Get("Notify"):FireClient(player, "Welcome to " .. Config.GameName .. "! Walk into orbs to collect coins.", "info")
+				Remotes.Get("Notify"):FireClient(player, "Welcome to " .. Config.GameName .. "! Follow the glowing arrows to get started.", "info")
 			else
 				Remotes.Get("Notify"):FireClient(player, "Welcome back, " .. player.DisplayName .. "!", "info")
 			end
@@ -4828,7 +5757,7 @@ return PlayerService
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="24">
+      <Item class="ModuleScript" referent="27">
         <Properties>
           <string name="Name">QuestService</string>
           <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -4948,7 +5877,7 @@ return QuestService
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="25">
+      <Item class="ModuleScript" referent="28">
         <Properties>
           <string name="Name">RateLimiter</string>
           <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -4993,7 +5922,7 @@ return RateLimiter
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="26">
+      <Item class="ModuleScript" referent="29">
         <Properties>
           <string name="Name">RebirthService</string>
           <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -5085,7 +6014,7 @@ return RebirthService
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="27">
+      <Item class="ModuleScript" referent="30">
         <Properties>
           <string name="Name">RewardService</string>
           <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -5343,7 +6272,7 @@ return RewardService
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="28">
+      <Item class="ModuleScript" referent="31">
         <Properties>
           <string name="Name">ShopService</string>
           <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -5468,7 +6397,7 @@ return ShopService
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="29">
+      <Item class="ModuleScript" referent="32">
         <Properties>
           <string name="Name">UpgradeService</string>
           <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -5510,6 +6439,14 @@ function UpgradeService.GetBonus(player: Player, key: string): number
 end
 
 local function applySpeed(player: Player)
+	-- Trail colour for everyone to see: one tier per speed level, plus a
+	-- special one for maxed speed after a rebirth.
+	local profile = DataService:GetProfile(player)
+	if profile then
+		local level = UpgradeService.GetLevel(player, "WalkSpeed")
+		local maxed = level >= #Config.Upgrades.WalkSpeed.Costs
+		player:SetAttribute("TrailTier", level + (if maxed and profile.Data.Rebirths > 0 then 1 else 0))
+	end
 	local character = player.Character
 	local humanoid = character and character:FindFirstChildOfClass("Humanoid")
 	if humanoid then
@@ -5578,7 +6515,7 @@ return UpgradeService
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="30">
+      <Item class="ModuleScript" referent="33">
         <Properties>
           <string name="Name">ZoneService</string>
           <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -5675,28 +6612,28 @@ return ZoneService
       </Item>
     </Item>
   </Item>
-  <Item class="SoundService" referent="31">
+  <Item class="SoundService" referent="34">
     <Properties>
       <string name="Name">SoundService</string>
       <bool name="RespectFilteringEnabled">true</bool>
     </Properties>
   </Item>
-  <Item class="StarterGui" referent="32">
+  <Item class="StarterGui" referent="35">
     <Properties>
       <string name="Name">StarterGui</string>
       <bool name="ShowDevelopmentGui">true</bool>
     </Properties>
   </Item>
-  <Item class="StarterPlayer" referent="33">
+  <Item class="StarterPlayer" referent="36">
     <Properties>
       <string name="Name">StarterPlayer</string>
       <float name="CharacterWalkSpeed">20</float>
     </Properties>
-    <Item class="StarterPlayerScripts" referent="34">
+    <Item class="StarterPlayerScripts" referent="37">
       <Properties>
         <string name="Name">StarterPlayerScripts</string>
       </Properties>
-      <Item class="LocalScript" referent="35">
+      <Item class="LocalScript" referent="38">
         <Properties>
           <string name="Name">Client</string>
           <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -5743,6 +6680,9 @@ local START_ORDER = {
 	"AmbienceController",
 	"EggDisplayController",
 	"EffectsController",
+	"BreakableController",
+	"GuideController",
+	"TrailController",
 	"EventUI",
 	"ChatController",
 }
@@ -5777,11 +6717,11 @@ end)
 ]]></string>
         </Properties>
       </Item>
-      <Item class="Folder" referent="36">
+      <Item class="Folder" referent="39">
         <Properties>
           <string name="Name">Controllers</string>
         </Properties>
-        <Item class="ModuleScript" referent="37">
+        <Item class="ModuleScript" referent="40">
           <Properties>
             <string name="Name">AmbienceController</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -5815,39 +6755,40 @@ type Preset = {
 }
 
 -- Keyed by Config.Zones[i].Theme.Decor
+-- Bright, saturated "toy" looks (high ambient light keeps shadows soft and colourful).
 local PRESETS: { [string]: Preset } = {
 	Trees = {
-		Lighting = { ClockTime = 14, Brightness = 2.6, Ambient = rgb(95, 95, 105), OutdoorAmbient = rgb(140, 140, 150), ExposureCompensation = 0 },
-		Atmosphere = { Density = 0.28, Color = rgb(199, 212, 232), Decay = rgb(110, 120, 140), Haze = 1, Glare = 0.15 },
-		Color = { TintColor = rgb(255, 255, 255), Saturation = 0.18, Contrast = 0.08 },
-		Clouds = { Cover = 0.55, Density = 0.7, Color = rgb(255, 255, 255) },
+		Lighting = { ClockTime = 14, Brightness = 3, Ambient = rgb(120, 120, 132), OutdoorAmbient = rgb(168, 168, 180), ExposureCompensation = 0.1 },
+		Atmosphere = { Density = 0.22, Color = rgb(205, 222, 245), Decay = rgb(120, 140, 170), Haze = 0.6, Glare = 0.15 },
+		Color = { TintColor = rgb(255, 255, 252), Saturation = 0.32, Contrast = 0.12, Brightness = 0.03 },
+		Clouds = { Cover = 0.4, Density = 0.6, Color = rgb(255, 255, 255) },
 		Weather = "Pollen",
 	},
 	Candy = {
-		Lighting = { ClockTime = 15.5, Brightness = 2.7, Ambient = rgb(135, 105, 125), OutdoorAmbient = rgb(170, 140, 160), ExposureCompensation = 0.05 },
-		Atmosphere = { Density = 0.34, Color = rgb(255, 205, 232), Decay = rgb(255, 150, 205), Haze = 1.6, Glare = 0.25 },
-		Color = { TintColor = rgb(255, 242, 250), Saturation = 0.28, Contrast = 0.06 },
-		Clouds = { Cover = 0.62, Density = 0.75, Color = rgb(255, 210, 236) },
+		Lighting = { ClockTime = 15.5, Brightness = 3, Ambient = rgb(150, 122, 142), OutdoorAmbient = rgb(192, 162, 182), ExposureCompensation = 0.12 },
+		Atmosphere = { Density = 0.28, Color = rgb(255, 210, 236), Decay = rgb(255, 160, 210), Haze = 1, Glare = 0.25 },
+		Color = { TintColor = rgb(255, 244, 252), Saturation = 0.38, Contrast = 0.1, Brightness = 0.03 },
+		Clouds = { Cover = 0.45, Density = 0.65, Color = rgb(255, 215, 238) },
 		Weather = "Sparkles",
 	},
 	Ice = {
-		Lighting = { ClockTime = 13, Brightness = 2.4, Ambient = rgb(120, 140, 170), OutdoorAmbient = rgb(150, 170, 200), ExposureCompensation = 0.1 },
-		Atmosphere = { Density = 0.42, Color = rgb(212, 230, 255), Decay = rgb(150, 182, 222), Haze = 2.2, Glare = 0.1 },
-		Color = { TintColor = rgb(236, 246, 255), Saturation = 0.02, Contrast = 0.1 },
-		Clouds = { Cover = 0.8, Density = 0.8, Color = rgb(230, 238, 250) },
+		Lighting = { ClockTime = 13, Brightness = 2.8, Ambient = rgb(135, 155, 188), OutdoorAmbient = rgb(170, 190, 222), ExposureCompensation = 0.1 },
+		Atmosphere = { Density = 0.32, Color = rgb(215, 232, 255), Decay = rgb(155, 188, 228), Haze = 1.4, Glare = 0.1 },
+		Color = { TintColor = rgb(240, 248, 255), Saturation = 0.15, Contrast = 0.12, Brightness = 0.02 },
+		Clouds = { Cover = 0.6, Density = 0.7, Color = rgb(235, 242, 252) },
 		Weather = "Snow",
 	},
 	Rock = {
-		Lighting = { ClockTime = 18.1, Brightness = 2.2, Ambient = rgb(125, 72, 62), OutdoorAmbient = rgb(150, 92, 72), ExposureCompensation = 0 },
-		Atmosphere = { Density = 0.45, Color = rgb(255, 140, 95), Decay = rgb(120, 42, 30), Haze = 2.4, Glare = 0.45 },
-		Color = { TintColor = rgb(255, 228, 212), Saturation = 0.12, Contrast = 0.14 },
-		Clouds = { Cover = 0.75, Density = 0.85, Color = rgb(95, 62, 60) },
+		Lighting = { ClockTime = 17.8, Brightness = 2.5, Ambient = rgb(150, 92, 78), OutdoorAmbient = rgb(182, 118, 92), ExposureCompensation = 0.05 },
+		Atmosphere = { Density = 0.4, Color = rgb(255, 150, 105), Decay = rgb(130, 50, 36), Haze = 2, Glare = 0.45 },
+		Color = { TintColor = rgb(255, 232, 216), Saturation = 0.24, Contrast = 0.16, Brightness = 0.02 },
+		Clouds = { Cover = 0.65, Density = 0.8, Color = rgb(110, 72, 68) },
 		Weather = "Embers",
 	},
 	Crystal = {
-		Lighting = { ClockTime = 0, Brightness = 1.6, Ambient = rgb(95, 85, 140), OutdoorAmbient = rgb(115, 105, 165), ExposureCompensation = 0.25 },
-		Atmosphere = { Density = 0.2, Color = rgb(70, 50, 130), Decay = rgb(25, 12, 65), Haze = 0.6, Glare = 0 },
-		Color = { TintColor = rgb(232, 222, 255), Saturation = 0.22, Contrast = 0.12 },
+		Lighting = { ClockTime = 0, Brightness = 1.8, Ambient = rgb(118, 106, 168), OutdoorAmbient = rgb(140, 126, 192), ExposureCompensation = 0.3 },
+		Atmosphere = { Density = 0.2, Color = rgb(80, 58, 140), Decay = rgb(30, 15, 72), Haze = 0.6, Glare = 0 },
+		Color = { TintColor = rgb(236, 226, 255), Saturation = 0.32, Contrast = 0.14, Brightness = 0.03 },
 		Clouds = { Cover = 0, Density = 0, Color = rgb(60, 50, 110) },
 		Weather = "Stars",
 	},
@@ -5972,7 +6913,299 @@ return AmbienceController
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="38">
+        <Item class="ModuleScript" referent="41">
+          <Properties>
+            <string name="Name">BreakableController</string>
+            <string name="Source"><![CDATA[--------------------------------------------------------------------------------
+-- BreakableController - HP bars, hit wobble, break bursts and reward popups for
+-- the coin piles, crates and chests (BreakableService). Clicking is handled by
+-- the server's ClickDetectors; this script is only visuals.
+--------------------------------------------------------------------------------
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared.Config)
+local Util = require(Shared.Util)
+local Remotes = require(Shared.Remotes)
+
+local Modules = script.Parent.Parent:WaitForChild("Modules")
+local FloatingText = require(Modules.FloatingText)
+local UIController = require(script.Parent.UIController)
+local EffectsController = require(script.Parent.EffectsController)
+
+local player = Players.LocalPlayer
+
+local BreakableController = {}
+
+local SHAKE_TIME = 0.18
+local EFFECT_DISTANCE = 110
+local GOLD = Color3.fromRGB(255, 205, 50)
+
+type Tracked = {
+	Model: Model,
+	Base: CFrame,
+	Position: Vector3,
+	Fill: Frame,
+	HPLabel: TextLabel,
+	ShakeUntil: number,
+	LastHP: number,
+}
+
+local tracked: { [Model]: Tracked } = {}
+local fxPart: Part
+local hitSparks: ParticleEmitter
+local coinBurst: ParticleEmitter
+local targetHighlight: Highlight
+
+local function hpColor(fraction: number): Color3
+	if fraction > 0.5 then
+		return Color3.fromRGB(90, 225, 90):Lerp(Color3.fromRGB(255, 210, 60), (1 - fraction) * 2)
+	end
+	return Color3.fromRGB(255, 210, 60):Lerp(Color3.fromRGB(240, 70, 70), (0.5 - fraction) * 2)
+end
+
+local function displayName(kind: string): string
+	if kind == "Giant" then
+		return Config.Breakables.Giant.Name
+	end
+	local spec = Config.Breakables.Kinds[kind]
+	return if spec then spec.Name else kind
+end
+
+local function refresh(info: Tracked)
+	local hp = info.Model:GetAttribute("HP")
+	local maxHP = info.Model:GetAttribute("MaxHP")
+	if type(hp) ~= "number" or type(maxHP) ~= "number" or maxHP <= 0 then
+		return
+	end
+	local fraction = math.clamp(hp / maxHP, 0, 1)
+	info.Fill.Size = UDim2.fromScale(fraction, 1)
+	info.Fill.BackgroundColor3 = hpColor(fraction)
+	info.HPLabel.Text = Util.FormatNumber(hp) .. " / " .. Util.FormatNumber(maxHP)
+	if hp < info.LastHP then
+		info.ShakeUntil = os.clock() + SHAKE_TIME
+		local camera = Workspace.CurrentCamera
+		if camera and (camera.CFrame.Position - info.Position).Magnitude < EFFECT_DISTANCE then
+			fxPart.CFrame = CFrame.new(info.Position + Vector3.new(0, 2, 0))
+			hitSparks:Emit(4)
+		end
+	end
+	info.LastHP = hp
+end
+
+local function track(model: Instance)
+	if not model:IsA("Model") or tracked[model] then
+		return
+	end
+	local hitbox = model.PrimaryPart
+	if not hitbox then
+		return
+	end
+	local kind = model:GetAttribute("Kind")
+	local isGiant = kind == "Giant"
+
+	local gui = Instance.new("BillboardGui")
+	gui.Name = "HPBar"
+	gui.Size = if isGiant then UDim2.fromOffset(260, 58) else UDim2.fromOffset(150, 40)
+	gui.StudsOffsetWorldSpace = Vector3.new(0, hitbox.Size.Y / 2 + (if isGiant then 3 else 1.6), 0)
+	gui.MaxDistance = if isGiant then 160 else 45
+	gui.LightInfluence = 0
+	gui.Adornee = hitbox
+
+	local name = Instance.new("TextLabel")
+	name.BackgroundTransparency = 1
+	name.Size = UDim2.new(1, 0, 0.5, 0)
+	name.Font = Enum.Font.LuckiestGuy
+	name.TextScaled = true
+	name.Text = displayName(tostring(kind))
+	name.TextColor3 = if isGiant then GOLD else Color3.new(1, 1, 1)
+	name.TextStrokeTransparency = 0
+	name.TextStrokeColor3 = Color3.fromRGB(30, 22, 40)
+	name.Parent = gui
+
+	local bar = Instance.new("Frame")
+	bar.Position = UDim2.fromScale(0.05, 0.55)
+	bar.Size = UDim2.fromScale(0.9, 0.4)
+	bar.BackgroundColor3 = Color3.fromRGB(30, 26, 40)
+	bar.Parent = gui
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(1, 0)
+	corner.Parent = bar
+	local stroke = Instance.new("UIStroke")
+	stroke.Thickness = 2
+	stroke.Color = Color3.fromRGB(20, 16, 28)
+	stroke.Parent = bar
+
+	local fill = Instance.new("Frame")
+	fill.Size = UDim2.fromScale(1, 1)
+	fill.BackgroundColor3 = hpColor(1)
+	fill.Parent = bar
+	local fillCorner = Instance.new("UICorner")
+	fillCorner.CornerRadius = UDim.new(1, 0)
+	fillCorner.Parent = fill
+	local shine = Instance.new("UIGradient")
+	shine.Rotation = 90
+	shine.Color = ColorSequence.new(Color3.new(1, 1, 1), Color3.fromRGB(190, 190, 190))
+	shine.Parent = fill
+
+	local hpLabel = Instance.new("TextLabel")
+	hpLabel.BackgroundTransparency = 1
+	hpLabel.Size = UDim2.fromScale(1, 1)
+	hpLabel.Font = Enum.Font.GothamBlack
+	hpLabel.TextScaled = true
+	hpLabel.TextColor3 = Color3.new(1, 1, 1)
+	hpLabel.TextStrokeTransparency = 0.3
+	hpLabel.ZIndex = 2
+	hpLabel.Parent = bar
+
+	gui.Parent = hitbox
+
+	local pivot = model:GetPivot()
+	local info: Tracked = {
+		Model = model,
+		Base = pivot,
+		Position = pivot.Position,
+		Fill = fill,
+		HPLabel = hpLabel,
+		ShakeUntil = 0,
+		LastHP = 0,
+	}
+	local startHP = model:GetAttribute("HP")
+	info.LastHP = if type(startHP) == "number" then startHP else 0
+	tracked[model] = info
+	refresh(info)
+	model:GetAttributeChangedSignal("HP"):Connect(function()
+		refresh(info)
+	end)
+end
+
+local function untrack(model: Instance)
+	local info = tracked[model :: Model]
+	if not info then
+		return
+	end
+	tracked[model :: Model] = nil
+	local camera = Workspace.CurrentCamera
+	if camera and (camera.CFrame.Position - info.Position).Magnitude < EFFECT_DISTANCE then
+		fxPart.CFrame = CFrame.new(info.Position + Vector3.new(0, 1.5, 0))
+		coinBurst:Emit(if model:GetAttribute("Kind") == "Giant" then 120 else 24)
+	end
+end
+
+local function animate()
+	local now = os.clock()
+	for model, info in pairs(tracked) do
+		if info.ShakeUntil > 0 then
+			if now < info.ShakeUntil then
+				local k = (info.ShakeUntil - now) / SHAKE_TIME
+				model:PivotTo(info.Base * CFrame.Angles(0, 0, math.sin(now * 60) * 0.08 * k))
+			else
+				info.ShakeUntil = 0
+				model:PivotTo(info.Base)
+			end
+		end
+	end
+	-- Outline whatever this player's pets are attacking.
+	local targetId = player:GetAttribute("BreakTarget")
+	local folder = Workspace:FindFirstChild("Breakables")
+	local target = if type(targetId) == "string" and targetId ~= "" and folder then folder:FindFirstChild(targetId) else nil
+	if targetHighlight.Adornee ~= target then
+		targetHighlight.Adornee = target
+		targetHighlight.Enabled = target ~= nil
+	end
+end
+
+local function onBroken(position: Vector3, coins: number, gems: number, kind: string)
+	if typeof(position) ~= "Vector3" then
+		return
+	end
+	local isGiant = kind == "Giant"
+	if type(coins) == "number" and coins > 0 then
+		FloatingText.Show(position + Vector3.new(0, 4, 0), "+" .. Util.FormatNumber(coins), GOLD, if isGiant then Vector2.new(260, 70) else Vector2.new(170, 48))
+	end
+	if type(gems) == "number" and gems > 0 then
+		FloatingText.Show(position + Vector3.new(0, 6, 0), "+" .. gems .. " Gems", Color3.fromRGB(110, 250, 225))
+	end
+	if isGiant then
+		UIController.Banner("GIANT CHEST!", "+" .. Util.FormatNumber(coins) .. " coins  +" .. tostring(gems) .. " gems", GOLD)
+		EffectsController.Confetti(120)
+		UIController.PlaySound("Rare")
+	else
+		UIController.PlaySound("Collect", 0.5)
+	end
+end
+
+function BreakableController.Init()
+	fxPart = Instance.new("Part")
+	fxPart.Name = "BreakableFx"
+	fxPart.Anchored = true
+	fxPart.CanCollide = false
+	fxPart.CanQuery = false
+	fxPart.CanTouch = false
+	fxPart.Transparency = 1
+	fxPart.Size = Vector3.new(2, 2, 2)
+	fxPart.Parent = Workspace
+
+	hitSparks = Instance.new("ParticleEmitter")
+	hitSparks.Rate = 0
+	hitSparks.Color = ColorSequence.new(Color3.new(1, 1, 1), GOLD)
+	hitSparks.LightEmission = 1
+	hitSparks.Lifetime = NumberRange.new(0.2, 0.4)
+	hitSparks.Speed = NumberRange.new(8, 14)
+	hitSparks.Drag = 5
+	hitSparks.SpreadAngle = Vector2.new(180, 180)
+	hitSparks.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.45), NumberSequenceKeypoint.new(1, 0) })
+	hitSparks.Parent = fxPart
+
+	coinBurst = Instance.new("ParticleEmitter")
+	coinBurst.Rate = 0
+	coinBurst.Color = ColorSequence.new(GOLD, Color3.fromRGB(255, 240, 160))
+	coinBurst.LightEmission = 0.6
+	coinBurst.Lifetime = NumberRange.new(0.6, 1.1)
+	coinBurst.Speed = NumberRange.new(14, 24)
+	coinBurst.Acceleration = Vector3.new(0, -40, 0)
+	coinBurst.SpreadAngle = Vector2.new(60, 60)
+	coinBurst.EmissionDirection = Enum.NormalId.Top
+	coinBurst.RotSpeed = NumberRange.new(-300, 300)
+	coinBurst.Squash = NumberSequence.new(-0.6)
+	coinBurst.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.6), NumberSequenceKeypoint.new(1, 0.4) })
+	coinBurst.Parent = fxPart
+
+	targetHighlight = Instance.new("Highlight")
+	targetHighlight.Name = "BreakTargetOutline"
+	targetHighlight.FillColor = GOLD
+	targetHighlight.FillTransparency = 0.8
+	targetHighlight.OutlineColor = Color3.fromRGB(255, 245, 180)
+	targetHighlight.OutlineTransparency = 0
+	targetHighlight.DepthMode = Enum.HighlightDepthMode.Occluded
+	targetHighlight.Enabled = false
+	targetHighlight.Parent = fxPart
+
+	task.spawn(function()
+		local folder = Workspace:WaitForChild("Breakables")
+		for _, model in ipairs(folder:GetChildren()) do
+			track(model)
+		end
+		folder.ChildAdded:Connect(function(model)
+			-- Attributes and parts arrive together, but wait a frame to be safe.
+			task.defer(track, model)
+		end)
+		folder.ChildRemoved:Connect(untrack)
+	end)
+
+	Remotes.Get("BreakableBroken").OnClientEvent:Connect(onBroken)
+	RunService.RenderStepped:Connect(animate)
+end
+
+return BreakableController
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="42">
           <Properties>
             <string name="Name">ChatController</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -6006,7 +7239,7 @@ return ChatController
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="39">
+        <Item class="ModuleScript" referent="43">
           <Properties>
             <string name="Name">EffectsController</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -6133,7 +7366,7 @@ return EffectsController
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="40">
+        <Item class="ModuleScript" referent="44">
           <Properties>
             <string name="Name">EggDisplayController</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -6159,12 +7392,12 @@ local EggDisplayController = {}
 local CELL = 62
 local ANIMATE_DISTANCE = 120
 
+type Piece = { Part: BasePart, Offset: CFrame }
 type Stand = {
 	EggKey: string,
 	Egg: BasePart,
-	Spots: BasePart?,
 	EggBase: CFrame,
-	SpotsBase: CFrame?,
+	Pieces: { Piece }, -- the rest of the egg (shell, pattern), moved with it
 	Phase: number,
 	Chances: { TextLabel },
 }
@@ -6289,17 +7522,46 @@ local function register(eggPart: Instance)
 	if type(eggKey) ~= "string" or not Config.Eggs[eggKey] then
 		return
 	end
-	local model = eggPart.Parent
-	local spots = model and model:FindFirstChild("Spots")
 	local stand: Stand = {
 		EggKey = eggKey,
 		Egg = eggPart,
-		Spots = if spots and spots:IsA("BasePart") then spots else nil,
 		EggBase = eggPart.CFrame,
-		SpotsBase = if spots and spots:IsA("BasePart") then spots.CFrame else nil,
+		Pieces = {},
 		Phase = math.random() * math.pi * 2,
 		Chances = {},
 	}
+	-- Every other part of the egg model follows the egg as it floats.
+	local function collectPieces()
+		local model = eggPart.Parent
+		if not model then
+			return
+		end
+		local pieces = {}
+		for _, child in ipairs(model:GetChildren()) do
+			if child:IsA("BasePart") and child ~= eggPart then
+				table.insert(pieces, { Part = child, Offset = stand.EggBase:ToObjectSpace(child.CFrame) })
+			end
+		end
+		stand.Pieces = pieces
+	end
+	collectPieces()
+	-- Parts can still be arriving from the server; pick up any stragglers.
+	task.delay(2, function()
+		local model = eggPart.Parent
+		if model and #model:GetChildren() - 1 > #stand.Pieces then
+			-- Late pieces haven't been moved yet, so they still sit at their
+			-- original offset from the egg's base position.
+			local known = {}
+			for _, piece in ipairs(stand.Pieces) do
+				known[piece.Part] = true
+			end
+			for _, child in ipairs(model:GetChildren()) do
+				if child:IsA("BasePart") and child ~= eggPart and not known[child] then
+					table.insert(stand.Pieces, { Part = child, Offset = stand.EggBase:ToObjectSpace(child.CFrame) })
+				end
+			end
+		end
+	end)
 	table.insert(stands, stand)
 	buildBoard(stand)
 end
@@ -6315,12 +7577,12 @@ local function animate()
 	for _, stand in ipairs(stands) do
 		if (stand.EggBase.Position - cameraPosition).Magnitude < ANIMATE_DISTANCE then
 			local offset = CFrame.new(0, math.sin(t * 1.6 + stand.Phase) * 0.35, 0) * CFrame.Angles(0, math.sin(t * 0.7 + stand.Phase) * 0.35, math.sin(t * 1.1 + stand.Phase) * 0.04)
+			local eggCFrame = stand.EggBase * offset
 			table.insert(parts, stand.Egg)
-			table.insert(cframes, stand.EggBase * offset)
-			if stand.Spots and stand.SpotsBase then
-				-- keep the spots glued to the egg
-				table.insert(parts, stand.Spots)
-				table.insert(cframes, stand.EggBase * offset * stand.EggBase:ToObjectSpace(stand.SpotsBase))
+			table.insert(cframes, eggCFrame)
+			for _, piece in ipairs(stand.Pieces) do
+				table.insert(parts, piece.Part)
+				table.insert(cframes, eggCFrame * piece.Offset)
 			end
 		end
 	end
@@ -6359,7 +7621,7 @@ return EggDisplayController
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="41">
+        <Item class="ModuleScript" referent="45">
           <Properties>
             <string name="Name">EventUI</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -6445,7 +7707,434 @@ return EventUI
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="42">
+        <Item class="ModuleScript" referent="46">
+          <Properties>
+            <string name="Name">GuideController</string>
+            <string name="Source"><![CDATA[--------------------------------------------------------------------------------
+-- GuideController - tells players exactly what to do next.
+--
+-- A card above the goal bar shows the current objective, and glowing arrows on
+-- the ground lead to it, with a big bouncing arrow over the target. The steps
+-- come from saved stats, so progress carries over between visits:
+--   collect coins -> hatch an egg -> break coin piles -> fill your team ->
+--   unlock the next zone. After that it only appears when there is something
+--   to do (a gate you can afford, rebirth ready). Players can turn it off.
+--------------------------------------------------------------------------------
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared.Config)
+local Util = require(Shared.Util)
+local Remotes = require(Shared.Remotes)
+
+local Modules = script.Parent.Parent:WaitForChild("Modules")
+local State = require(Modules.ClientState)
+local UIKit = require(Modules.UIKit)
+local UIController = require(script.Parent.UIController)
+local EffectsController = require(script.Parent.EffectsController)
+
+local player = Players.LocalPlayer
+
+local GuideController = {}
+
+local ARROW_COUNT = 7
+local ARROW_SPACING = 5
+local ARROW_SPEED = 7
+local GOLD = Color3.fromRGB(255, 220, 60)
+local FIRST_ORBS = 10
+local FIRST_BREAKS = 3
+local TEAM_SIZE = 3
+
+type Step = { Id: string, Text: string, Progress: number?, Target: string?, Key: any? }
+
+local card: Frame
+local cardText: TextLabel
+local cardFill: Frame
+local cardBar: Frame
+local folder: Folder
+local chevrons: { Model } = {}
+local marker: Model
+local ring: Part
+local rayParams = RaycastParams.new()
+rayParams.FilterType = Enum.RaycastFilterType.Exclude
+
+local step: Step? = nil
+local targetPosition: Vector3? = nil
+local eggParts: { [string]: BasePart } = {}
+
+--------------------------------------------------------------------------------
+-- Steps
+--------------------------------------------------------------------------------
+
+local function firstCoinEgg(): (string, any)
+	for _, entry in ipairs(Config.GetEggsSortedByZone()) do
+		if entry.Egg.Currency == "Coins" then
+			return entry.Key, entry.Egg
+		end
+	end
+	return "Basic", Config.Eggs.Basic
+end
+
+local function computeStep(): Step?
+	local stats = State.Get("Stats", {})
+	local coins = State.Get("Coins", 0)
+	local zones = State.Get("ZonesUnlocked", 1)
+	local hatched = stats.PetsHatched or 0
+	local broken = stats.BreakablesBroken or 0
+	local rebirths = State.Get("Rebirths", 0)
+	local tutorial = rebirths == 0 and zones < 2
+
+	if tutorial then
+		if hatched == 0 and (stats.OrbsCollected or 0) < FIRST_ORBS then
+			return { Id = "orbs", Text = "Walk into the gold coins to collect them!", Progress = (stats.OrbsCollected or 0) / FIRST_ORBS, Target = "Orb" }
+		end
+		local eggKey, egg = firstCoinEgg()
+		if hatched == 0 then
+			if coins < egg.Cost then
+				return { Id = "save1", Text = string.format("Collect %s coins for your first egg", Util.FormatNumber(egg.Cost)), Progress = coins / egg.Cost, Target = "Orb" }
+			end
+			return { Id = "hatch1", Text = "Go to the " .. egg.Name .. " and press E (or tap) to hatch it!", Target = "Egg", Key = eggKey }
+		end
+		if broken < FIRST_BREAKS then
+			return { Id = "break", Text = string.format("Click a coin pile or chest. Your pets will break it! (%d/%d)", broken, FIRST_BREAKS), Progress = broken / FIRST_BREAKS, Target = "Breakable" }
+		end
+		if hatched < TEAM_SIZE then
+			if coins < egg.Cost then
+				return { Id = "save2", Text = string.format("Break coin piles to afford another egg (%d/%d pets)", hatched, TEAM_SIZE), Progress = coins / egg.Cost, Target = "Breakable" }
+			end
+			return { Id = "hatch3", Text = string.format("Hatch more pets for a stronger team (%d/%d)", hatched, TEAM_SIZE), Progress = hatched / TEAM_SIZE, Target = "Egg", Key = eggKey }
+		end
+	end
+
+	local nextZone = Config.Zones[zones + 1]
+	if nextZone then
+		if coins >= nextZone.Cost then
+			return { Id = "gate" .. (zones + 1), Text = "You can unlock " .. nextZone.Name .. "! Walk into the gate.", Target = "Gate", Key = zones + 1 }
+		end
+		if tutorial then
+			return { Id = "save-zone", Text = string.format("Save up to unlock %s: %s / %s coins", nextZone.Name, Util.FormatNumber(coins), Util.FormatNumber(nextZone.Cost)), Progress = coins / nextZone.Cost, Target = "Breakable" }
+		end
+		return nil
+	end
+	if coins >= State.GetRebirthCost() then
+		return { Id = "rebirth", Text = "Rebirth is ready! Go to the purple portal at spawn.", Target = "Portal" }
+	end
+	return nil
+end
+
+--------------------------------------------------------------------------------
+-- Targets
+--------------------------------------------------------------------------------
+
+local function nearestChild(container: Instance?, from: Vector3, filter: (Instance) -> boolean): Vector3?
+	if not container then
+		return nil
+	end
+	local best, bestDistance = nil, math.huge
+	for _, child in ipairs(container:GetChildren()) do
+		if filter(child) then
+			local position = if child:IsA("Model") then child:GetPivot().Position elseif child:IsA("BasePart") then child.Position else nil
+			if position then
+				local distance = (position - from).Magnitude
+				if distance < bestDistance then
+					best, bestDistance = position, distance
+				end
+			end
+		end
+	end
+	return best
+end
+
+local function findTarget(current: Step, from: Vector3): Vector3?
+	local unlocked = State.Get("ZonesUnlocked", 1)
+	if current.Target == "Orb" then
+		return nearestChild(Workspace:FindFirstChild("Orbs"), from, function(orb)
+			return orb:IsA("BasePart") and orb.Transparency < 1 and (orb:GetAttribute("Zone") or 1) <= unlocked
+		end)
+	elseif current.Target == "Breakable" then
+		return nearestChild(Workspace:FindFirstChild("Breakables"), from, function(model)
+			local zone = model:GetAttribute("Zone")
+			return model:GetAttribute("Kind") ~= "Giant" and type(zone) == "number" and zone <= unlocked
+		end)
+	elseif current.Target == "Egg" then
+		local egg = eggParts[tostring(current.Key)]
+		return if egg then egg.Position else nil
+	elseif current.Target == "Gate" then
+		local map = Workspace:FindFirstChild("Map")
+		local gates = map and map:FindFirstChild("Gates")
+		local gate = gates and gates:FindFirstChild("Gate" .. tostring(current.Key))
+		return if gate and gate:IsA("BasePart") then gate.Position - Vector3.new(0, gate.Size.Y / 2 - 3, 0) else nil
+	elseif current.Target == "Portal" then
+		local map = Workspace:FindFirstChild("Map")
+		local zone1 = map and map:FindFirstChild("Zone1")
+		local portal = zone1 and zone1:FindFirstChild("RebirthPortal")
+		return if portal and portal:IsA("Model") then portal:GetPivot().Position else nil
+	end
+	return nil
+end
+
+--------------------------------------------------------------------------------
+-- 3D arrows
+--------------------------------------------------------------------------------
+
+local function neon(size: Vector3, parent: Instance): Part
+	local p = Instance.new("Part")
+	p.Anchored = true
+	p.CanCollide = false
+	p.CanQuery = false
+	p.CanTouch = false
+	p.CastShadow = false
+	p.Material = Enum.Material.Neon
+	p.Color = GOLD
+	p.Size = size
+	p.Parent = parent
+	return p
+end
+
+-- A "V" whose tip points along the model's -Z (its look direction).
+local function chevron(scale: number, stem: boolean): Model
+	local model = Instance.new("Model")
+	local armLength = 2 * scale
+	local offset = Vector3.new(math.sin(math.rad(40)), 0, math.cos(math.rad(40))) * armLength / 2
+	local right = neon(Vector3.new(0.4 * scale, 0.2 * scale, armLength), model)
+	right.CFrame = CFrame.new(offset) * CFrame.Angles(0, math.rad(40), 0)
+	local left = neon(Vector3.new(0.4 * scale, 0.2 * scale, armLength), model)
+	left.CFrame = CFrame.new(-offset.X, 0, offset.Z) * CFrame.Angles(0, math.rad(-40), 0)
+	if stem then
+		local shaft = neon(Vector3.new(0.45 * scale, 0.25 * scale, 2.4 * scale), model)
+		shaft.CFrame = CFrame.new(0, 0, 1.3 * scale)
+	end
+	model.WorldPivot = CFrame.new()
+	model.Parent = folder
+	return model
+end
+
+local function hideArrows()
+	for _, model in ipairs(chevrons) do
+		model.Parent = nil
+	end
+	marker.Parent = nil
+	ring.Parent = nil
+end
+
+local function groundAt(position: Vector3, fallback: number): number
+	local hit = Workspace:Raycast(position + Vector3.new(0, 8, 0), Vector3.new(0, -30, 0), rayParams)
+	return if hit then hit.Position.Y else fallback
+end
+
+local function updateArrows()
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+	local settings = State.Get("Settings", {})
+	if not root or not targetPosition or settings.ShowGuide == false then
+		hideArrows()
+		return
+	end
+	local ignore: { Instance } = { folder, character }
+	for _, name in ipairs({ "ClientPets", "Orbs", "Breakables", "FloatingText" }) do
+		local found = Workspace:FindFirstChild(name)
+		if found then
+			table.insert(ignore, found)
+		end
+	end
+	rayParams.FilterDescendantsInstances = ignore
+
+	local t = os.clock()
+	local from = root.Position
+	local goal = targetPosition :: Vector3
+	local flat = (goal - from) * Vector3.new(1, 0, 1)
+	local length = flat.Magnitude
+	local direction = if length > 0.01 then flat.Unit else Vector3.zAxis
+
+	-- Ground arrows sliding toward the target.
+	local loop = ARROW_COUNT * ARROW_SPACING
+	for index, model in ipairs(chevrons) do
+		local d = ((index - 1) * ARROW_SPACING + t * ARROW_SPEED) % loop + 3
+		if d < length - 4 then
+			local position = from + direction * d
+			local y = groundAt(position, from.Y - 3) + 0.4
+			model:PivotTo(CFrame.lookAlong(Vector3.new(position.X, y, position.Z), direction))
+			model.Parent = folder
+		else
+			model.Parent = nil
+		end
+	end
+
+	-- Bouncing arrow and pulsing ring at the target.
+	local groundY = groundAt(goal, goal.Y)
+	local bob = math.abs(math.sin(t * 3.2)) * 1.6
+	marker:PivotTo(CFrame.new(goal.X, groundY + 9 + bob, goal.Z) * CFrame.Angles(0, t * 2, 0) * CFrame.Angles(math.rad(-90), 0, 0))
+	marker.Parent = folder
+	local pulse = 7 + math.sin(t * 4) * 1
+	ring.Size = Vector3.new(0.2, pulse, pulse)
+	ring.CFrame = CFrame.new(goal.X, groundY + 0.15, goal.Z) * CFrame.Angles(0, 0, math.rad(90))
+	ring.Transparency = 0.35 + math.sin(t * 4) * 0.15
+	ring.Parent = folder
+end
+
+--------------------------------------------------------------------------------
+-- Objective card
+--------------------------------------------------------------------------------
+
+local function refreshCard()
+	local settings = State.Get("Settings", {})
+	local newStep = if State.Loaded and settings.ShowGuide ~= false then computeStep() else nil
+	local changed = (newStep and newStep.Id) ~= (step and step.Id)
+	local finishedOne = changed and step ~= nil
+	step = newStep
+	card.Visible = newStep ~= nil
+	if not newStep then
+		targetPosition = nil
+		return
+	end
+	cardText.Text = newStep.Text
+	cardBar.Visible = newStep.Progress ~= nil
+	if newStep.Progress then
+		UIKit.Tween(cardFill, { Size = UDim2.fromScale(math.clamp(newStep.Progress, 0, 1), 1) }, 0.2)
+	end
+	if changed then
+		UIKit.Pop(card, 1.12)
+		if finishedOne then
+			EffectsController.Confetti(30)
+		end
+	end
+end
+
+local function buildCard()
+	card = UIKit.Frame({
+		Name = "Objective",
+		AnchorPoint = Vector2.new(0.5, 1),
+		Position = UDim2.new(0.5, 0, 1, -52),
+		Size = UDim2.fromOffset(520, 58),
+		BackgroundColor3 = UIKit.Colors.Background,
+		BackgroundTransparency = 0.05,
+		Visible = false,
+		Parent = UIController.Root,
+	})
+	UIKit.Corner(card, 16)
+	UIKit.Stroke(card, GOLD, 3)
+
+	local badge = UIKit.Frame({
+		Position = UDim2.fromOffset(8, 8),
+		Size = UDim2.fromOffset(42, 42),
+		BackgroundColor3 = GOLD,
+		Parent = card,
+	})
+	UIKit.Corner(badge, 21)
+	UIKit.Label({
+		Size = UDim2.fromScale(1, 1),
+		Text = "!",
+		Font = UIKit.Fonts.Display,
+		TextSize = 30,
+		TextColor3 = UIKit.Colors.Background,
+		TextXAlignment = Enum.TextXAlignment.Center,
+		Parent = badge,
+	})
+
+	cardText = UIKit.Label({
+		Position = UDim2.fromOffset(60, 4),
+		Size = UDim2.new(1, -100, 0, 34),
+		Font = UIKit.Fonts.Title,
+		TextSize = 19,
+		TextWrapped = true,
+		TextStrokeTransparency = 0.5,
+		Parent = card,
+	})
+
+	cardBar = UIKit.Frame({
+		Position = UDim2.new(0, 60, 1, -16),
+		Size = UDim2.new(1, -104, 0, 8),
+		BackgroundColor3 = UIKit.Colors.PanelLight,
+		Parent = card,
+	})
+	UIKit.Corner(cardBar, 4)
+	cardFill = UIKit.Frame({ Size = UDim2.fromScale(0, 1), BackgroundColor3 = GOLD, Parent = cardBar })
+	UIKit.Corner(cardFill, 4)
+
+	local close = UIKit.Button({
+		AnchorPoint = Vector2.new(1, 0.5),
+		Position = UDim2.new(1, -8, 0.5, 0),
+		Size = UDim2.fromOffset(28, 28),
+		Color = UIKit.Colors.PanelLight,
+		Text = "X",
+		TextSize = 14,
+		Radius = 14,
+	}, function()
+		Remotes.Get("UpdateSetting"):FireServer("ShowGuide", false)
+		local settings = table.clone(State.Get("Settings", {}))
+		settings.ShowGuide = false
+		State.Apply({ Settings = settings })
+		UIController.Notify("Guide hidden. Turn it back on in Settings.", "info")
+	end)
+	close.Parent = card
+end
+
+--------------------------------------------------------------------------------
+-- Init
+--------------------------------------------------------------------------------
+
+local function registerEgg(part: Instance)
+	if part:IsA("BasePart") and part.Name == "Egg" then
+		local key = part:GetAttribute("EggId")
+		if type(key) == "string" then
+			eggParts[key] = part
+		end
+	end
+end
+
+function GuideController.Init()
+	folder = Instance.new("Folder")
+	folder.Name = "Guide"
+	folder.Parent = Workspace
+	for _ = 1, ARROW_COUNT do
+		table.insert(chevrons, chevron(1, false))
+	end
+	marker = chevron(2.2, true)
+	ring = neon(Vector3.new(0.2, 7, 7), folder)
+	ring.Shape = Enum.PartType.Cylinder
+	hideArrows()
+
+	buildCard()
+
+	task.spawn(function()
+		local map = Workspace:WaitForChild("Map")
+		for _, descendant in ipairs(map:GetDescendants()) do
+			registerEgg(descendant)
+		end
+		map.DescendantAdded:Connect(registerEgg)
+	end)
+
+	State.OnLoaded(refreshCard)
+	State.Changed:Connect(function(patch)
+		if patch.Stats ~= nil or patch.Coins ~= nil or patch.ZonesUnlocked ~= nil or patch.Rebirths ~= nil or patch.Settings ~= nil then
+			refreshCard()
+		end
+	end)
+
+	-- Re-pick the target a few times a second (nearest orb / pile changes).
+	local accumulator = 0
+	RunService.Heartbeat:Connect(function(dt)
+		accumulator += dt
+		if accumulator < 0.25 then
+			return
+		end
+		accumulator = 0
+		local character = player.Character
+		local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+		targetPosition = if step and root then findTarget(step, root.Position) else nil
+	end)
+	RunService.RenderStepped:Connect(updateArrows)
+end
+
+return GuideController
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="47">
           <Properties>
             <string name="Name">HatchUI</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -6461,6 +8150,7 @@ local TweenService = game:GetService("TweenService")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared.Config)
+local EggLooks = require(Shared.EggLooks)
 local Util = require(Shared.Util)
 local Remotes = require(Shared.Remotes)
 
@@ -6677,7 +8367,7 @@ end
 -- Reveal animation
 --------------------------------------------------------------------------------
 
--- A 3D egg (sphere-meshed block like the ones in the world) in a viewport.
+-- A 3D egg in a viewport, built exactly like the ones on the egg stands.
 local function eggShape(parent: Instance, egg, xScale: number): ViewportFrame
 	local viewport = UIKit.Create("ViewportFrame", {
 		AnchorPoint = Vector2.new(0.5, 0.5),
@@ -6690,31 +8380,7 @@ local function eggShape(parent: Instance, egg, xScale: number): ViewportFrame
 		ZIndex = 202,
 		Parent = parent,
 	}) :: ViewportFrame
-	local model = Instance.new("Model")
-	local shell = Instance.new("Part")
-	shell.Anchored = true
-	shell.Size = Vector3.new(5, 6.5, 5)
-	shell.Color = egg.Color
-	shell.Material = Enum.Material.SmoothPlastic
-	shell.Parent = model
-	local mesh = Instance.new("SpecialMesh")
-	mesh.MeshType = Enum.MeshType.Sphere
-	mesh.Parent = shell
-	-- Spots in a lighter shade, scattered over the shell.
-	local spotRng = Random.new(#egg.Name)
-	for _ = 1, 7 do
-		local yaw = spotRng:NextNumber(0, math.pi * 2)
-		local height = spotRng:NextNumber(-0.6, 0.75)
-		local ring = math.sqrt(1 - height * height)
-		local spot = Instance.new("Part")
-		spot.Anchored = true
-		spot.Shape = Enum.PartType.Ball
-		spot.Size = Vector3.one * spotRng:NextNumber(0.8, 1.3)
-		spot.Color = egg.Color:Lerp(Color3.new(1, 1, 1), 0.55)
-		spot.Material = Enum.Material.SmoothPlastic
-		spot.Position = Vector3.new(math.cos(yaw) * ring * 2.4, height * 3.1, math.sin(yaw) * ring * 2.4)
-		spot.Parent = model
-	end
+	local model = EggLooks.Build(egg)
 	model.Parent = viewport
 	PetBuilder.FrameCamera(viewport, model, 1.1)
 	return viewport
@@ -6801,17 +8467,23 @@ local function petCard(parent: Instance, result, xScale: number): (Frame, Model,
 		ZIndex = 204,
 		Parent = card,
 	})
-	UIKit.Label({
-		Position = UDim2.fromOffset(8, 206),
-		Size = UDim2.new(1, -16, 0, 26),
+	local shine = UIKit.ShineFor(def.Rarity, 0)
+	local rarityLabel = UIKit.Label({
+		Position = UDim2.fromOffset(8, 204),
+		Size = UDim2.new(1, -16, 0, 30),
 		Text = string.upper(def.Rarity),
-		Font = UIKit.Fonts.Black,
-		TextSize = 20,
-		TextColor3 = rarityColor,
+		Font = UIKit.Fonts.Display,
+		TextSize = 26,
+		TextColor3 = if shine then Color3.new(1, 1, 1) else rarityColor,
+		TextStrokeColor3 = UIKit.Ink,
+		TextStrokeTransparency = 0,
 		TextXAlignment = Enum.TextXAlignment.Center,
 		ZIndex = 204,
 		Parent = card,
 	})
+	if shine then
+		UIKit.Shine(rarityLabel, shine)
+	end
 	if result.New then
 		local badge = UIKit.Frame({
 			AnchorPoint = Vector2.new(1, 0),
@@ -7194,7 +8866,7 @@ function HatchUI.Init()
 	autoChip = UIKit.Frame({
 		Name = "AutoHatchChip",
 		AnchorPoint = Vector2.new(0.5, 1),
-		Position = UDim2.new(0.5, 0, 1, -54),
+		Position = UDim2.new(0.5, 0, 1, -118),
 		Size = UDim2.fromOffset(330, 40),
 		BackgroundColor3 = UIKit.Colors.Background,
 		BackgroundTransparency = 0.1,
@@ -7295,7 +8967,7 @@ return HatchUI
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="43">
+        <Item class="ModuleScript" referent="48">
           <Properties>
             <string name="Name">IndexUI</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -7511,7 +9183,7 @@ return IndexUI
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="44">
+        <Item class="ModuleScript" referent="49">
           <Properties>
             <string name="Name">OrbController</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -7522,7 +9194,6 @@ return IndexUI
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
@@ -7532,6 +9203,7 @@ local Remotes = require(Shared.Remotes)
 
 local Modules = script.Parent.Parent:WaitForChild("Modules")
 local State = require(Modules.ClientState)
+local FloatingText = require(Modules.FloatingText)
 local UIController = require(script.Parent.UIController)
 
 local player = Players.LocalPlayer
@@ -7541,7 +9213,6 @@ local OrbController = {}
 local SEND_INTERVAL = 1 / 6 -- matches the server's sustained pickup rate
 local RETRY_AFTER = 2.5 -- un-hide an orb if the server didn't take it after sending
 local ANIMATE_DISTANCE = 140
-local MAX_POPUPS = 10
 local MAX_QUEUE = 6 -- keeps popups within ~1s of the actual pickup
 
 -- Queued: hidden locally and waiting to be sent. SentAt: when the request went out.
@@ -7550,8 +9221,6 @@ type OrbInfo = { Base: CFrame, Phase: number, Queued: boolean, SentAt: number? }
 local orbs: { [BasePart]: OrbInfo } = {}
 local queue: { BasePart } = {}
 local lastSend = 0
-local popupCount = 0
-local popupFolder: Folder
 
 local function track(orb: Instance)
 	if not orb:IsA("BasePart") then
@@ -7562,47 +9231,6 @@ end
 
 local function untrack(orb: Instance)
 	orbs[orb :: BasePart] = nil
-end
-
-local function showPopup(position: Vector3, text: string, color: Color3)
-	if popupCount >= MAX_POPUPS then
-		return
-	end
-	popupCount += 1
-	local anchor = Instance.new("Part")
-	anchor.Anchored = true
-	anchor.CanCollide = false
-	anchor.CanQuery = false
-	anchor.CanTouch = false
-	anchor.Transparency = 1
-	anchor.Size = Vector3.new(0.2, 0.2, 0.2)
-	anchor.Position = position
-	anchor.Parent = popupFolder
-
-	local gui = Instance.new("BillboardGui")
-	gui.Size = UDim2.fromOffset(140, 40)
-	gui.AlwaysOnTop = true
-	gui.LightInfluence = 0
-	gui.Adornee = anchor
-	gui.Parent = anchor
-
-	local label = Instance.new("TextLabel")
-	label.BackgroundTransparency = 1
-	label.Size = UDim2.fromScale(1, 1)
-	label.Font = Enum.Font.FredokaOne
-	label.Text = text
-	label.TextColor3 = color
-	label.TextScaled = true
-	label.TextStrokeTransparency = 0.2
-	label.Parent = gui
-
-	local info = TweenInfo.new(0.9, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-	TweenService:Create(gui, info, { StudsOffset = Vector3.new(0, 4, 0) }):Play()
-	TweenService:Create(label, info, { TextTransparency = 1, TextStrokeTransparency = 1 }):Play()
-	task.delay(0.95, function()
-		anchor:Destroy()
-		popupCount -= 1
-	end)
 end
 
 local burstPart: Part
@@ -7620,10 +9248,10 @@ local function popupFor(orb: BasePart)
 	burstAt(orb.Position, orb.Color, if kind == "Coin" then 8 else 18)
 	local value = orb:GetAttribute("Value") or 0
 	if kind == "Gem" then
-		showPopup(orb.Position, "+" .. value .. " Gems", Color3.fromRGB(110, 250, 225))
+		FloatingText.Show(orb.Position, "+" .. value .. " Gems", Color3.fromRGB(110, 250, 225))
 	else
 		local amount = math.max(1, math.floor(value * State.GetMultiplier()))
-		showPopup(orb.Position, "+" .. Util.FormatNumber(amount), Color3.fromRGB(255, 220, 60))
+		FloatingText.Show(orb.Position, "+" .. Util.FormatNumber(amount), Color3.fromRGB(255, 220, 60))
 	end
 	UIController.PlaySound("Collect", 0.35)
 end
@@ -7761,10 +9389,6 @@ function OrbController.Init()
 	burst.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.5), NumberSequenceKeypoint.new(1, 0) })
 	burst.Parent = burstPart
 
-	popupFolder = Instance.new("Folder")
-	popupFolder.Name = "OrbPopups"
-	popupFolder.Parent = Workspace
-
 	task.spawn(function()
 		local folder = Workspace:WaitForChild("Orbs")
 		for _, orb in ipairs(folder:GetChildren()) do
@@ -7782,7 +9406,7 @@ return OrbController
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="45">
+        <Item class="ModuleScript" referent="50">
           <Properties>
             <string name="Name">PetFollowController</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -7791,7 +9415,8 @@ return OrbController
 -- (JSON list of {n = name, t = tier}) that the server keeps updated.
 --
 -- Pets hop when their owner walks, flying pets hover and flap their wings,
--- and Rainbow pets cycle colours.
+-- and Rainbow pets cycle colours. When their owner clicks a coin pile or chest
+-- (player attribute "BreakTarget"), the pets run over and attack it.
 --------------------------------------------------------------------------------
 
 local HttpService = game:GetService("HttpService")
@@ -7801,6 +9426,7 @@ local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared.Config)
 local PetStyles = require(Shared.PetStyles)
 
 local Modules = script.Parent.Parent:WaitForChild("Modules")
@@ -7812,9 +9438,12 @@ local RENDER_DISTANCE = 160
 local ANIMATE_DISTANCE = 70
 local FOLLOW_SPEED = 9
 local ROW_SIZE = 4
-local SPACING = 4.2
-local WORLD_SCALE = 0.75
+local SPACING = 5
+local WORLD_SCALE = 0.95
+local OUTLINE_COLOR = Color3.fromRGB(30, 22, 40)
 local FLYING = { Owl = true, Phoenix = true, Dragon = true }
+local SNAP_DISTANCE = 120 -- teleport pets instead of running further than this
+local ATTACK_REACH = 85 -- pets only attack breakables this close to their owner
 
 type PetVisual = {
 	Built: PetBuilder.Built,
@@ -7825,7 +9454,9 @@ type PetVisual = {
 type Owner = { Pets: { PetVisual }, Connection: RBXScriptConnection? }
 
 local owners: { [Player]: Owner } = {}
-local petFolder: Folder
+-- A Model (not a Folder) so one Highlight outlines every pet: Roblox only
+-- draws 31 Highlights at once, so one per pet would not scale.
+local petFolder: Model
 local rayParams = RaycastParams.new()
 rayParams.FilterType = Enum.RaycastFilterType.Exclude
 
@@ -7875,6 +9506,46 @@ local function decode(raw: any): { { Name: string, Tier: number } }
 	return result
 end
 
+-- Name, rarity and coin bonus over the local player's own pets.
+local function addTag(built: PetBuilder.Built, petName: string, tier: number)
+	local def = Config.Pets[petName]
+	if not def then
+		return
+	end
+	local gui = Instance.new("BillboardGui")
+	gui.Name = "Tag"
+	gui.Size = UDim2.new(4.5, 0, 1.3, 0) -- in studs, so it shrinks with distance
+	gui.StudsOffset = Vector3.new(0, built.Height + 0.9, 0)
+	gui.MaxDistance = 40
+	gui.LightInfluence = 0
+	gui.Adornee = built.Root
+
+	local name = Instance.new("TextLabel")
+	name.BackgroundTransparency = 1
+	name.Size = UDim2.fromScale(1, 0.58)
+	name.Font = Enum.Font.FredokaOne
+	name.TextScaled = true
+	name.Text = PetBuilder.DisplayName(petName, tier)
+	name.TextColor3 = if tier >= 1 then Color3.fromRGB(255, 215, 80) else Config.Rarities[def.Rarity].Color:Lerp(Color3.new(1, 1, 1), 0.35)
+	name.TextStrokeTransparency = 0
+	name.TextStrokeColor3 = OUTLINE_COLOR
+	name.Parent = gui
+
+	local bonus = Instance.new("TextLabel")
+	bonus.BackgroundTransparency = 1
+	bonus.Position = UDim2.fromScale(0, 0.58)
+	bonus.Size = UDim2.fromScale(1, 0.42)
+	bonus.Font = Enum.Font.LuckiestGuy
+	bonus.TextScaled = true
+	bonus.Text = string.format("x%.2f", Config.GetPetMultiplier(petName, tier))
+	bonus.TextColor3 = Color3.fromRGB(110, 235, 120)
+	bonus.TextStrokeTransparency = 0
+	bonus.TextStrokeColor3 = OUTLINE_COLOR
+	bonus.Parent = gui
+
+	gui.Parent = built.Root
+end
+
 local function rebuild(player: Player)
 	local owner = owners[player]
 	if not owner then
@@ -7884,6 +9555,9 @@ local function rebuild(player: Player)
 	for _, entry in ipairs(decode(player:GetAttribute("EquippedPets"))) do
 		local ok, built = pcall(PetBuilder.Build, entry.Name, entry.Tier, { Effects = true, Weld = true, Scale = WORLD_SCALE })
 		if ok and built then
+			if player == Players.LocalPlayer then
+				addTag(built, entry.Name, entry.Tier)
+			end
 			table.insert(owner.Pets, {
 				Built = built,
 				Current = CFrame.new(),
@@ -7939,6 +9613,25 @@ local function groundHeight(position: Vector3, fallback: number): number
 	return fallback
 end
 
+-- Centre and radius of the breakable this player's pets are attacking.
+local function attackTarget(player: Player, root: BasePart): (Vector3?, number)
+	local id = player:GetAttribute("BreakTarget")
+	local folder = Workspace:FindFirstChild("Breakables")
+	if type(id) ~= "string" or id == "" or not folder then
+		return nil, 0
+	end
+	local model = folder:FindFirstChild(id)
+	if not model or not model:IsA("Model") then
+		return nil, 0
+	end
+	local center = model:GetPivot().Position
+	if ((center - root.Position) * Vector3.new(1, 0, 1)).Magnitude > ATTACK_REACH then
+		return nil, 0
+	end
+	local radius = model:GetAttribute("Radius")
+	return center, if type(radius) == "number" then radius else 2.5
+end
+
 local function hide(pet: PetVisual)
 	if pet.Built.Model.Parent then
 		pet.Built.Model.Parent = nil
@@ -7953,6 +9646,10 @@ local function update(dt: number)
 
 	-- Never let pets stand on pets or players.
 	local ignore: { Instance } = { petFolder }
+	local breakables = Workspace:FindFirstChild("Breakables")
+	if breakables then
+		table.insert(ignore, breakables)
+	end
 	for player in pairs(owners) do
 		if player.Character then
 			table.insert(ignore, player.Character)
@@ -7975,30 +9672,45 @@ local function update(dt: number)
 			local moving = velocity.Magnitude > 2
 			local flat = CFrame.lookAlong(root.Position, root.CFrame.LookVector * Vector3.new(1, 0, 1) + Vector3.new(0, 0, 1e-4))
 			local count = #owner.Pets
+			local attackCenter, attackRadius = attackTarget(player, root)
 			for index, pet in ipairs(owner.Pets) do
 				if far then
 					hide(pet)
 				else
-					local offset = slotOffset(index, count)
-					local spot = flat * Vector3.new(offset.X, 0, offset.Z)
-					local ground = groundHeight(spot, root.Position.Y - 3)
-					local lift
-					if pet.Flying then
-						lift = 2.2 + math.sin(t * 2.4 + pet.Phase) * 0.45
-					elseif moving then
-						lift = math.abs(math.sin(t * 9 + pet.Phase)) * 0.9 -- hop along
+					local target
+					if attackCenter then
+						-- Surround the breakable and lunge at it.
+						local angle = (index / count) * math.pi * 2 + 0.6
+						local ring = attackRadius + 1.6
+						local direction = Vector3.new(math.cos(angle), 0, math.sin(angle))
+						local strike = math.max(0, math.sin(t * 10 + pet.Phase))
+						local spot = attackCenter + direction * (ring - strike * 0.8)
+						local ground = groundHeight(spot, attackCenter.Y)
+						local lift = if pet.Flying then 2.4 + math.sin(t * 3 + pet.Phase) * 0.4 else strike * 0.9
+						target = CFrame.lookAt(Vector3.new(spot.X, ground + lift, spot.Z), Vector3.new(attackCenter.X, ground + lift, attackCenter.Z))
+							* CFrame.Angles(math.rad(-12) * strike, 0, 0)
 					else
-						lift = math.abs(math.sin(t * 2 + pet.Phase)) * 0.15
+						local offset = slotOffset(index, count)
+						local spot = flat * Vector3.new(offset.X, 0, offset.Z)
+						local ground = groundHeight(spot, root.Position.Y - 3)
+						local lift
+						if pet.Flying then
+							lift = 2.2 + math.sin(t * 2.4 + pet.Phase) * 0.45
+						elseif moving then
+							lift = math.abs(math.sin(t * 9 + pet.Phase)) * 0.9 -- hop along
+						else
+							lift = math.abs(math.sin(t * 2 + pet.Phase)) * 0.15
+						end
+						local tilt = if moving and not pet.Flying then CFrame.Angles(math.rad(-8), 0, 0) else CFrame.identity
+						target = CFrame.new(spot.X, ground + lift, spot.Z) * flat.Rotation * tilt
 					end
-					local tilt = if moving and not pet.Flying then CFrame.Angles(math.rad(-8), 0, 0) else CFrame.identity
-					local target = CFrame.new(spot.X, ground + lift, spot.Z) * flat.Rotation * tilt
 
 					local model = pet.Built.Model
 					if not model.Parent then
 						-- Appearing (new, or back in range): start in the slot.
 						pet.Current = target
 						model.Parent = petFolder
-					elseif (pet.Current.Position - target.Position).Magnitude > 60 then
+					elseif (pet.Current.Position - target.Position).Magnitude > SNAP_DISTANCE then
 						pet.Current = target -- owner teleported: snap
 					else
 						pet.Current = pet.Current:Lerp(target, alpha)
@@ -8014,9 +9726,18 @@ local function update(dt: number)
 end
 
 function PetFollowController.Init()
-	petFolder = Instance.new("Folder")
+	petFolder = Instance.new("Model")
 	petFolder.Name = "ClientPets"
 	petFolder.Parent = Workspace
+
+	-- Cartoon outline around every pet.
+	local outline = Instance.new("Highlight")
+	outline.Name = "Outline"
+	outline.FillTransparency = 1
+	outline.OutlineColor = OUTLINE_COLOR
+	outline.OutlineTransparency = 0.15
+	outline.DepthMode = Enum.HighlightDepthMode.Occluded
+	outline.Parent = petFolder
 
 	for _, player in ipairs(Players:GetPlayers()) do
 		addOwner(player)
@@ -8031,7 +9752,7 @@ return PetFollowController
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="46">
+        <Item class="ModuleScript" referent="51">
           <Properties>
             <string name="Name">PetsUI</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -8146,7 +9867,15 @@ local function refreshDetail()
 	end
 
 	detailName.Text = PetBuilder.DisplayName(petData.Type, tier)
-	detailName.TextColor3 = TIER_COLORS[tier] or rarityColor
+	local shine = UIKit.ShineFor(def.Rarity, tier)
+	local oldShine = detailName:FindFirstChildOfClass("UIGradient")
+	if oldShine then
+		oldShine:Destroy()
+	end
+	detailName.TextColor3 = if shine then Color3.new(1, 1, 1) else TIER_COLORS[tier] or rarityColor
+	if shine then
+		UIKit.Shine(detailName, shine)
+	end
 	detailInfo.Text = string.format("<font color='#%s'>%s</font>\nx%.2f coins", rarityColor:ToHex(), string.upper(def.Rarity), multiplierOf(petData))
 
 	equipButton.Text = if petData.Equipped then "UNEQUIP" else "EQUIP"
@@ -8178,7 +9907,7 @@ local function buildDetail(parent: Instance)
 	})
 	UIKit.Corner(detail, 12)
 	UIKit.Padding(detail, 10)
-	detailName = UIKit.Label({ Position = UDim2.fromOffset(0, 172), Size = UDim2.new(1, 0, 0, 26), Font = UIKit.Fonts.Title, TextSize = 20, TextXAlignment = Enum.TextXAlignment.Center, TextWrapped = true, Parent = detail })
+	detailName = UIKit.Label({ Position = UDim2.fromOffset(0, 172), Size = UDim2.new(1, 0, 0, 26), Font = UIKit.Fonts.Title, TextSize = 20, TextStrokeColor3 = UIKit.Ink, TextStrokeTransparency = 0, TextXAlignment = Enum.TextXAlignment.Center, TextWrapped = true, Parent = detail })
 	detailInfo = UIKit.Label({ Position = UDim2.fromOffset(0, 200), Size = UDim2.new(1, 0, 0, 40), TextSize = 15, TextXAlignment = Enum.TextXAlignment.Center, Parent = detail })
 
 	local buttons = UIKit.Frame({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, 0), Size = UDim2.new(1, 0, 0, 132), BackgroundTransparency = 1, Parent = detail })
@@ -8340,7 +10069,7 @@ return PetsUI
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="47">
+        <Item class="ModuleScript" referent="52">
           <Properties>
             <string name="Name">QuestsUI</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -8532,7 +10261,7 @@ return QuestsUI
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="48">
+        <Item class="ModuleScript" referent="53">
           <Properties>
             <string name="Name">RebirthUI</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -8653,7 +10382,7 @@ return RebirthUI
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="49">
+        <Item class="ModuleScript" referent="54">
           <Properties>
             <string name="Name">RewardsUI</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -9099,11 +10828,11 @@ return RewardsUI
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="50">
+        <Item class="ModuleScript" referent="55">
           <Properties>
             <string name="Name">SettingsUI</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
--- SettingsUI - music + hatch animation toggles (persisted on the server).
+-- SettingsUI - music, hatch animation and guide toggles (saved on the server).
 --------------------------------------------------------------------------------
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -9123,6 +10852,7 @@ local SettingsUI = {}
 local SETTINGS = {
 	{ Key = "Music", Label = "Background Music" },
 	{ Key = "SkipHatchAnimation", Label = "Skip Hatch Animation" },
+	{ Key = "ShowGuide", Label = "Guide Arrows & Goals" },
 }
 
 local window
@@ -9166,7 +10896,7 @@ local function refresh()
 end
 
 function SettingsUI.Init()
-	window = UIController.CreateWindow("Settings", "SETTINGS", UDim2.fromOffset(420, 240), UIKit.Colors.Stroke)
+	window = UIController.CreateWindow("Settings", "SETTINGS", UDim2.fromOffset(420, 302), UIKit.Colors.Stroke)
 	local list = UIKit.Frame({ Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Parent = window.Content })
 	UIKit.Create("UIListLayout", { Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder, Parent = list })
 
@@ -9219,7 +10949,7 @@ return SettingsUI
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="51">
+        <Item class="ModuleScript" referent="56">
           <Properties>
             <string name="Name">ShopUI</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -9464,7 +11194,96 @@ return ShopUI
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="52">
+        <Item class="ModuleScript" referent="57">
+          <Properties>
+            <string name="Name">TrailController</string>
+            <string name="Source"><![CDATA[--------------------------------------------------------------------------------
+-- TrailController - coloured speed trails behind players. The colour shows
+-- how far a player has upgraded their speed (player attribute "TrailTier",
+-- set by the server's UpgradeService), so progress is visible to everyone.
+--------------------------------------------------------------------------------
+
+local Players = game:GetService("Players")
+
+local TrailController = {}
+
+local rgb = Color3.fromRGB
+local TIERS = {
+	ColorSequence.new(rgb(230, 230, 240)), -- grey
+	ColorSequence.new(rgb(110, 235, 120)), -- green
+	ColorSequence.new(rgb(90, 180, 255)), -- blue
+	ColorSequence.new(rgb(185, 110, 255)), -- purple
+	ColorSequence.new(rgb(255, 215, 70), rgb(255, 160, 30)), -- golden
+	ColorSequence.new({ -- galaxy (max speed + a rebirth)
+		ColorSequenceKeypoint.new(0, rgb(120, 70, 255)),
+		ColorSequenceKeypoint.new(0.5, rgb(255, 110, 220)),
+		ColorSequenceKeypoint.new(1, rgb(80, 220, 255)),
+	}),
+}
+
+local function apply(player: Player, character: Model)
+	local root = character:WaitForChild("HumanoidRootPart", 10)
+	if not root or not root:IsA("BasePart") then
+		return
+	end
+	local trail = root:FindFirstChild("SpeedTrail") :: Trail?
+	if not trail then
+		local top = Instance.new("Attachment")
+		top.Name = "TrailTop"
+		top.Position = Vector3.new(0, 1, 0.3)
+		top.Parent = root
+		local bottom = Instance.new("Attachment")
+		bottom.Name = "TrailBottom"
+		bottom.Position = Vector3.new(0, -1.2, 0.3)
+		bottom.Parent = root
+		local newTrail = Instance.new("Trail")
+		newTrail.Name = "SpeedTrail"
+		newTrail.Attachment0 = top
+		newTrail.Attachment1 = bottom
+		newTrail.Lifetime = 0.45
+		newTrail.MinLength = 0.1
+		newTrail.FaceCamera = true
+		newTrail.LightEmission = 0.6
+		newTrail.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.3), NumberSequenceKeypoint.new(1, 1) })
+		newTrail.WidthScale = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(1, 0.2) })
+		newTrail.Parent = root
+		trail = newTrail
+	end
+	local tier = player:GetAttribute("TrailTier")
+	local colors = if type(tier) == "number" then TIERS[math.clamp(tier, 0, #TIERS)] else nil
+	local t = trail :: Trail
+	t.Enabled = colors ~= nil
+	if colors then
+		t.Color = colors
+	end
+end
+
+local function watch(player: Player)
+	player.CharacterAdded:Connect(function(character)
+		apply(player, character)
+	end)
+	player:GetAttributeChangedSignal("TrailTier"):Connect(function()
+		if player.Character then
+			task.spawn(apply, player, player.Character)
+		end
+	end)
+	if player.Character then
+		task.spawn(apply, player, player.Character)
+	end
+end
+
+function TrailController.Init()
+	for _, player in ipairs(Players:GetPlayers()) do
+		watch(player)
+	end
+	Players.PlayerAdded:Connect(watch)
+end
+
+return TrailController
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="58">
           <Properties>
             <string name="Name">UIController</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -9570,33 +11389,44 @@ local function currencyPill(parent: Instance, name: string, color: Color3, order
 		Parent = parent,
 	})
 	UIKit.Corner(pill, 23)
-	UIKit.Stroke(pill, color, 2)
+	UIKit.Stroke(pill, UIKit.Ink, 3)
+	UIKit.Lip(pill, color:Lerp(Color3.new(0, 0, 0), 0.4), 3)
 
 	local icon = UIKit.Frame({
 		Name = "Icon",
-		Size = UDim2.fromOffset(30, 30),
-		Position = UDim2.fromOffset(8, 8),
+		Size = UDim2.fromOffset(32, 32),
+		Position = UDim2.fromOffset(7, 7),
 		BackgroundColor3 = color,
 		Parent = pill,
 	})
+	UIKit.Stroke(icon, UIKit.Ink, 2.5)
 	if iconShape == "diamond" then
 		icon.Rotation = 45
-		icon.Size = UDim2.fromOffset(24, 24)
-		icon.Position = UDim2.fromOffset(11, 11)
-		UIKit.Corner(icon, 4)
+		icon.Size = UDim2.fromOffset(25, 25)
+		icon.Position = UDim2.fromOffset(10, 10)
+		UIKit.Corner(icon, 5)
+		UIKit.Gradient(icon, Color3.new(1, 1, 1), Color3.fromRGB(150, 190, 190), 45)
+		local shine = UIKit.Frame({ Position = UDim2.fromScale(0.18, 0.18), Size = UDim2.fromScale(0.3, 0.3), BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0.25, Parent = icon })
+		UIKit.Corner(shine, 3)
 	else
-		UIKit.Corner(icon, 15)
-		UIKit.Stroke(icon, color:Lerp(Color3.new(0, 0, 0), 0.3), 3)
+		UIKit.Corner(icon, 16)
+		UIKit.Gradient(icon, Color3.new(1, 1, 1), Color3.fromRGB(215, 175, 120), 90)
+		local inner = UIKit.Frame({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromScale(0.66, 0.66), BackgroundTransparency = 1, Parent = icon })
+		UIKit.Corner(inner, 11)
+		UIKit.Stroke(inner, color:Lerp(Color3.new(0.5, 0.3, 0), 0.45), 2)
+		UIKit.Label({ Size = UDim2.fromScale(1, 1), Text = "$", Font = UIKit.Fonts.Display, TextSize = 16, TextColor3 = color:Lerp(Color3.new(0.5, 0.3, 0), 0.55), TextXAlignment = Enum.TextXAlignment.Center, Parent = inner })
 	end
 
 	local label = UIKit.Label({
 		Name = "Value",
-		Position = UDim2.fromOffset(48, 0),
+		Position = UDim2.fromOffset(48, 2),
 		Size = UDim2.new(1, -100, 1, 0),
-		Font = UIKit.Fonts.Black,
-		TextSize = 22,
+		Font = UIKit.Fonts.Display,
+		TextSize = 26,
 		Text = "0",
 		TextColor3 = Color3.new(1, 1, 1),
+		TextStrokeColor3 = UIKit.Ink,
+		TextStrokeTransparency = 0,
 		Parent = pill,
 	})
 
@@ -9640,11 +11470,14 @@ local function buildHUD()
 		Parent = root,
 	})
 	UIKit.Corner(multPill, 23)
-	UIKit.Stroke(multPill, UIKit.Colors.Purple, 2)
+	UIKit.Stroke(multPill, UIKit.Ink, 3)
+	UIKit.Lip(multPill, UIKit.Colors.Purple:Lerp(Color3.new(0, 0, 0), 0.4), 3)
 	multLabel = UIKit.Label({
 		Size = UDim2.fromScale(1, 1),
-		Font = UIKit.Fonts.Black,
-		TextSize = 20,
+		Font = UIKit.Fonts.Display,
+		TextStrokeColor3 = UIKit.Ink,
+		TextStrokeTransparency = 0,
+		TextSize = 22,
 		Text = "x1.00 Coins",
 		TextXAlignment = Enum.TextXAlignment.Center,
 		TextColor3 = UIKit.Colors.Purple,
@@ -9734,20 +11567,53 @@ end
 -- Side buttons
 --------------------------------------------------------------------------------
 
+-- Emoji icons render on every platform without uploading images.
+local SIDE_ICONS = {
+	Pets = "🐾",
+	Shop = "🛒",
+	Rewards = "🎁",
+	Quests = "📜",
+	Upgrades = "⚡",
+	Index = "📖",
+	Zones = "🗺️",
+	Rebirth = "🌀",
+	Settings = "⚙️",
+}
+
 function UIController.AddSideButton(name: string, label: string, color: Color3, order: number, onClick: () -> ())
 	local button = UIKit.Button({
 		Name = name,
-		Size = UDim2.fromOffset(104, 52),
+		Size = UDim2.fromOffset(104, 64),
 		Color = color,
-		Text = label,
-		TextSize = 17,
-		Font = UIKit.Fonts.Title,
+		Text = "",
 		LayoutOrder = order,
-		Radius = 14,
+		Radius = 16,
 	}, function()
 		UIController.PlaySound("Click")
 		onClick()
 	end)
+	UIKit.Label({
+		Name = "Icon",
+		Position = UDim2.fromOffset(0, 4),
+		Size = UDim2.new(1, 0, 0, 32),
+		Text = SIDE_ICONS[name] or "",
+		TextSize = 28,
+		RichText = false,
+		TextXAlignment = Enum.TextXAlignment.Center,
+		Parent = button,
+	})
+	UIKit.Label({
+		Name = "Caption",
+		Position = UDim2.new(0, 0, 1, -26),
+		Size = UDim2.new(1, 0, 0, 22),
+		Text = label,
+		Font = UIKit.Fonts.Title,
+		TextSize = 15,
+		TextStrokeColor3 = UIKit.Ink,
+		TextStrokeTransparency = 0,
+		TextXAlignment = Enum.TextXAlignment.Center,
+		Parent = button,
+	})
 	button.Parent = sideList
 
 	local badge = UIKit.Frame({
@@ -10073,13 +11939,13 @@ function UIController.Init()
 		Name = "SideButtons",
 		AnchorPoint = Vector2.new(0, 0.5),
 		Position = UDim2.new(0, 16, 0.55, 0),
-		Size = UDim2.fromOffset(216, 300),
+		Size = UDim2.fromOffset(216, 368),
 		BackgroundTransparency = 1,
 		Parent = root,
 	})
 	UIKit.Create("UIGridLayout", {
-		CellSize = UDim2.fromOffset(104, 52),
-		CellPadding = UDim2.fromOffset(8, 8),
+		CellSize = UDim2.fromOffset(104, 64),
+		CellPadding = UDim2.fromOffset(8, 10),
 		SortOrder = Enum.SortOrder.LayoutOrder,
 		VerticalAlignment = Enum.VerticalAlignment.Center,
 		Parent = sideList,
@@ -10144,7 +12010,7 @@ return UIController
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="53">
+        <Item class="ModuleScript" referent="59">
           <Properties>
             <string name="Name">UpgradesUI</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -10257,7 +12123,7 @@ return UpgradesUI
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="54">
+        <Item class="ModuleScript" referent="60">
           <Properties>
             <string name="Name">WorldController</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -10305,12 +12171,15 @@ local function refreshGates()
 		if label and label:IsA("BillboardGui") then
 			local subtitle = label:FindFirstChild("Subtitle")
 			if subtitle and subtitle:IsA("TextLabel") then
+				local cost = Config.Zones[zone].Cost
 				if open then
 					subtitle.Text = "Unlocked!"
+				elseif zone == unlocked + 1 and State.Get("Coins", 0) >= cost then
+					subtitle.Text = "<font color='#50DC78'>READY! Walk in to unlock</font>"
 				elseif zone == unlocked + 1 then
-					subtitle.Text = "Unlock: " .. Util.FormatNumber(Config.Zones[zone].Cost) .. " Coins"
+					subtitle.Text = "Walk in to unlock: " .. Util.FormatNumber(cost) .. " Coins"
 				else
-					subtitle.Text = "Locked"
+					subtitle.Text = "Unlock " .. Config.Zones[zone - 1].Name .. " first"
 				end
 			end
 		end
@@ -10441,7 +12310,7 @@ function WorldController.Init()
 
 	State.OnLoaded(refreshGoal)
 	State.Changed:Connect(function(patch)
-		if patch.ZonesUnlocked ~= nil then
+		if patch.ZonesUnlocked ~= nil or patch.Coins ~= nil then
 			refreshGates()
 		end
 		if patch.Coins ~= nil or patch.ZonesUnlocked ~= nil or patch.Rebirths ~= nil or patch.PurchasedRebirths ~= nil then
@@ -10454,7 +12323,7 @@ return WorldController
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="55">
+        <Item class="ModuleScript" referent="61">
           <Properties>
             <string name="Name">ZonesUI</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -10583,11 +12452,11 @@ return ZonesUI
           </Properties>
         </Item>
       </Item>
-      <Item class="Folder" referent="56">
+      <Item class="Folder" referent="62">
         <Properties>
           <string name="Name">Modules</string>
         </Properties>
-        <Item class="ModuleScript" referent="57">
+        <Item class="ModuleScript" referent="63">
           <Properties>
             <string name="Name">ClientState</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -10700,7 +12569,77 @@ return State
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="58">
+        <Item class="ModuleScript" referent="64">
+          <Properties>
+            <string name="Name">FloatingText</string>
+            <string name="Source"><![CDATA[--------------------------------------------------------------------------------
+-- FloatingText - "+123" style popups that rise and fade at a world position.
+--------------------------------------------------------------------------------
+
+local TweenService = game:GetService("TweenService")
+local Workspace = game:GetService("Workspace")
+
+local FloatingText = {}
+
+local MAX_POPUPS = 12
+local popupCount = 0
+local folder: Folder? = nil
+
+-- size: optional pixel size (default 140x40); bigger for big rewards.
+function FloatingText.Show(position: Vector3, text: string, color: Color3, size: Vector2?)
+	if popupCount >= MAX_POPUPS then
+		return
+	end
+	if not folder then
+		local newFolder = Instance.new("Folder")
+		newFolder.Name = "FloatingText"
+		newFolder.Parent = Workspace
+		folder = newFolder
+	end
+	popupCount += 1
+	local anchor = Instance.new("Part")
+	anchor.Anchored = true
+	anchor.CanCollide = false
+	anchor.CanQuery = false
+	anchor.CanTouch = false
+	anchor.Transparency = 1
+	anchor.Size = Vector3.new(0.2, 0.2, 0.2)
+	anchor.Position = position
+	anchor.Parent = folder
+
+	local pixels = size or Vector2.new(140, 40)
+	local gui = Instance.new("BillboardGui")
+	gui.Size = UDim2.fromOffset(pixels.X, pixels.Y)
+	gui.AlwaysOnTop = true
+	gui.LightInfluence = 0
+	gui.Adornee = anchor
+	gui.Parent = anchor
+
+	local label = Instance.new("TextLabel")
+	label.BackgroundTransparency = 1
+	label.Size = UDim2.fromScale(1, 1)
+	label.Font = Enum.Font.LuckiestGuy
+	label.Text = text
+	label.TextColor3 = color
+	label.TextScaled = true
+	label.TextStrokeTransparency = 0
+	label.TextStrokeColor3 = Color3.fromRGB(30, 22, 40)
+	label.Parent = gui
+
+	local info = TweenInfo.new(0.9, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+	TweenService:Create(gui, info, { StudsOffset = Vector3.new(0, 4, 0) }):Play()
+	TweenService:Create(label, info, { TextTransparency = 1, TextStrokeTransparency = 1 }):Play()
+	task.delay(0.95, function()
+		anchor:Destroy()
+		popupCount -= 1
+	end)
+end
+
+return FloatingText
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="65">
           <Properties>
             <string name="Name">PetBuilder</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -11355,6 +13294,57 @@ local function addExtras(c, extras: { string })
 	end
 end
 
+-- Cute "chibi" proportions: grow the head (and everything on it) and lift it a
+-- little. Only for body plans with a separate head; owls, penguins and crabs
+-- are already one round shape.
+local CHIBI = {
+	Dog = true,
+	Wolf = true,
+	Cat = true,
+	Fox = true,
+	Bunny = true,
+	Bear = true,
+	Lamb = true,
+	Deer = true,
+	Unicorn = true,
+	Dragon = true,
+	Phoenix = true,
+	Seal = true,
+	Lizard = true,
+	Capybara = true,
+}
+local HEAD_SCALE = 1.3
+local EYE_SCALE = 1.12
+
+local function chibify(c, archetype: string)
+	if not CHIBI[archetype] then
+		return
+	end
+	local s = c.S
+	local center = c.HeadCenter * s
+	local radius = c.HeadSize * 0.85 * s
+	local top = (c.HeadCenter.Y + 0.3) * s
+	local lift = V(0, (HEAD_SCALE - 1) * c.HeadSize * 0.4 * s, 0)
+	local flapping = {}
+	for _, flapper in ipairs(c.Flappers) do
+		flapping[flapper.Part] = true
+	end
+	for _, part in ipairs(c.Model:GetChildren()) do
+		if part:IsA("BasePart") and part ~= c.Root and part ~= c.BodyPart and not flapping[part] then
+			local position = part.Position
+			local near = (position - center).Magnitude < radius
+			local above = position.Y > top and math.abs(position.Z - center.Z) < c.HeadSize * 0.9 * s
+			if near or above then
+				local k = if part:GetAttribute("Role") == "Eye" then HEAD_SCALE * EYE_SCALE else HEAD_SCALE
+				part.Size *= k
+				part.CFrame = CFrame.new(center + (position - center) * HEAD_SCALE + lift) * part.CFrame.Rotation
+			end
+		end
+	end
+	c.HeadCenter += lift / s
+	c.HeadTop = c.HeadCenter + (c.HeadTop - c.HeadCenter) * HEAD_SCALE
+end
+
 local function addEffects(c, def, extras: { string })
 	local body = c.BodyPart
 	if not body then
@@ -11526,6 +13516,7 @@ function PetBuilder.Build(petName: string, tier: number?, opts: { [string]: any 
 	archetype(c)
 	local extras = resolvedStyle.Extras or {}
 	addExtras(c, extras)
+	chibify(c, resolvedStyle.Archetype)
 	if o.Effects then
 		addEffects(c, def or { Rarity = "Common" }, extras)
 	end
@@ -11632,7 +13623,7 @@ return PetBuilder
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="59">
+        <Item class="ModuleScript" referent="66">
           <Properties>
             <string name="Name">RewardText</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -11677,13 +13668,14 @@ return RewardText
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="60">
+        <Item class="ModuleScript" referent="67">
           <Properties>
             <string name="Name">UIKit</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
 -- UIKit - tiny helper library for building consistent, animated UI in code.
 --------------------------------------------------------------------------------
 
+local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
 local UIKit = {}
@@ -11706,6 +13698,7 @@ UIKit.Colors = {
 }
 
 UIKit.Fonts = {
+	Display = Enum.Font.LuckiestGuy, -- big buttons, banners, numbers
 	Title = Enum.Font.FredokaOne,
 	Bold = Enum.Font.GothamBold,
 	Black = Enum.Font.GothamBlack,
@@ -11713,6 +13706,12 @@ UIKit.Fonts = {
 }
 
 local FAST = TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+local INK = Color3.fromRGB(28, 22, 40) -- outline colour for the cartoon look
+UIKit.Ink = INK
+
+local function darker(color: Color3, amount: number): Color3
+	return color:Lerp(Color3.new(0, 0, 0), amount)
+end
 
 function UIKit.Create(className: string, props: { [string]: any }?, children: { Instance }?): any
 	local instance = Instance.new(className)
@@ -11802,15 +13801,43 @@ function UIKit.Label(props: { [string]: any }?): TextLabel
 	return UIKit.Create("TextLabel", defaults)
 end
 
--- A rounded, animated button. `props.Color` sets the base color.
+-- Solid "3D lip" under a button or panel (UIShadow with no blur).
+function UIKit.Lip(parent: GuiObject, color: Color3, depth: number?)
+	pcall(function()
+		local shadow = Instance.new("UIShadow" :: any)
+		shadow.Name = "Lip"
+		shadow.BlurRadius = UDim.new(0, 0)
+		shadow.Offset = UDim2.fromOffset(0, depth or 4)
+		shadow.Color = color
+		shadow.Transparency = 0
+		shadow.Parent = parent
+	end)
+end
+
+-- Colours the outline and lip to match a button's base colour.
+local function paintButton(button: GuiButton, color: Color3)
+	button.BackgroundColor3 = color
+	local stroke = button:FindFirstChild("Outline")
+	if stroke and stroke:IsA("UIStroke") then
+		stroke.Color = darker(color, 0.6)
+	end
+	local lip = button:FindFirstChild("Lip") :: any
+	if lip then
+		lip.Color = darker(color, 0.45)
+	end
+end
+
+-- A chunky, glossy cartoon button. `props.Color` sets the base color.
 function UIKit.Button(props: { [string]: any }, onClick: (() -> ())?): TextButton
 	local color = props.Color or UIKit.Colors.Accent
 	local defaults = {
 		BackgroundColor3 = color,
 		BorderSizePixel = 0,
 		AutoButtonColor = false,
-		Font = UIKit.Fonts.Bold,
+		Font = UIKit.Fonts.Title,
 		TextColor3 = props.TextColor3 or Color3.new(1, 1, 1),
+		TextStrokeColor3 = INK,
+		TextStrokeTransparency = 0.25,
 		TextSize = 18,
 		Text = "",
 		Size = UDim2.fromOffset(140, 42),
@@ -11821,8 +13848,20 @@ function UIKit.Button(props: { [string]: any }, onClick: (() -> ())?): TextButto
 		end
 	end
 	local button = UIKit.Create("TextButton", defaults) :: TextButton
-	UIKit.Corner(button, props.Radius or 10)
-	UIKit.Stroke(button, Color3.new(0, 0, 0), 1.5, 0.75)
+	UIKit.Corner(button, props.Radius or 12)
+	local outline = UIKit.Stroke(button, darker(color, 0.6), 2.5)
+	outline.Name = "Outline"
+	-- Glossy: bright on top, a little darker at the bottom.
+	UIKit.Create("UIGradient", {
+		Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
+			ColorSequenceKeypoint.new(0.5, Color3.fromRGB(240, 240, 240)),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 200, 200)),
+		}),
+		Rotation = 90,
+		Parent = button,
+	})
+	UIKit.Lip(button, darker(color, 0.45), 4)
 
 	local scale = UIKit.Create("UIScale", { Scale = 1, Parent = button })
 	button:SetAttribute("BaseColor", color)
@@ -11861,10 +13900,10 @@ function UIKit.SetButtonEnabled(button: TextButton, enabled: boolean, disabledTe
 	button:SetAttribute("Disabled", not enabled)
 	local baseColor = button:GetAttribute("BaseColor") :: Color3?
 	if enabled then
-		button.BackgroundColor3 = baseColor or UIKit.Colors.Accent
+		paintButton(button, baseColor or UIKit.Colors.Accent)
 		button.TextColor3 = Color3.new(1, 1, 1)
 	else
-		button.BackgroundColor3 = UIKit.Colors.PanelLight
+		paintButton(button, UIKit.Colors.PanelLight)
 		button.TextColor3 = UIKit.Colors.Muted
 		if disabledText then
 			button.Text = disabledText
@@ -11875,7 +13914,7 @@ end
 function UIKit.SetButtonColor(button: TextButton, color: Color3)
 	button:SetAttribute("BaseColor", color)
 	if not button:GetAttribute("Disabled") then
-		button.BackgroundColor3 = color
+		paintButton(button, color)
 	end
 end
 
@@ -11954,8 +13993,10 @@ function UIKit.Window(parent: Instance, title: string, size: UDim2, accent: Colo
 		ZIndex = 10,
 		Parent = parent,
 	})
-	UIKit.Corner(frame, 16)
-	UIKit.Stroke(frame, accent or UIKit.Colors.Stroke, 2)
+	UIKit.Corner(frame, 18)
+	UIKit.Stroke(frame, INK, 4)
+	UIKit.Lip(frame, darker(accent or UIKit.Colors.Stroke, 0.5), 6)
+	UIKit.Gradient(frame, Color3.new(1, 1, 1), Color3.fromRGB(205, 205, 215), 90)
 
 	local scale = UIKit.Create("UIScale", { Scale = 1, Parent = frame })
 
@@ -11967,23 +14008,27 @@ function UIKit.Window(parent: Instance, title: string, size: UDim2, accent: Colo
 		Parent = frame,
 	})
 	UIKit.Corner(header, 16)
-	-- square off the bottom corners of the header
-	UIKit.Frame({
+	UIKit.Gradient(header, Color3.new(1, 1, 1), Color3.fromRGB(190, 190, 190), 90)
+	-- square off the bottom corners of the header (and continue its gloss,
+	-- since this strip covers the bottom 30% of it)
+	local strip = UIKit.Frame({
 		Size = UDim2.new(1, 0, 0, 16),
 		Position = UDim2.new(0, 0, 1, -16),
 		BackgroundColor3 = header.BackgroundColor3,
 		ZIndex = 11,
 		Parent = header,
 	})
+	UIKit.Gradient(strip, Color3.fromRGB(210, 210, 210), Color3.fromRGB(190, 190, 190), 90)
 
 	local titleLabel = UIKit.Label({
 		Name = "Title",
 		Size = UDim2.new(1, -120, 1, 0),
-		Position = UDim2.fromOffset(20, 0),
-		Font = UIKit.Fonts.Title,
-		TextSize = 28,
+		Position = UDim2.fromOffset(20, 2),
+		Font = UIKit.Fonts.Display,
+		TextSize = 32,
 		Text = title,
-		TextStrokeTransparency = 0.6,
+		TextStrokeColor3 = INK,
+		TextStrokeTransparency = 0,
 		ZIndex = 12,
 		Parent = header,
 	})
@@ -12055,6 +14100,68 @@ function UIKit.Pop(instance: GuiObject, amount: number?)
 	TweenService:Create(scale, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
 end
 
+--------------------------------------------------------------------------------
+-- Animated shine for the best stuff: a gold sweep (Legendary, Golden) and a
+-- rolling rainbow (Mythic, Rainbow). Put it on white text or frames.
+--------------------------------------------------------------------------------
+
+local GOLD_SHINE = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 180, 30)),
+	ColorSequenceKeypoint.new(0.42, Color3.fromRGB(255, 225, 90)),
+	ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 235)),
+	ColorSequenceKeypoint.new(0.58, Color3.fromRGB(255, 225, 90)),
+	ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 180, 30)),
+})
+
+local shines: { [UIGradient]: string } = setmetatable({}, { __mode = "k" }) :: any
+local shineLoop: RBXScriptConnection? = nil
+
+local function rainbowAt(t: number): ColorSequence
+	local keys = {}
+	for i = 0, 6 do
+		keys[i + 1] = ColorSequenceKeypoint.new(i / 6, Color3.fromHSV((t * 0.25 + i / 6) % 1, 0.65, 1))
+	end
+	return ColorSequence.new(keys)
+end
+
+local function animateShines()
+	local t = os.clock()
+	local rainbow = rainbowAt(t)
+	local sweep = Vector2.new(((t * 0.6) % 2.4) - 1.2, 0)
+	for gradient, style in pairs(shines) do
+		if gradient.Parent then
+			if style == "Rainbow" then
+				gradient.Color = rainbow
+			else
+				gradient.Offset = sweep
+			end
+		end
+	end
+end
+
+-- style: "Gold" | "Rainbow". Returns the UIGradient.
+function UIKit.Shine(target: GuiObject, style: string): UIGradient
+	local gradient = Instance.new("UIGradient")
+	gradient.Color = if style == "Rainbow" then rainbowAt(0) else GOLD_SHINE
+	gradient.Rotation = if style == "Rainbow" then 0 else 15
+	gradient.Parent = target
+	shines[gradient] = style
+	if not shineLoop then
+		shineLoop = RunService.Heartbeat:Connect(animateShines)
+	end
+	return gradient
+end
+
+-- Which shine (if any) a pet deserves: tier 2 / Mythic rainbow, tier 1 / Legendary gold.
+function UIKit.ShineFor(rarity: string?, tier: number?): string?
+	if (tier or 0) >= 2 or rarity == "Mythic" then
+		return "Rainbow"
+	elseif (tier or 0) == 1 or rarity == "Legendary" then
+		return "Gold"
+	end
+	return nil
+end
+
 function UIKit.RarityGradient(parent: Instance, color: Color3)
 	return UIKit.Gradient(parent, color, color:Lerp(Color3.new(0, 0, 0), 0.45), 90)
 end
@@ -12066,13 +14173,13 @@ return UIKit
       </Item>
     </Item>
   </Item>
-  <Item class="Workspace" referent="61">
+  <Item class="Workspace" referent="68">
     <Properties>
       <string name="Name">Workspace</string>
       <bool name="NeedsPivotMigration">false</bool>
       <bool name="StreamingEnabled">false</bool>
     </Properties>
-    <Item class="Terrain" referent="62">
+    <Item class="Terrain" referent="69">
       <Properties>
         <string name="Name">Terrain</string>
         <bool name="Decoration">true</bool>

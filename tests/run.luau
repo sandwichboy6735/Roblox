@@ -331,6 +331,67 @@ end
 check(Config.BaseWalkSpeed + Config.Upgrades.WalkSpeed.PerLevel * #Config.Upgrades.WalkSpeed.Costs <= 40, "Max walk speed stays reasonable")
 check(type(Config.DataTemplate.Quests.Ids) == "table" and Config.DataTemplate.Quests.BonusClaimed == false, "Quest data template")
 
+--------------------------------------------------------------------------------
+-- Breakables (coin piles, crates, chests)
+--------------------------------------------------------------------------------
+
+local B = Config.Breakables
+check(B.PerZone > 0 and B.MaxPerZone >= B.PerZone and B.RespawnMax >= B.RespawnMin, "Breakable spawn settings sane")
+check(B.PlayerDamage > 0 and B.PetDamage > 0, "Breakable damage settings positive")
+check(B.AutoTargetRange <= B.MaxDistance, "Auto-target stays inside the attack range")
+local maxKindHP = 0
+for key, kind in pairs(B.Kinds) do
+	check(kind.HP > 0 and kind.Reward > 0 and kind.Weight > 0, "Breakable " .. key .. " has HP, reward and weight")
+	check(kind.GemChance >= 0 and kind.GemChance <= 1, "Breakable " .. key .. " gem chance is a probability")
+	check(kind.Gems[1] >= 1 and kind.Gems[2] >= kind.Gems[1], "Breakable " .. key .. " gem range valid")
+	check(type(kind.Name) == "string", "Breakable " .. key .. " has a name")
+	maxKindHP = math.max(maxKindHP, kind.HP)
+end
+check(B.Giant.HP > maxKindHP * 5 and B.Giant.Respawn > 0 and B.Giant.MinShare < 0.5, "Giant Chest is a big shared goal")
+check(B.Giant.Gems[2] >= B.Giant.Gems[1] and B.Giant.Gems[1] >= 1, "Giant Chest gem range valid")
+for index, zone in ipairs(Config.Zones) do
+	check((zone.BreakableHP or 0) >= 1, zone.Name .. " has a breakable HP scale")
+	if index > 1 then
+		check(zone.BreakableHP > Config.Zones[index - 1].BreakableHP, zone.Name .. " breakables are tougher than the zone before")
+	end
+end
+check(Config.GetBreakableHP("Pile", 1) == B.Kinds.Pile.HP, "Zone 1 pile HP is the base HP")
+check(Config.GetBreakableHP("Giant", 2) == math.floor(B.Giant.HP * Config.Zones[2].BreakableHP), "Giant HP scales by zone")
+check(Config.GetBreakableHP("Nope", 1) == 1 and Config.GetBreakableHP("Pile", 99) == 1, "Unknown breakable or zone is harmless")
+
+-- Team damage: the player alone, then pets add damage, best pets first.
+check(near(Config.GetTeamDamage({}, 3), B.PlayerDamage), "No pets = player damage only")
+check(near(Config.GetPetDamage("Dog", 0), B.PetDamage * math.sqrt(Config.Pets.Dog.Multiplier)), "Pet damage formula")
+check(Config.GetPetDamage("Dog", 1) > Config.GetPetDamage("Dog", 0) and Config.GetPetDamage("Dog", 2) > Config.GetPetDamage("Dog", 1), "Golden and Rainbow pets hit harder")
+local strongTeam = { { Type = "Unicorn" }, { Type = "Dog" }, { Type = "Dog" }, { Type = "Dog" } }
+check(near(Config.GetTeamDamage(strongTeam, 1), B.PlayerDamage + Config.GetPetDamage("Unicorn", 0)), "Only the best pets up to the slot count attack")
+check(Config.GetTeamDamage({ { Type = "NotAPet" } }, 3) == B.PlayerDamage, "Unknown pets deal no damage")
+
+-- Not a grind wall: three common pets from a zone break that zone's coin pile
+-- in under 20 seconds, and the zone's rarest pets do it much faster.
+for _, entry in ipairs(Config.GetEggsSortedByZone()) do
+	local egg = entry.Egg
+	if egg.Currency == "Coins" then
+		local common, rarest = egg.Pets[1].Pet, egg.Pets[#egg.Pets].Pet
+		local commons = { { Type = common }, { Type = common }, { Type = common } }
+		local best = { { Type = rarest }, { Type = rarest }, { Type = rarest } }
+		local hp = Config.GetBreakableHP("Pile", egg.Zone)
+		check(hp / Config.GetTeamDamage(commons, 3) <= 20, egg.Name .. " commons break a pile within 20s")
+		check(hp / Config.GetTeamDamage(best, 3) < hp / Config.GetTeamDamage(commons, 3) / 2, egg.Name .. " best pets break piles over 2x faster")
+	end
+end
+
+--------------------------------------------------------------------------------
+-- Egg looks and guide
+--------------------------------------------------------------------------------
+
+local PATTERNS = { Spots = true, Stripes = true, Diamonds = true }
+for key, egg in pairs(Config.Eggs) do
+	check(egg.Pattern == nil or PATTERNS[egg.Pattern] == true, key .. " uses a known egg pattern")
+end
+check(Config.DataTemplate.Settings.ShowGuide == true, "Guide is on by default")
+check(Config.DataTemplate.Stats.BreakablesBroken == 0, "Breakables broken is saved")
+
 print(string.format("\n%d passed, %d failed", passed, failed))
 if failed > 0 then
 	error("tests failed")

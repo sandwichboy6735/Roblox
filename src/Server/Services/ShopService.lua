@@ -16,6 +16,7 @@ local Remotes = require(Shared.Remotes)
 local DataService = require(script.Parent.DataService)
 local EconomyService = require(script.Parent.EconomyService)
 local RebirthService = require(script.Parent.RebirthService)
+local ComplianceService = require(script.Parent.ComplianceService)
 
 local ShopService = {}
 
@@ -82,6 +83,11 @@ local function processReceipt(receiptInfo)
 	if not productKey or not product then
 		warn("[ShopService] Receipt for unknown ProductId " .. tostring(receiptInfo.ProductId) .. " - add it to Config.Products")
 		return Enum.ProductPurchaseDecision.NotProcessedYet
+	end
+	if ComplianceService.IsPurchaseBlocked(player, productKey) then
+		-- The shop hides these for restricted regions. Robux were already charged,
+		-- so still deliver, but log it so other prompt paths can be found.
+		warn("[ShopService] Restricted product " .. productKey .. " purchased by " .. player.Name .. " outside the shop")
 	end
 
 	local ok, err = pcall(grantProduct, player, productKey, product)

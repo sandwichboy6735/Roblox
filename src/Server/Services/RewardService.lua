@@ -35,7 +35,12 @@ local function grant(player: Player, reward, multiplier: number): string
 		local amount = EconomyService.AddGems(player, reward.Gems * multiplier)
 		table.insert(parts, amount .. " Gems")
 	end
-	if reward.Pet then
+	local profile = DataService:GetProfile(player)
+	local alreadyHasOncePet = reward.PetOnce and profile ~= nil and profile.Data.Discovered[reward.Pet] == true
+	if reward.Pet and alreadyHasOncePet then
+		local amount = EconomyService.AddGems(player, (reward.PetGems or 100) * multiplier)
+		table.insert(parts, amount .. " bonus Gems")
+	elseif reward.Pet then
 		local petData = PetService.AddPet(player, reward.Pet)
 		if petData then
 			table.insert(parts, reward.Pet .. " pet")

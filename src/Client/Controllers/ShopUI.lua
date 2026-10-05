@@ -66,7 +66,7 @@ end
 
 local function describeGrant(grant): string
 	if grant.CoinMinutes then
-		return string.format("%s Coins\n(%d min of your current income)", Util.FormatNumber(State.CoinsForMinutes(grant.CoinMinutes)), grant.CoinMinutes)
+		return string.format("~%s Coins\n(%d min of your current income)", Util.FormatNumber(State.CoinsForMinutes(grant.CoinMinutes)), grant.CoinMinutes)
 	elseif grant.Gems then
 		return "+" .. Util.FormatNumber(grant.Gems) .. " Gems"
 	elseif grant.Boost then

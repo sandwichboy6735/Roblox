@@ -225,8 +225,8 @@ Config.Pets = {
 	["Celestial Capybara"] = pet("Celestial Capybara", "Mythic", 50, Color3.fromRGB(255, 255, 200), "Block"),
 
 	-- Exclusive rewards (not in any egg)
-	-- Day-7 streak reward: strong enough to equip until the late zone-5 pets.
-	["Golden Capybara"] = pet("Golden Capybara", "Legendary", 75, Color3.fromRGB(255, 200, 40), "Block"),
+	-- First 7-day streak reward (one time only; later cycles give gems instead).
+	["Golden Capybara"] = pet("Golden Capybara", "Legendary", 60, Color3.fromRGB(255, 200, 40), "Block"),
 }
 
 Config.PetStorageLimit = 150 -- total pets a player can hold
@@ -458,7 +458,8 @@ Config.DailyRewards = {
 	{ Gems = 10 },
 	{ CoinMinutes = 20 },
 	{ Gems = 20 },
-	{ Gems = 50, Pet = "Golden Capybara" },
+	-- The pet is given once; if the player already has it, they get PetGems instead.
+	{ Gems = 50, Pet = "Golden Capybara", PetOnce = true, PetGems = 100 },
 }
 
 -- Session gifts (reset each visit). Kept small so gameplay, not timers, drives

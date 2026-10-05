@@ -36,7 +36,12 @@ local function describe(reward, multiplier: number?): string
 		table.insert(parts, "<font color='#6EFAE1'>" .. Util.FormatNumber(reward.Gems * mult) .. " Gems</font>")
 	end
 	if reward.Pet then
-		table.insert(parts, "<font color='#FFAA00'>" .. reward.Pet .. "</font>")
+		local discovered = State.Get("Discovered", {})
+		if reward.PetOnce and discovered[reward.Pet] then
+			table.insert(parts, "<font color='#6EFAE1'>+" .. Util.FormatNumber((reward.PetGems or 100) * mult) .. " Gems</font>")
+		else
+			table.insert(parts, "<font color='#FFAA00'>" .. reward.Pet .. "</font>")
+		end
 	end
 	return table.concat(parts, "\n")
 end
@@ -428,7 +433,7 @@ function RewardsUI.Init()
 
 	window.OnOpen = refreshAll
 	State.Changed:Connect(function(patch)
-		if patch.Daily ~= nil or patch.PlaytimeClaimed ~= nil or patch.GroupClaimed ~= nil or patch.Gamepasses ~= nil or patch.ZonesUnlocked ~= nil or patch.Multiplier ~= nil then
+		if patch.Daily ~= nil or patch.PlaytimeClaimed ~= nil or patch.GroupClaimed ~= nil or patch.Gamepasses ~= nil or patch.ZonesUnlocked ~= nil or patch.Multiplier ~= nil or patch.Discovered ~= nil then
 			refreshAll()
 		end
 	end)

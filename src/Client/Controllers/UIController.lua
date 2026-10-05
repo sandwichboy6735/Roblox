@@ -186,7 +186,7 @@ local function buildHUD()
 		Name = "Breakdown",
 		AnchorPoint = Vector2.new(1, 0),
 		Position = UDim2.new(1, -16, 0, 64),
-		Size = UDim2.fromOffset(190, 90),
+		Size = UDim2.fromOffset(190, 126),
 		Font = UIKit.Fonts.Body,
 		TextSize = 14,
 		TextColor3 = UIKit.Colors.Muted,
@@ -236,12 +236,14 @@ local function refreshHUD()
 	if info then
 		multLabel.Text = string.format("x%.2f Coins", info.Total)
 		breakdownLabel.Text = string.format(
-			"Pets x%.2f\nRebirth x%.2f\nGamepass x%.2f\nGroup x%.2f\nBoost x%.2f",
+			"Pets x%.2f\nRebirth x%.2f\nGamepass x%.2f\nGroup x%.2f\nUpgrades x%.2f\nBoost x%.2f\nEvent x%.2f",
 			info.Pets,
 			info.Rebirth,
 			info.Gamepass,
 			info.Group,
-			info.Boost
+			info.Upgrade or 1,
+			info.Boost,
+			info.Event or 1
 		)
 	end
 end
@@ -266,10 +268,10 @@ end
 function UIController.AddSideButton(name: string, label: string, color: Color3, order: number, onClick: () -> ())
 	local button = UIKit.Button({
 		Name = name,
-		Size = UDim2.fromOffset(120, 48),
+		Size = UDim2.fromOffset(104, 52),
 		Color = color,
 		Text = label,
-		TextSize = 20,
+		TextSize = 17,
 		Font = UIKit.Fonts.Title,
 		LayoutOrder = order,
 		Radius = 14,
@@ -597,16 +599,18 @@ function UIController.Init()
 		Parent = toastContainer,
 	})
 
+	-- Two-column grid of menu buttons on the left edge.
 	sideList = UIKit.Frame({
 		Name = "SideButtons",
 		AnchorPoint = Vector2.new(0, 0.5),
-		Position = UDim2.new(0, 16, 0.5, 0),
-		Size = UDim2.fromOffset(120, 420),
+		Position = UDim2.new(0, 16, 0.55, 0),
+		Size = UDim2.fromOffset(216, 300),
 		BackgroundTransparency = 1,
 		Parent = root,
 	})
-	UIKit.Create("UIListLayout", {
-		Padding = UDim.new(0, 8),
+	UIKit.Create("UIGridLayout", {
+		CellSize = UDim2.fromOffset(104, 52),
+		CellPadding = UDim2.fromOffset(8, 8),
 		SortOrder = Enum.SortOrder.LayoutOrder,
 		VerticalAlignment = Enum.VerticalAlignment.Center,
 		Parent = sideList,

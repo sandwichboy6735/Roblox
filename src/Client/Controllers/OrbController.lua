@@ -149,6 +149,8 @@ local function step()
 	if State.Owns("AutoCollect") then
 		radius = Config.Gamepasses.AutoCollect.Radius
 	end
+	local magnet = State.GetUpgradeBonus("Magnet")
+	radius += magnet
 	local rootPosition = root.Position
 	local now = os.clock()
 
@@ -171,7 +173,7 @@ local function step()
 	end
 
 	-- Orbs we've walked too far from for the server to accept reappear at once.
-	local serverReach = if State.Owns("AutoCollect") then Config.Gamepasses.AutoCollect.Radius + 16 else Config.Orbs.MaxCollectDistance
+	local serverReach = (if State.Owns("AutoCollect") then Config.Gamepasses.AutoCollect.Radius + 16 else Config.Orbs.MaxCollectDistance) + magnet
 	for index = #queue, 1, -1 do
 		local orb = queue[index]
 		if (orb.Position - rootPosition).Magnitude > serverReach - 6 then

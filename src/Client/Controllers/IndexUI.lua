@@ -168,7 +168,7 @@ function IndexUI.Init()
 		end
 	end)
 
-	UIController.AddSideButton("Index", "INDEX", UIKit.Colors.Info:Lerp(UIKit.Colors.Purple, 0.5), 4, function()
+	UIController.AddSideButton("Index", "INDEX", UIKit.Colors.Info:Lerp(UIKit.Colors.Purple, 0.5), 6, function()
 		UIController.Toggle("Index")
 	end)
 end

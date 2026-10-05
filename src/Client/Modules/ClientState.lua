@@ -70,12 +70,22 @@ function State.GetPermanentMultiplier(): number
 	if not info then
 		return 1
 	end
-	return (info.Pets or 1) * (info.Rebirth or 1) * (info.Gamepass or 1) * (info.Group or 1)
+	return (info.Pets or 1) * (info.Rebirth or 1) * (info.Gamepass or 1) * (info.Group or 1) * (info.Upgrade or 1)
 end
 
 -- Coins worth `minutes` of this player's income (matches the server).
 function State.CoinsForMinutes(minutes: number): number
 	return Config.CoinsForMinutes(minutes, State.Get("ZonesUnlocked", 1), State.GetPermanentMultiplier())
+end
+
+-- Bonus from a gem upgrade (e.g. +3 studs of magnet range).
+function State.GetUpgradeBonus(key: string): number
+	local upgrade = Config.Upgrades[key]
+	local levels = State.Data.Upgrades
+	if not upgrade or not levels then
+		return 0
+	end
+	return (levels[key] or 0) * upgrade.PerLevel
 end
 
 function State.GetRebirthCost(): number

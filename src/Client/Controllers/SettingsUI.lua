@@ -106,7 +106,7 @@ function SettingsUI.Init()
 		end
 	end)
 
-	UIController.AddSideButton("Settings", "SETTINGS", UIKit.Colors.Stroke, 7, function()
+	UIController.AddSideButton("Settings", "SETTINGS", UIKit.Colors.Stroke, 9, function()
 		UIController.Toggle("Settings")
 	end)
 end

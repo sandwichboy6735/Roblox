@@ -12,6 +12,7 @@ local Remotes = require(Shared.Remotes)
 local Modules = script.Parent.Parent:WaitForChild("Modules")
 local State = require(Modules.ClientState)
 local UIKit = require(Modules.UIKit)
+local RewardText = require(Modules.RewardText)
 local UIController = require(script.Parent.UIController)
 
 local RewardsUI = {}
@@ -25,26 +26,7 @@ local groupButton: TextButton?
 local codeBox: TextBox
 local redeeming = false
 
-local function describe(reward, multiplier: number?): string
-	local mult = multiplier or 1
-	local parts = {}
-	if reward.CoinMinutes then
-		local amount = State.CoinsForMinutes(reward.CoinMinutes) * mult
-		table.insert(parts, "<font color='#FFC400'>" .. Util.FormatNumber(amount) .. " Coins</font>")
-	end
-	if reward.Gems then
-		table.insert(parts, "<font color='#6EFAE1'>" .. Util.FormatNumber(reward.Gems * mult) .. " Gems</font>")
-	end
-	if reward.Pet then
-		local discovered = State.Get("Discovered", {})
-		if reward.PetOnce and discovered[reward.Pet] then
-			table.insert(parts, "<font color='#6EFAE1'>+" .. Util.FormatNumber((reward.PetGems or 100) * mult) .. " Gems</font>")
-		else
-			table.insert(parts, "<font color='#FFAA00'>" .. reward.Pet .. "</font>")
-		end
-	end
-	return table.concat(parts, "\n")
-end
+local describe = RewardText.Describe
 
 local function sessionElapsed(): number
 	local start = State.Get("SessionStart")

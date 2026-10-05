@@ -107,7 +107,7 @@ function RebirthUI.Init()
 		end
 	end)
 
-	UIController.AddSideButton("Rebirth", "REBIRTH", UIKit.Colors.Purple, 6, function()
+	UIController.AddSideButton("Rebirth", "REBIRTH", UIKit.Colors.Purple, 8, function()
 		UIController.Toggle("Rebirth")
 	end)
 end

@@ -78,8 +78,25 @@ end
 -- Multipliers
 --------------------------------------------------------------------------------
 
+-- Injected by EventService / UpgradeService (they require this module, so
+-- requiring them here would create a cycle).
+local eventMultiplier: () -> number = function()
+	return 1
+end
+local upgradeMultiplier: (Player) -> number = function()
+	return 1
+end
+
+function EconomyService.SetEventMultiplierSource(source: () -> number)
+	eventMultiplier = source
+end
+
+function EconomyService.SetUpgradeMultiplierSource(source: (Player) -> number)
+	upgradeMultiplier = source
+end
+
 function EconomyService.GetMultiplierInfo(player: Player)
-	local info = { Pets = 1, Rebirth = 1, Gamepass = 1, Group = 1, Boost = 1, Total = 1 }
+	local info = { Pets = 1, Rebirth = 1, Gamepass = 1, Group = 1, Upgrade = 1, Boost = 1, Event = 1, Total = 1 }
 	local profile = DataService:GetProfile(player)
 	if not profile then
 		return info
@@ -115,8 +132,10 @@ function EconomyService.GetMultiplierInfo(player: Player)
 	end
 	info.Gamepass = passMult
 	info.Group = profile.Runtime.InGroup and Config.GroupReward.Multiplier or 1
+	info.Upgrade = upgradeMultiplier(player)
 	info.Boost = EconomyService.GetBoost(player, "Coins")
-	info.Total = info.Pets * info.Rebirth * info.Gamepass * info.Group * info.Boost
+	info.Event = eventMultiplier()
+	info.Total = info.Pets * info.Rebirth * info.Gamepass * info.Group * info.Upgrade * info.Boost * info.Event
 	return info
 end
 
@@ -143,10 +162,10 @@ function EconomyService.GetLuckMultiplier(player: Player): number
 	return luck
 end
 
--- Pets x rebirth x gamepasses x group (timed boosts excluded).
+-- Pets x rebirth x gamepasses x group x upgrades (timed boosts and events excluded).
 function EconomyService.GetPermanentMultiplier(player: Player): number
 	local info = EconomyService.GetMultiplierInfo(player)
-	return info.Pets * info.Rebirth * info.Gamepass * info.Group
+	return info.Pets * info.Rebirth * info.Gamepass * info.Group * info.Upgrade
 end
 
 -- Coins worth `minutes` of this player's current income (rewards, coin packs).

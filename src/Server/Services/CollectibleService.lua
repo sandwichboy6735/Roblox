@@ -15,6 +15,8 @@ local GamepassService = require(script.Parent.GamepassService)
 local EconomyService = require(script.Parent.EconomyService)
 local MapBuilder = require(script.Parent.MapBuilder)
 local RateLimiter = require(script.Parent.RateLimiter)
+local EventService = require(script.Parent.EventService)
+local UpgradeService = require(script.Parent.UpgradeService)
 
 local CollectibleService = {}
 
@@ -47,10 +49,11 @@ local function spawnOrb(zoneIndex: number)
 	end
 
 	local roll = rng:NextNumber()
+	local gemChance = EventService.GetGemChance(Config.Orbs.GemOrbChance)
 	local kind = "Coin"
-	if roll < Config.Orbs.GemOrbChance then
+	if roll < gemChance then
 		kind = "Gem"
-	elseif roll < Config.Orbs.GemOrbChance + Config.Orbs.BigOrbChance then
+	elseif roll < gemChance + Config.Orbs.BigOrbChance then
 		kind = "Big"
 	end
 
@@ -143,7 +146,8 @@ local function rebalance()
 	end
 	for zoneIndex, zone in ipairs(Config.Zones) do
 		local extraPlayers = math.max(0, (playersIn[zoneIndex] or 0) - 1)
-		local target = math.min(zone.OrbCount + extraPlayers * Config.Orbs.ExtraPerPlayer, Config.Orbs.MaxPerZone)
+		local base = zone.OrbCount * (1 + EventService.GetOrbBonus())
+		local target = math.floor(math.min(base + extraPlayers * Config.Orbs.ExtraPerPlayer, Config.Orbs.MaxPerZone))
 		targetCount[zoneIndex] = target
 		-- Orbs already waiting to respawn will refill themselves on schedule.
 		local missing = target - (liveCount[zoneIndex] or 0) - (pendingRespawns[zoneIndex] or 0)
@@ -199,6 +203,7 @@ local function onCollect(player: Player, orbArg: any)
 	if GamepassService.Owns(player, "AutoCollect") then
 		maxDistance = Config.Gamepasses.AutoCollect.Radius + 16
 	end
+	maxDistance += UpgradeService.GetBonus(player, "Magnet")
 	if (root.Position - orb.Position).Magnitude > maxDistance then
 		return
 	end
@@ -215,12 +220,16 @@ local function onCollect(player: Player, orbArg: any)
 	liveCount[record.Zone] = math.max(0, (liveCount[record.Zone] or 1) - 1)
 	orb:Destroy()
 
+	-- Update stats first so the Stats sent with the currency change are current.
+	local stats = profile.Data.Stats
+	stats.OrbsCollected += 1
 	if record.Kind == "Gem" then
+		stats.GemOrbs += 1
 		EconomyService.AddGems(player, record.Value)
+		DataService:Replicate(player, { Stats = stats })
 	else
 		EconomyService.AddCoins(player, record.Value, true)
 	end
-	profile.Data.Stats.OrbsCollected += 1
 
 	respawnLater(record.Zone)
 end

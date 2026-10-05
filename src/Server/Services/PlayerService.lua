@@ -61,12 +61,13 @@ function PlayerService.Init()
 		end
 	end)
 
-	-- Playtime tracking (persisted stat; useful for analytics / future rewards)
+	-- Playtime tracking (also drives the "play for N minutes" quest).
 	task.spawn(function()
 		while true do
 			task.wait(10)
-			for _, profile in pairs(DataService.Profiles) do
+			for player, profile in pairs(DataService.Profiles) do
 				profile.Data.Stats.Playtime += 10
+				DataService:Replicate(player, { Stats = profile.Data.Stats })
 			end
 		end
 	end)

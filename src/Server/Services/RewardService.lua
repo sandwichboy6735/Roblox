@@ -57,6 +57,9 @@ local function grant(player: Player, reward, multiplier: number): string
 	return table.concat(parts, " + ")
 end
 
+-- Shared with other services (quests).
+RewardService.Grant = grant
+
 --------------------------------------------------------------------------------
 -- Daily
 --------------------------------------------------------------------------------

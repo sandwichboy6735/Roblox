@@ -499,6 +499,50 @@ Config.GroupReward = {
 -- Promo codes live in src/Server/Codes.lua (server only, so they stay secret).
 
 --------------------------------------------------------------------------------
+-- DAILY QUESTS - three are picked per player per UTC day from this pool.
+-- Progress = how much a Stat grew since the day started (Scale converts units,
+-- e.g. Playtime seconds -> minutes). Rewards use the same keys as other rewards.
+--------------------------------------------------------------------------------
+
+Config.Quests = {
+	PerDay = 3,
+	Pool = {
+		{ Id = "Orbs", Text = "Collect %d orbs", Stat = "OrbsCollected", Goal = 250, Reward = { Gems = 10 } },
+		{ Id = "Hatch", Text = "Hatch %d eggs", Stat = "PetsHatched", Goal = 20, Reward = { CoinMinutes = 6 } },
+		{ Id = "GemOrbs", Text = "Find %d gem orbs", Stat = "GemOrbs", Goal = 6, Reward = { CoinMinutes = 8 } },
+		{ Id = "Play", Text = "Play for %d minutes", Stat = "Playtime", Scale = 60, Goal = 20, Reward = { Gems = 15 } },
+		{ Id = "Craft", Text = "Craft %d Golden or Rainbow pet", Stat = "PetsCrafted", Goal = 1, Reward = { Gems = 25 } },
+		{ Id = "BigHatch", Text = "Hatch %d eggs", Stat = "PetsHatched", Goal = 60, Reward = { Gems = 30 } },
+		{ Id = "BigOrbs", Text = "Collect %d orbs", Stat = "OrbsCollected", Goal = 800, Reward = { CoinMinutes = 12 } },
+	},
+	BonusReward = { Gems = 40 }, -- for finishing all of today's quests
+}
+
+--------------------------------------------------------------------------------
+-- SERVER EVENTS - a random event starts every Interval seconds.
+--------------------------------------------------------------------------------
+
+Config.Events = {
+	Interval = 600, -- seconds between event starts
+	Duration = 120,
+	List = {
+		CoinFrenzy = { Name = "COIN FRENZY", Description = "x2 coins from every orb!", CoinMult = 2, ExtraOrbs = 0.5, Color = Color3.fromRGB(255, 200, 40) },
+		GemRush = { Name = "GEM RUSH", Description = "Gem orbs are everywhere!", GemChance = 0.12, Color = Color3.fromRGB(255, 90, 210) },
+	},
+}
+
+--------------------------------------------------------------------------------
+-- UPGRADES - permanent boosts bought with gems.
+--------------------------------------------------------------------------------
+
+Config.Upgrades = {
+	WalkSpeed = { Name = "Speed", Description = "+2 walk speed per level", PerLevel = 2, Costs = { 20, 45, 90, 160, 260 }, Order = 1 },
+	Magnet = { Name = "Magnet", Description = "+1.5 stud pickup range per level", PerLevel = 1.5, Costs = { 25, 55, 110, 190, 300 }, Order = 2 },
+	CoinBoost = { Name = "Coin Boost", Description = "+10% coins per level", PerLevel = 0.1, Costs = { 30, 70, 140, 240, 380 }, Order = 3 },
+}
+Config.BaseWalkSpeed = 20 -- keep equal to StarterPlayer.CharacterWalkSpeed
+
+--------------------------------------------------------------------------------
 -- SOUNDS (0 = disabled). Use ids you own or free-to-use Roblox library sounds.
 --------------------------------------------------------------------------------
 
@@ -538,6 +582,8 @@ Config.DataTemplate = {
 	Daily = { LastClaim = 0, Streak = 0 },
 	GroupClaimed = false,
 	RedeemedCodes = {}, -- { [CODE] = true }
+	Quests = { Day = 0, Ids = {}, Baseline = {}, Claimed = {}, BonusClaimed = false },
+	Upgrades = { WalkSpeed = 0, Magnet = 0, CoinBoost = 0 },
 	Purchases = {}, -- processed receipt ids (dedupe)
 	Boosts = {}, -- { Luck = {Mult, ExpiresAt}, Coins = {...} }
 	Settings = { Music = true, SkipHatchAnimation = false },
@@ -573,6 +619,43 @@ end
 function Config.GetRebirthCost(naturalRebirths: number): number
 	local cost = Config.Rebirth.BaseCost * Config.Rebirth.CostGrowth ^ math.max(naturalRebirths, 0)
 	return math.floor(math.min(cost, Config.Rebirth.MaxCost))
+end
+
+-- Today's quests for a player: a stable pick per (day, userId), one per stat.
+function Config.PickQuests(day: number, userId: number): { string }
+	local pool = Config.Quests.Pool
+	local order = {}
+	for index = 1, #pool do
+		order[index] = index
+	end
+	-- deterministic shuffle (LCG) so client and server agree without syncing
+	local seed = (day * 7919 + userId * 104729) % 2147483647
+	for i = #order, 2, -1 do
+		seed = (seed * 16807) % 2147483647
+		local j = (seed % i) + 1
+		order[i], order[j] = order[j], order[i]
+	end
+	local picked, usedStats = {}, {}
+	for _, index in ipairs(order) do
+		local quest = pool[index]
+		if not usedStats[quest.Stat] then
+			usedStats[quest.Stat] = true
+			table.insert(picked, quest.Id)
+			if #picked >= Config.Quests.PerDay then
+				break
+			end
+		end
+	end
+	return picked
+end
+
+function Config.GetQuest(id: string)
+	for _, quest in ipairs(Config.Quests.Pool) do
+		if quest.Id == id then
+			return quest
+		end
+	end
+	return nil
 end
 
 -- Zone index containing a world position, or nil (bridges / outside).

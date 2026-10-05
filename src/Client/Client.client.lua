@@ -32,6 +32,8 @@ local START_ORDER = {
 	"ZonesUI",
 	"RebirthUI",
 	"RewardsUI",
+	"QuestsUI",
+	"UpgradesUI",
 	"SettingsUI",
 	"HatchUI",
 	"OrbController",
@@ -40,6 +42,7 @@ local START_ORDER = {
 	"AmbienceController",
 	"EggDisplayController",
 	"EffectsController",
+	"EventUI",
 	"ChatController",
 }
 

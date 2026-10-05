@@ -14,7 +14,7 @@ local EconomyService = require(script.Parent.EconomyService)
 
 local PlayerService = {}
 
-local ALLOWED_SETTINGS = { Music = true, SkipHatchAnimation = true }
+local ALLOWED_SETTINGS = { Music = true, SkipHatchAnimation = true, ShowGuide = true }
 
 local function setupLeaderstats(player: Player, data)
 	if player:FindFirstChild("leaderstats") then
@@ -44,7 +44,7 @@ function PlayerService.Init()
 				return
 			end
 			if profile.Data.Stats.Joins <= 1 then
-				Remotes.Get("Notify"):FireClient(player, "Welcome to " .. Config.GameName .. "! Walk into orbs to collect coins.", "info")
+				Remotes.Get("Notify"):FireClient(player, "Welcome to " .. Config.GameName .. "! Follow the glowing arrows to get started.", "info")
 			else
 				Remotes.Get("Notify"):FireClient(player, "Welcome back, " .. player.DisplayName .. "!", "info")
 			end

@@ -43,12 +43,15 @@ local function refreshGates()
 		if label and label:IsA("BillboardGui") then
 			local subtitle = label:FindFirstChild("Subtitle")
 			if subtitle and subtitle:IsA("TextLabel") then
+				local cost = Config.Zones[zone].Cost
 				if open then
 					subtitle.Text = "Unlocked!"
+				elseif zone == unlocked + 1 and State.Get("Coins", 0) >= cost then
+					subtitle.Text = "<font color='#50DC78'>READY! Walk in to unlock</font>"
 				elseif zone == unlocked + 1 then
-					subtitle.Text = "Unlock: " .. Util.FormatNumber(Config.Zones[zone].Cost) .. " Coins"
+					subtitle.Text = "Walk in to unlock: " .. Util.FormatNumber(cost) .. " Coins"
 				else
-					subtitle.Text = "Locked"
+					subtitle.Text = "Unlock " .. Config.Zones[zone - 1].Name .. " first"
 				end
 			end
 		end
@@ -179,7 +182,7 @@ function WorldController.Init()
 
 	State.OnLoaded(refreshGoal)
 	State.Changed:Connect(function(patch)
-		if patch.ZonesUnlocked ~= nil then
+		if patch.ZonesUnlocked ~= nil or patch.Coins ~= nil then
 			refreshGates()
 		end
 		if patch.Coins ~= nil or patch.ZonesUnlocked ~= nil or patch.Rebirths ~= nil or patch.PurchasedRebirths ~= nil then

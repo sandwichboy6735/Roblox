@@ -135,12 +135,12 @@ local function billboard(adornee: BasePart, title: string, subtitle: string?, co
 	titleLabel.Name = "Title"
 	titleLabel.BackgroundTransparency = 1
 	titleLabel.Size = UDim2.new(1, 0, 0.55, 0)
-	titleLabel.Font = Enum.Font.FredokaOne
+	titleLabel.Font = Enum.Font.LuckiestGuy
 	titleLabel.Text = title
 	titleLabel.TextColor3 = color or Color3.new(1, 1, 1)
 	titleLabel.TextScaled = true
-	titleLabel.TextStrokeTransparency = 0.2
-	titleLabel.TextStrokeColor3 = Color3.new(0, 0, 0)
+	titleLabel.TextStrokeTransparency = 0
+	titleLabel.TextStrokeColor3 = rgb(30, 22, 40)
 	titleLabel.Parent = gui
 
 	local subLabel = Instance.new("TextLabel")
@@ -148,7 +148,8 @@ local function billboard(adornee: BasePart, title: string, subtitle: string?, co
 	subLabel.BackgroundTransparency = 1
 	subLabel.Position = UDim2.new(0, 0, 0.55, 0)
 	subLabel.Size = UDim2.new(1, 0, 0.45, 0)
-	subLabel.Font = Enum.Font.GothamBold
+	subLabel.Font = Enum.Font.FredokaOne
+	subLabel.RichText = true
 	subLabel.Text = subtitle or ""
 	subLabel.TextColor3 = rgb(255, 235, 150)
 	subLabel.TextScaled = true
@@ -170,6 +171,9 @@ local function isReserved(zoneIndex: number, localX: number, z: number): boolean
 	end
 	if math.abs(localX) < 8 and z < 0 and z > -42 then
 		return true
+	end
+	if math.abs(localX - 44) < 13 and math.abs(z - 36) < 13 then
+		return true -- Giant Chest
 	end
 	if zoneIndex == 1 then
 		if z < -70 then
@@ -360,7 +364,7 @@ local function buildBridgeAndGate(mapFolder: Folder, index: number)
 		CastShadow = false,
 	}, gates)
 	gate:SetAttribute("Zone", index + 1)
-	billboard(gate, nextZone.Name, "Unlock: " .. Util.FormatNumber(nextZone.Cost) .. " Coins", theme.Accent, UDim2.fromOffset(320, 110), 15)
+	billboard(gate, nextZone.Name, "Walk in to unlock: " .. Util.FormatNumber(nextZone.Cost) .. " Coins", theme.Accent, UDim2.fromOffset(340, 110), 15)
 end
 
 local function buildEggStand(parent: Instance, eggKey: string, egg, position: Vector3, trim: Color3)
@@ -423,8 +427,8 @@ local function buildEggStand(parent: Instance, eggKey: string, egg, position: Ve
 
 	local prompt = Instance.new("ProximityPrompt")
 	prompt.Name = "HatchPrompt"
-	prompt.ActionText = "Open"
-	prompt.ObjectText = egg.Name
+	prompt.ActionText = "Hatch"
+	prompt.ObjectText = egg.Name .. " - " .. Util.FormatNumber(egg.Cost) .. (if egg.Currency == "Gems" then " Gems" else " Coins")
 	prompt.KeyboardKeyCode = Enum.KeyCode.E
 	prompt.HoldDuration = 0
 	prompt.MaxActivationDistance = 14
@@ -623,7 +627,7 @@ local function buildPlaza(zoneModel: Model, cx: number)
 		part({ Name = "SignPost", Size = V(0.6, 6, 0.6), Position = center + V(2, 3, -14 + side * 3.5), Color = rgb(120, 85, 55), Material = Enum.Material.Wood }, plaza)
 	end
 	local signBoard = part({ Name = "WelcomeSign", Size = V(0.5, 3, 8), Position = center + V(2, 5.5, -14), Color = rgb(150, 110, 70), Material = Enum.Material.WoodPlanks }, plaza)
-	billboard(signBoard, "Welcome to " .. Config.GameName .. "!", "Collect orbs  >  Hatch eggs  >  Unlock zones  >  Rebirth!", rgb(255, 230, 120), UDim2.fromOffset(420, 120), 4)
+	billboard(signBoard, "Welcome to " .. Config.GameName .. "!", "Collect coins > Hatch pets > Break chests > Unlock zones", rgb(255, 230, 120), UDim2.fromOffset(420, 120), 4)
 
 	-- Spawn pad (players face +X, toward the zone)
 	local spawn = Instance.new("SpawnLocation")
@@ -688,6 +692,7 @@ local function buildZone(mapFolder: Folder, index: number)
 		end
 	end
 	MapDecor.Backdrop(theme.Decor, decor, V(cx, 0, 0), rng)
+	table.insert(blockedSpots, { Position = V(cx + 44, 0, 36), Radius = 9 })
 
 	-- Egg stands
 	local stands = Instance.new("Folder")
@@ -844,6 +849,16 @@ function MapBuilder.IsSpotBlocked(position: Vector3): boolean
 		end
 	end
 	return false
+end
+
+-- Keeps orbs and breakables out of a circle (e.g. around a Giant Chest).
+function MapBuilder.BlockSpot(position: Vector3, radius: number)
+	table.insert(blockedSpots, { Position = position, Radius = radius })
+end
+
+-- Where each zone's Giant Chest sits (kept clear of stands, portal and plaza).
+function MapBuilder.GetGiantChestSpot(index: number): Vector3
+	return V(zoneCenterX(index) + 44, 0, 36)
 end
 
 function MapBuilder.GetEggStandPosition(eggKey: string): Vector3?

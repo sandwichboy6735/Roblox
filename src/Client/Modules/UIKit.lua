@@ -24,6 +24,7 @@ UIKit.Colors = {
 }
 
 UIKit.Fonts = {
+	Display = Enum.Font.LuckiestGuy, -- big buttons, banners, numbers
 	Title = Enum.Font.FredokaOne,
 	Bold = Enum.Font.GothamBold,
 	Black = Enum.Font.GothamBlack,

@@ -30,6 +30,7 @@ local START_ORDER = {
 	"UpgradeService",
 	"ShopService",
 	"CollectibleService",
+	"BreakableService",
 	"LeaderboardService",
 	"PlayerService",
 }

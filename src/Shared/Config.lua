@@ -359,6 +359,7 @@ Config.Zones = {
 		Cost = 0,
 		OrbValue = 5,
 		OrbCount = 50,
+		BreakableHP = 1, -- multiplies breakable HP here (see Config.Breakables)
 		Eggs = { "Basic" },
 		Theme = {
 			Ground = Color3.fromRGB(96, 170, 70),
@@ -374,6 +375,7 @@ Config.Zones = {
 		Cost = 2500,
 		OrbValue = 40,
 		OrbCount = 50,
+		BreakableHP = 2.2,
 		Eggs = { "Candy" },
 		Theme = {
 			Ground = Color3.fromRGB(255, 170, 210),
@@ -389,6 +391,7 @@ Config.Zones = {
 		Cost = 200000,
 		OrbValue = 400,
 		OrbCount = 50,
+		BreakableHP = 4,
 		Eggs = { "Frost" },
 		Theme = {
 			Ground = Color3.fromRGB(225, 240, 255),
@@ -404,6 +407,7 @@ Config.Zones = {
 		Cost = 10000000,
 		OrbValue = 5000,
 		OrbCount = 50,
+		BreakableHP = 7,
 		Eggs = { "Lava" },
 		Theme = {
 			Ground = Color3.fromRGB(60, 50, 50),
@@ -419,6 +423,7 @@ Config.Zones = {
 		Cost = 450000000,
 		OrbValue = 75000,
 		OrbCount = 50,
+		BreakableHP = 12,
 		Eggs = { "Cosmic" },
 		Theme = {
 			Ground = Color3.fromRGB(45, 40, 70),
@@ -450,6 +455,66 @@ Config.Orbs = {
 	CollectRadius = 7, -- studs, walk-over pickup
 	MaxCollectDistance = 24, -- server validation (pickup rate limits: CollectibleService)
 }
+
+--------------------------------------------------------------------------------
+-- BREAKABLES - coin piles, crates and chests in every zone. Click one and your
+-- equipped pets run over and break it. HP grows zone by zone (Zone.BreakableHP),
+-- so rarer, Golden and Rainbow pets matter: they break things much faster.
+-- Reward is counted in orbs: Reward 3 = worth three of the zone's coin orbs
+-- (before the player's coin multiplier).
+--------------------------------------------------------------------------------
+
+Config.Breakables = {
+	PerZone = 10, -- small breakables alive per zone with one player in it
+	ExtraPerPlayer = 3, -- more for each extra player in the zone
+	MaxPerZone = 22,
+	RespawnMin = 5, -- seconds
+	RespawnMax = 10,
+	PlayerDamage = 2, -- damage per second from the player alone (no pets yet)
+	PetDamage = 2, -- per equipped pet: PetDamage * sqrt(pet multiplier) per second
+	MaxDistance = 70, -- studs: pets give up if their owner walks further away
+	AutoTargetRange = 40, -- after a break, pets move on to the nearest one this close
+	Kinds = {
+		Pile = { Name = "Coin Pile", Weight = 68, HP = 25, Reward = 3, GemChance = 0.04, Gems = { 1, 1 } },
+		Crate = { Name = "Crate", Weight = 26, HP = 80, Reward = 11, GemChance = 0.1, Gems = { 1, 2 } },
+		Chest = { Name = "Treasure Chest", Weight = 6, HP = 300, Reward = 48, GemChance = 0.5, Gems = { 2, 4 } },
+	},
+	-- One per zone: a huge chest that takes teamwork (or a great team of pets).
+	-- Everyone who helps gets a share; anyone who did 3%+ also gets gems.
+	Giant = { Name = "Giant Chest", HP = 6000, Reward = 1100, Gems = { 15, 30 }, Respawn = 180, MinShare = 0.03 },
+}
+
+-- Damage per second one pet deals to breakables (Golden/Rainbow included).
+function Config.GetPetDamage(petType: string, tier: number?): number
+	return Config.Breakables.PetDamage * math.sqrt(Config.GetPetMultiplier(petType, tier))
+end
+
+-- Total damage per second of a team: the player plus their best `slots` pets.
+function Config.GetTeamDamage(pets: { { Type: string, Tier: number? } }, slots: number): number
+	local damages = {}
+	for _, pet in ipairs(pets) do
+		if Config.Pets[pet.Type] then
+			table.insert(damages, Config.GetPetDamage(pet.Type, pet.Tier))
+		end
+	end
+	table.sort(damages, function(a, b)
+		return a > b
+	end)
+	local total = Config.Breakables.PlayerDamage
+	for index = 1, math.min(#damages, slots) do
+		total += damages[index]
+	end
+	return total
+end
+
+function Config.GetBreakableHP(kind: string, zoneIndex: number): number
+	local spec = Config.Breakables.Kinds[kind] or (kind == "Giant" and Config.Breakables.Giant)
+	local zone = Config.Zones[zoneIndex]
+	if not spec or not zone then
+		return 1
+	end
+	return math.floor(spec.HP * (zone.BreakableHP or 1))
+end
 
 --------------------------------------------------------------------------------
 -- REBIRTH
@@ -514,6 +579,8 @@ Config.Quests = {
 		{ Id = "Craft", Text = "Craft %d Golden or Rainbow pet", Stat = "PetsCrafted", Goal = 1, Reward = { Gems = 25 } },
 		{ Id = "BigHatch", Text = "Hatch %d eggs", Stat = "PetsHatched", Goal = 60, Reward = { Gems = 30 } },
 		{ Id = "BigOrbs", Text = "Collect %d orbs", Stat = "OrbsCollected", Goal = 800, Reward = { CoinMinutes = 12 } },
+		{ Id = "Break", Text = "Break %d coin piles or chests", Stat = "BreakablesBroken", Goal = 40, Reward = { Gems = 12 } },
+		{ Id = "BigBreak", Text = "Break %d coin piles or chests", Stat = "BreakablesBroken", Goal = 150, Reward = { CoinMinutes = 12 } },
 	},
 	BonusReward = { Gems = 40 }, -- for finishing all of today's quests
 }
@@ -575,6 +642,7 @@ Config.DataTemplate = {
 		PetsCrafted = 0,
 		OrbsCollected = 0,
 		GemOrbs = 0,
+		BreakablesBroken = 0,
 		Playtime = 0, -- seconds
 		RobuxSpent = 0,
 		Joins = 0,
@@ -586,7 +654,7 @@ Config.DataTemplate = {
 	Upgrades = { WalkSpeed = 0, Magnet = 0, CoinBoost = 0 },
 	Purchases = {}, -- processed receipt ids (dedupe)
 	Boosts = {}, -- { Luck = {Mult, ExpiresAt}, Coins = {...} }
-	Settings = { Music = true, SkipHatchAnimation = false },
+	Settings = { Music = true, SkipHatchAnimation = false, ShowGuide = true },
 	FirstJoin = 0,
 }
 

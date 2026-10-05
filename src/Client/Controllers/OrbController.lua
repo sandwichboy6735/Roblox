@@ -6,7 +6,6 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
@@ -16,6 +15,7 @@ local Remotes = require(Shared.Remotes)
 
 local Modules = script.Parent.Parent:WaitForChild("Modules")
 local State = require(Modules.ClientState)
+local FloatingText = require(Modules.FloatingText)
 local UIController = require(script.Parent.UIController)
 
 local player = Players.LocalPlayer
@@ -25,7 +25,6 @@ local OrbController = {}
 local SEND_INTERVAL = 1 / 6 -- matches the server's sustained pickup rate
 local RETRY_AFTER = 2.5 -- un-hide an orb if the server didn't take it after sending
 local ANIMATE_DISTANCE = 140
-local MAX_POPUPS = 10
 local MAX_QUEUE = 6 -- keeps popups within ~1s of the actual pickup
 
 -- Queued: hidden locally and waiting to be sent. SentAt: when the request went out.
@@ -34,8 +33,6 @@ type OrbInfo = { Base: CFrame, Phase: number, Queued: boolean, SentAt: number? }
 local orbs: { [BasePart]: OrbInfo } = {}
 local queue: { BasePart } = {}
 local lastSend = 0
-local popupCount = 0
-local popupFolder: Folder
 
 local function track(orb: Instance)
 	if not orb:IsA("BasePart") then
@@ -46,47 +43,6 @@ end
 
 local function untrack(orb: Instance)
 	orbs[orb :: BasePart] = nil
-end
-
-local function showPopup(position: Vector3, text: string, color: Color3)
-	if popupCount >= MAX_POPUPS then
-		return
-	end
-	popupCount += 1
-	local anchor = Instance.new("Part")
-	anchor.Anchored = true
-	anchor.CanCollide = false
-	anchor.CanQuery = false
-	anchor.CanTouch = false
-	anchor.Transparency = 1
-	anchor.Size = Vector3.new(0.2, 0.2, 0.2)
-	anchor.Position = position
-	anchor.Parent = popupFolder
-
-	local gui = Instance.new("BillboardGui")
-	gui.Size = UDim2.fromOffset(140, 40)
-	gui.AlwaysOnTop = true
-	gui.LightInfluence = 0
-	gui.Adornee = anchor
-	gui.Parent = anchor
-
-	local label = Instance.new("TextLabel")
-	label.BackgroundTransparency = 1
-	label.Size = UDim2.fromScale(1, 1)
-	label.Font = Enum.Font.FredokaOne
-	label.Text = text
-	label.TextColor3 = color
-	label.TextScaled = true
-	label.TextStrokeTransparency = 0.2
-	label.Parent = gui
-
-	local info = TweenInfo.new(0.9, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-	TweenService:Create(gui, info, { StudsOffset = Vector3.new(0, 4, 0) }):Play()
-	TweenService:Create(label, info, { TextTransparency = 1, TextStrokeTransparency = 1 }):Play()
-	task.delay(0.95, function()
-		anchor:Destroy()
-		popupCount -= 1
-	end)
 end
 
 local burstPart: Part
@@ -104,10 +60,10 @@ local function popupFor(orb: BasePart)
 	burstAt(orb.Position, orb.Color, if kind == "Coin" then 8 else 18)
 	local value = orb:GetAttribute("Value") or 0
 	if kind == "Gem" then
-		showPopup(orb.Position, "+" .. value .. " Gems", Color3.fromRGB(110, 250, 225))
+		FloatingText.Show(orb.Position, "+" .. value .. " Gems", Color3.fromRGB(110, 250, 225))
 	else
 		local amount = math.max(1, math.floor(value * State.GetMultiplier()))
-		showPopup(orb.Position, "+" .. Util.FormatNumber(amount), Color3.fromRGB(255, 220, 60))
+		FloatingText.Show(orb.Position, "+" .. Util.FormatNumber(amount), Color3.fromRGB(255, 220, 60))
 	end
 	UIController.PlaySound("Collect", 0.35)
 end
@@ -244,10 +200,6 @@ function OrbController.Init()
 	burst.SpreadAngle = Vector2.new(180, 180)
 	burst.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.5), NumberSequenceKeypoint.new(1, 0) })
 	burst.Parent = burstPart
-
-	popupFolder = Instance.new("Folder")
-	popupFolder.Name = "OrbPopups"
-	popupFolder.Parent = Workspace
 
 	task.spawn(function()
 		local folder = Workspace:WaitForChild("Orbs")

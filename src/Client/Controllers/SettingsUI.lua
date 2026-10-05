@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------------
--- SettingsUI - music + hatch animation toggles (persisted on the server).
+-- SettingsUI - music, hatch animation and guide toggles (saved on the server).
 --------------------------------------------------------------------------------
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -19,6 +19,7 @@ local SettingsUI = {}
 local SETTINGS = {
 	{ Key = "Music", Label = "Background Music" },
 	{ Key = "SkipHatchAnimation", Label = "Skip Hatch Animation" },
+	{ Key = "ShowGuide", Label = "Guide Arrows & Goals" },
 }
 
 local window
@@ -62,7 +63,7 @@ local function refresh()
 end
 
 function SettingsUI.Init()
-	window = UIController.CreateWindow("Settings", "SETTINGS", UDim2.fromOffset(420, 240), UIKit.Colors.Stroke)
+	window = UIController.CreateWindow("Settings", "SETTINGS", UDim2.fromOffset(420, 302), UIKit.Colors.Stroke)
 	local list = UIKit.Frame({ Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Parent = window.Content })
 	UIKit.Create("UIListLayout", { Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder, Parent = list })
 

@@ -744,7 +744,7 @@ function HatchUI.Init()
 	autoChip = UIKit.Frame({
 		Name = "AutoHatchChip",
 		AnchorPoint = Vector2.new(0.5, 1),
-		Position = UDim2.new(0.5, 0, 1, -54),
+		Position = UDim2.new(0.5, 0, 1, -118),
 		Size = UDim2.fromOffset(330, 40),
 		BackgroundColor3 = UIKit.Colors.Background,
 		BackgroundTransparency = 0.1,

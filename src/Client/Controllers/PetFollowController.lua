@@ -4,7 +4,8 @@
 -- (JSON list of {n = name, t = tier}) that the server keeps updated.
 --
 -- Pets hop when their owner walks, flying pets hover and flap their wings,
--- and Rainbow pets cycle colours.
+-- and Rainbow pets cycle colours. When their owner clicks a coin pile or chest
+-- (player attribute "BreakTarget"), the pets run over and attack it.
 --------------------------------------------------------------------------------
 
 local HttpService = game:GetService("HttpService")
@@ -28,6 +29,8 @@ local ROW_SIZE = 4
 local SPACING = 4.2
 local WORLD_SCALE = 0.75
 local FLYING = { Owl = true, Phoenix = true, Dragon = true }
+local SNAP_DISTANCE = 120 -- teleport pets instead of running further than this
+local ATTACK_REACH = 85 -- pets only attack breakables this close to their owner
 
 type PetVisual = {
 	Built: PetBuilder.Built,
@@ -152,6 +155,25 @@ local function groundHeight(position: Vector3, fallback: number): number
 	return fallback
 end
 
+-- Centre and radius of the breakable this player's pets are attacking.
+local function attackTarget(player: Player, root: BasePart): (Vector3?, number)
+	local id = player:GetAttribute("BreakTarget")
+	local folder = Workspace:FindFirstChild("Breakables")
+	if type(id) ~= "string" or id == "" or not folder then
+		return nil, 0
+	end
+	local model = folder:FindFirstChild(id)
+	if not model or not model:IsA("Model") then
+		return nil, 0
+	end
+	local center = model:GetPivot().Position
+	if ((center - root.Position) * Vector3.new(1, 0, 1)).Magnitude > ATTACK_REACH then
+		return nil, 0
+	end
+	local radius = model:GetAttribute("Radius")
+	return center, if type(radius) == "number" then radius else 2.5
+end
+
 local function hide(pet: PetVisual)
 	if pet.Built.Model.Parent then
 		pet.Built.Model.Parent = nil
@@ -166,6 +188,10 @@ local function update(dt: number)
 
 	-- Never let pets stand on pets or players.
 	local ignore: { Instance } = { petFolder }
+	local breakables = Workspace:FindFirstChild("Breakables")
+	if breakables then
+		table.insert(ignore, breakables)
+	end
 	for player in pairs(owners) do
 		if player.Character then
 			table.insert(ignore, player.Character)
@@ -188,30 +214,45 @@ local function update(dt: number)
 			local moving = velocity.Magnitude > 2
 			local flat = CFrame.lookAlong(root.Position, root.CFrame.LookVector * Vector3.new(1, 0, 1) + Vector3.new(0, 0, 1e-4))
 			local count = #owner.Pets
+			local attackCenter, attackRadius = attackTarget(player, root)
 			for index, pet in ipairs(owner.Pets) do
 				if far then
 					hide(pet)
 				else
-					local offset = slotOffset(index, count)
-					local spot = flat * Vector3.new(offset.X, 0, offset.Z)
-					local ground = groundHeight(spot, root.Position.Y - 3)
-					local lift
-					if pet.Flying then
-						lift = 2.2 + math.sin(t * 2.4 + pet.Phase) * 0.45
-					elseif moving then
-						lift = math.abs(math.sin(t * 9 + pet.Phase)) * 0.9 -- hop along
+					local target
+					if attackCenter then
+						-- Surround the breakable and lunge at it.
+						local angle = (index / count) * math.pi * 2 + 0.6
+						local ring = attackRadius + 1.6
+						local direction = Vector3.new(math.cos(angle), 0, math.sin(angle))
+						local strike = math.max(0, math.sin(t * 10 + pet.Phase))
+						local spot = attackCenter + direction * (ring - strike * 0.8)
+						local ground = groundHeight(spot, attackCenter.Y)
+						local lift = if pet.Flying then 2.4 + math.sin(t * 3 + pet.Phase) * 0.4 else strike * 0.9
+						target = CFrame.lookAt(Vector3.new(spot.X, ground + lift, spot.Z), Vector3.new(attackCenter.X, ground + lift, attackCenter.Z))
+							* CFrame.Angles(math.rad(-12) * strike, 0, 0)
 					else
-						lift = math.abs(math.sin(t * 2 + pet.Phase)) * 0.15
+						local offset = slotOffset(index, count)
+						local spot = flat * Vector3.new(offset.X, 0, offset.Z)
+						local ground = groundHeight(spot, root.Position.Y - 3)
+						local lift
+						if pet.Flying then
+							lift = 2.2 + math.sin(t * 2.4 + pet.Phase) * 0.45
+						elseif moving then
+							lift = math.abs(math.sin(t * 9 + pet.Phase)) * 0.9 -- hop along
+						else
+							lift = math.abs(math.sin(t * 2 + pet.Phase)) * 0.15
+						end
+						local tilt = if moving and not pet.Flying then CFrame.Angles(math.rad(-8), 0, 0) else CFrame.identity
+						target = CFrame.new(spot.X, ground + lift, spot.Z) * flat.Rotation * tilt
 					end
-					local tilt = if moving and not pet.Flying then CFrame.Angles(math.rad(-8), 0, 0) else CFrame.identity
-					local target = CFrame.new(spot.X, ground + lift, spot.Z) * flat.Rotation * tilt
 
 					local model = pet.Built.Model
 					if not model.Parent then
 						-- Appearing (new, or back in range): start in the slot.
 						pet.Current = target
 						model.Parent = petFolder
-					elseif (pet.Current.Position - target.Position).Magnitude > 60 then
+					elseif (pet.Current.Position - target.Position).Magnitude > SNAP_DISTANCE then
 						pet.Current = target -- owner teleported: snap
 					else
 						pet.Current = pet.Current:Lerp(target, alpha)

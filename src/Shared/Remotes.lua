@@ -9,6 +9,7 @@ local DEFINITIONS: { [string]: string } = {
 	DataLoaded = "RemoteEvent",
 	DataChanged = "RemoteEvent",
 	Notify = "RemoteEvent",
+	BreakableBroken = "RemoteEvent",
 
 	-- Client -> Server
 	RequestData = "RemoteEvent",

@@ -55,11 +55,17 @@ A green **+** next to coins and gems opens the shop.
 
 ### Option A: open the ready-made place file (easiest)
 
-1. Download `build/HatchLegends.rbxlx` from this repository.
-2. Double-click it, or open it from Roblox Studio with **File > Open from File**.
-3. Press **Play** (F5). The world builds itself in about a second.
+You need a Windows PC or a Mac. Roblox Studio doesn't run on phones or tablets.
 
-> `build/HatchLegends.rbxlx` is a snapshot. If you change files in `src/`, rebuild it with Option B.
+1. **Install Roblox Studio** for free from [create.roblox.com](https://create.roblox.com/) and sign in.
+2. **Download the game file.** On GitHub, open [`build/HatchLegends.rbxl`](build/HatchLegends.rbxl) and click the **Download raw file** button, the arrow icon at the top right of the file view.
+3. **Open it.** Double-click the downloaded file, or in Roblox Studio use **File > Open from File** and pick it.
+4. **Press Play** (F5). The world builds itself in about a second.
+
+If your browser saves it as `HatchLegends.rbxl.txt` or similar, rename it so it ends in `.rbxl`.
+`build/HatchLegends.rbxlx` is the same game in text format, in case the first file won't open.
+
+> These files are snapshots. If you change files in `src/`, rebuild them with Option B.
 
 ### Option B: build from source with Rojo (for developers)
 
@@ -146,7 +152,8 @@ docs/
   MONETIZATION_SETUP.md  creating passes and products, step by step
   LAUNCH_GUIDE.md        how to get players and grow revenue
 build/
-  HatchLegends.rbxlx     ready-to-open place file
+  HatchLegends.rbxl      ready-to-open place file (Roblox Studio format)
+  HatchLegends.rbxlx     the same place in text format
 ```
 
 The server owns all game state. The client only shows it and sends requests, which the server checks.

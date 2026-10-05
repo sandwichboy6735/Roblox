@@ -3,6 +3,7 @@
 *.rbxlx
 *.rbxm
 *.rbxmx
+!build/HatchLegends.rbxl
 !build/HatchLegends.rbxlx
 
 # Rojo / editor

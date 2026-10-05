@@ -2,7 +2,8 @@
 # Builds a ready-to-open Roblox place file from this repository.
 # Requires Rojo: https://rojo.space/docs/v7/getting-started/installation/
 #   ./scripts/build.sh                 -> HatchLegends.rbxlx in the repo root
-#   ./scripts/build.sh build/HatchLegends.rbxlx   -> refresh the committed snapshot
+#   ./scripts/build.sh build/HatchLegends.rbxl    -> refresh the committed snapshots
+#   ./scripts/build.sh build/HatchLegends.rbxlx
 set -euo pipefail
 cd "$(dirname "$0")/.."
 OUT="${1:-HatchLegends.rbxlx}"

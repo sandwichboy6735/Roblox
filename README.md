@@ -13,8 +13,14 @@ Open it in Roblox Studio and press Play.
 | System | What it does |
 |---|---|
 | **100 stages, 6 worlds** | Meme Meadow, Pasta Beach, Sahur Jungle, Cappuccino City, Crocodilo Skies and Brainrot Void. Each world has its own look, sky, weather and scenery. |
-| **11 obstacle types** | Jumps, lava stepping stones, moving platforms, spinning kill bars, vanishing platforms, conveyor belts, climbing walls, narrow beams, jump pads, pillars and sliding walls. They get harder stage by stage. |
-| **24 brainrots** | Common to Mythic, each a 3D character you wear. Every one has its own speed and jump power. |
+| **18 obstacle types** | Jumps, lava stepping stones, moving platforms (they carry you), spinning kill bars, vanishing platforms, conveyor belts, climbing walls, narrow beams, jump pads, pillars, sliding walls, swinging hammers, turntables, ice, speed pads, crosswind corridors, blinking lasers and rolling boulders. They get harder stage by stage. |
+| **Boss arenas** | The last stage of every world is an arena with a giant brainrot statue, spinning bars and hammers guarding the exit. Beating it pays 4x. |
+| **25 brainrots** | Common to Mythic, each a 3D character you wear with a cartoon outline. Every one has its own speed and jump power. |
+| **Secrets** | 12 hidden Brainrot Fragments on side platforms unlock the secret Fragment Phantom. A Lucky Coin worth 10 coins hides in every world. |
+| **Daily quests** | Three quests a day (collect coins, beat stages, touch checkpoints...) plus a bonus for all three. |
+| **Server events** | Every 10 minutes a 2-minute Coin Rush or Lucky Stages event for the whole server, with a countdown on screen. |
+| **Trails** | Six trail colours bought with coins, plus the Rainbow Trail gamepass. |
+| **Stats** | A stats window: best stage, fastest run, deaths, coins, fragments, time played. |
 | **Perks** | Double Jump, Dash (Q key or a touch button), Glide (hold jump), Coin Magnet and Coin Boost. Better brainrots make the hard stages possible. |
 | **Coins** | Floating coins on every stage and a reward for each new stage. Coins come back after 90 seconds. |
 | **Checkpoints** | Glowing pads save your spot. Fall or touch lava and you're back on the pad in a second. A RESET button and a STAGES menu let you jump back to any pad you've reached. |
@@ -26,7 +32,8 @@ Open it in Roblox Studio and press Play.
 | **Promo codes** | Hand out codes on social media and YouTube. |
 | **Group bonus** | +10% coins and free coins for joining your Roblox group. |
 | **Leaderboards** | Top stage, top prestige and fastest run on 3D boards in the lobby. |
-| **Lobby** | Spawn plaza with statues of the best brainrots, a how-to sign and arrows to stage 1. |
+| **Lobby and intro** | A camera sweep over the lobby with the title when you join. Spawn plaza with statues of the best brainrots, a how-to sign and arrows to stage 1. |
+| **Looks** | Themed platforms per world (grass tops on dirt, neon underglow in the city, cloud puffs in the sky), flags and lamps along the path, bubbling hazard pools, mountains, skylines, giant trees, planets and nebulas on the horizon, drifting clouds, a light column over your next checkpoint, name tags over players, death explosions and landing dust. |
 | **Safe saving** | DataStore saving with session locking, retries, autosave and shutdown saves. |
 | **Anti-exploit** | Checkpoints must be touched in order, near the pad, no faster than the brainrot can run. Coins are checked for distance. Skips come only from real purchases. |
 

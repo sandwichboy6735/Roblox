@@ -40,8 +40,18 @@ local function updateLeaderstats(player: Player, data)
 end
 EconomyService.UpdateLeaderstats = updateLeaderstats
 
+-- Injected by EventService (it requires this module, so requiring it here
+-- would create a cycle).
+local eventMultiplier: () -> number = function()
+	return 1
+end
+
+function EconomyService.SetEventMultiplierSource(source: () -> number)
+	eventMultiplier = source
+end
+
 function EconomyService.GetMultiplierInfo(player: Player)
-	local info = { Prestige = 1, Gamepass = 1, Group = 1, Brainrot = 1, Total = 1 }
+	local info = { Prestige = 1, Gamepass = 1, Group = 1, Brainrot = 1, Event = 1, Total = 1 }
 	local profile = DataService:GetProfile(player)
 	if not profile then
 		return info
@@ -61,7 +71,8 @@ function EconomyService.GetMultiplierInfo(player: Player)
 	if brainrot and brainrot.Perk == "CoinBoost" then
 		info.Brainrot = 1 + brainrot.Value
 	end
-	info.Total = info.Prestige * info.Gamepass * info.Group * info.Brainrot
+	info.Event = eventMultiplier()
+	info.Total = info.Prestige * info.Gamepass * info.Group * info.Brainrot * info.Event
 	return info
 end
 

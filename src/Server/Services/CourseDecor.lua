@@ -230,4 +230,83 @@ function CourseDecor.Fill(themeName: string, parent: Instance, minX: number, max
 	end
 end
 
+--------------------------------------------------------------------------------
+-- Backdrops: the big things on the horizon that give each world its skyline.
+--------------------------------------------------------------------------------
+
+local function mountains(folder, minX, maxX, groundY, rng, colors)
+	for x = minX, maxX, 90 do
+		for _, side in ipairs({ -1, 1 }) do
+			local w = rng:NextNumber(90, 160)
+			local h = rng:NextNumber(60, 130)
+			part({ Sphere = true, Size = V(w, h, w * 0.8), Position = V(x + rng:NextNumber(-30, 30), groundY + h * 0.2, side * rng:NextNumber(260, 340)), Color = pick(colors, rng) }, folder)
+		end
+	end
+end
+
+local function skyline(folder, minX, maxX, groundY, rng)
+	for x = minX, maxX, 22 do
+		for _, side in ipairs({ -1, 1 }) do
+			local w = rng:NextNumber(14, 22)
+			local h = rng:NextNumber(50, 120)
+			local z = side * rng:NextNumber(240, 300)
+			part({ Size = V(w, h, 18), Position = V(x, groundY + h / 2, z), Color = pick({ rgb(60, 50, 70), rgb(80, 60, 75), rgb(50, 45, 65) }, rng) }, folder)
+			for y = 6, h - 6, 7 do
+				if rng:NextNumber() < 0.5 then
+					part({ Size = V(w * 0.7, 2.2, 0.3), Position = V(x, groundY + y, z - side * 9.2), Color = pick({ rgb(255, 225, 120), rgb(120, 210, 255), rgb(255, 120, 200) }, rng), Material = Enum.Material.Neon }, folder)
+				end
+			end
+		end
+	end
+end
+
+local function sun(folder, x, y, z, color)
+	local body = ball(folder, V(x, y, z), 70, color, Enum.Material.Neon)
+	local light = Instance.new("PointLight")
+	light.Color = color
+	light.Range = 200
+	light.Brightness = 0.4
+	light.Parent = body
+end
+
+function CourseDecor.Backdrop(themeName: string, parent: Instance, minX: number, maxX: number, groundY: number, rng: Random)
+	local folder = Instance.new("Folder")
+	folder.Name = themeName .. "Backdrop"
+	folder.Parent = parent
+	if themeName == "Meadow" then
+		mountains(folder, minX, maxX, groundY, rng, { rgb(90, 180, 80), rgb(70, 150, 75), rgb(110, 195, 90) })
+	elseif themeName == "Beach" then
+		mountains(folder, minX, maxX, groundY - 10, rng, { rgb(230, 200, 150), rgb(210, 180, 130) })
+		sun(folder, (minX + maxX) / 2, groundY + 260, 480, rgb(255, 230, 150))
+	elseif themeName == "Jungle" then
+		mountains(folder, minX, maxX, groundY, rng, { rgb(40, 110, 60), rgb(55, 130, 70) })
+		-- giant trees towering over the course
+		for x = minX, maxX, 120 do
+			for _, side in ipairs({ -1, 1 }) do
+				local z = side * rng:NextNumber(150, 220)
+				pillar(folder, V(x, groundY, z), 120, 6, rgb(90, 60, 45))
+				ball(folder, V(x, groundY + 125, z), 70, rgb(45, 140, 65))
+			end
+		end
+	elseif themeName == "City" then
+		skyline(folder, minX, maxX, groundY, rng)
+		sun(folder, (minX + maxX) / 2, groundY + 120, 520, rgb(255, 150, 90))
+	elseif themeName == "Sky" then
+		for x = minX, maxX, 70 do
+			for _, side in ipairs({ -1, 1 }) do
+				cloud(folder, V(x + rng:NextNumber(-20, 20), groundY + 60 + rng:NextNumber(-20, 50) + (x - minX) * 0.02, side * rng:NextNumber(230, 330)), rng)
+			end
+		end
+		sun(folder, (minX + maxX) / 2, groundY + 330, -420, rgb(255, 245, 200))
+	elseif themeName == "Void" then
+		for _ = 1, 4 do
+			planet(folder, V(rng:NextNumber(minX, maxX), groundY + rng:NextNumber(120, 260), (if rng:NextNumber() < 0.5 then -1 else 1) * rng:NextNumber(260, 420)), rng)
+		end
+		-- a nebula of big soft blobs
+		for _ = 1, 10 do
+			part({ Sphere = true, Size = V(1, 1, 1) * rng:NextNumber(60, 140), Position = V(rng:NextNumber(minX, maxX), groundY + rng:NextNumber(0, 300), (if rng:NextNumber() < 0.5 then -1 else 1) * rng:NextNumber(300, 480)), Color = pick({ rgb(120, 60, 200), rgb(60, 40, 160), rgb(200, 80, 220) }, rng), Transparency = 0.6 }, folder)
+		end
+	end
+end
+
 return CourseDecor

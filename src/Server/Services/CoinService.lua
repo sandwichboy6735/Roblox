@@ -62,6 +62,9 @@ local function onCollect(player: Player, coinId: any)
 	record[coinId] = now
 	local stage = coin:GetAttribute("Stage")
 	local value = Config.GetCoinValue(if type(stage) == "number" then stage else 1)
+	if coin:GetAttribute("Lucky") then
+		value *= 10
+	end
 	local amount = EconomyService.AddCoins(player, value, true)
 	profile.Data.Stats.CoinsCollected += 1
 	Remotes.Get("CoinTaken"):FireClient(player, coinId, amount)

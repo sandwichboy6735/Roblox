@@ -9,6 +9,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared.Config)
 local Util = require(Shared.Util)
+local Remotes = require(Shared.Remotes)
 
 local Modules = script.Parent.Parent:WaitForChild("Modules")
 local State = require(Modules.ClientState)
@@ -156,6 +157,33 @@ local function card(parent: Instance, order: number, color: Color3, title: strin
 	end
 end
 
+local function trailCard(parent: Instance, order: number, key: string, def)
+	local owned = State.Get("Trails", {})[key] == true
+	local equipped = State.Get("EquippedTrail", "None") == key
+	local color = def.Color or UIKit.Colors.Muted
+	local frame = UIKit.Frame({ BackgroundColor3 = UIKit.Colors.Panel, LayoutOrder = order, Parent = parent })
+	UIKit.Corner(frame, 12)
+	UIKit.Stroke(frame, color, 1.5)
+	local swatch = UIKit.Frame({ Position = UDim2.fromOffset(10, 10), Size = UDim2.new(1, -20, 0, 60), BackgroundColor3 = color, Parent = frame })
+	UIKit.Corner(swatch, 10)
+	UIKit.Gradient(swatch, Color3.new(1, 1, 1), color:Lerp(Color3.new(0, 0, 0), 0.3), 0)
+	UIKit.Label({ Position = UDim2.fromOffset(10, 76), Size = UDim2.new(1, -20, 0, 24), Text = def.Name .. " Trail", Font = UIKit.Fonts.Title, TextSize = 18, Parent = frame })
+	local button = UIKit.Button({
+		AnchorPoint = Vector2.new(0.5, 1),
+		Position = UDim2.new(0.5, 0, 1, -10),
+		Size = UDim2.new(1, -20, 0, 38),
+		Color = if equipped then UIKit.Colors.Info elseif owned then UIKit.Colors.Success else UIKit.Colors.Accent,
+		Text = if equipped then "EQUIPPED" elseif owned then "EQUIP" elseif def.Price > 0 then "BUY  " .. Util.FormatNumber(def.Price) .. " coins" else "EQUIP",
+		TextSize = 16,
+	}, function()
+		Remotes.Get(if owned then "EquipTrail" else "BuyTrail"):FireServer(key)
+	end)
+	button.Parent = frame
+	if equipped then
+		UIKit.SetButtonEnabled(button, false, "EQUIPPED")
+	end
+end
+
 local function rebuild()
 	if not window or not window.IsOpen() then
 		return
@@ -186,6 +214,13 @@ local function rebuild()
 			promptProduct(entry.Key, product)
 		end, false, blocked)
 	end
+
+	local trails = Config.SortedTrails()
+	sectionHeader("TRAILS (COINS)", 5, UIKit.Colors.Pink)
+	local trailGrid = gridContainer(#trails, 6)
+	for index, entry in ipairs(trails) do
+		trailCard(trailGrid, index, entry.Key, entry.Def)
+	end
 end
 
 function ShopUI.Init()
@@ -201,7 +236,7 @@ function ShopUI.Init()
 
 	window.OnOpen = rebuild
 	State.Changed:Connect(function(patch)
-		if patch.Gamepasses ~= nil then
+		if patch.Gamepasses ~= nil or patch.Trails ~= nil or patch.EquippedTrail ~= nil then
 			rebuild()
 		end
 	end)

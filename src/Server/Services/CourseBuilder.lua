@@ -88,19 +88,47 @@ local function walkable(c: Ctx, p: BasePart)
 	c.MinY = math.min(c.MinY, p.Position.Y + p.Size.Y / 2)
 end
 
--- A platform with a darker rim so edges read clearly from above.
+-- Per-theme platform looks: a lighter top plate on a darker base, plus a
+-- themed extra (neon underglow, a cloud puff, hanging vines, wooden posts).
+local STYLES = {
+	Meadow = { Top = rgb(130, 222, 95), Side = rgb(150, 105, 65), Extra = "Posts" },
+	Beach = { Top = rgb(255, 234, 170), Side = rgb(205, 165, 110), Extra = "Posts" },
+	Jungle = { Top = rgb(80, 175, 90), Side = rgb(95, 70, 50), Extra = "Vines" },
+	City = { Top = rgb(150, 110, 90), Side = rgb(80, 62, 58), Extra = "Neon" },
+	Sky = { Top = rgb(248, 250, 255), Side = rgb(175, 208, 255), Extra = "Cloud" },
+	Void = { Top = rgb(110, 80, 200), Side = rgb(40, 26, 80), Extra = "Neon" },
+}
+
 local function platform(c: Ctx, cf: CFrame, size: Vector3, color: Color3?): BasePart
-	local p = part({ Name = "Platform", CFrame = cf, Size = size, Color = color or c.Theme.Platform }, c.Model)
-	part({
-		Name = "Rim",
-		CFrame = cf * CFrame.new(0, -size.Y / 2 - 0.2, 0),
-		Size = V(size.X + 0.6, 0.4, size.Z + 0.6),
-		Color = c.Theme.Trim,
-		CanCollide = false,
-		CastShadow = false,
-	}, c.Model)
+	local style = STYLES[c.Theme.Decor] or STYLES.Meadow
+	local topColor = color or style.Top
+	-- the walkable part is the whole slab; the plate and base are the look
+	-- The slab is invisible and does the colliding; its look is made of child
+	-- parts so moving / vanishing platforms carry their look with them.
+	local p = part({ Name = "Platform", CFrame = cf, Size = size, Color = topColor, Transparency = 1 }, c.Model)
+	p.CastShadow = false
+	part({ Name = "Plate", CFrame = cf * CFrame.new(0, size.Y / 2 - 0.18, 0), Size = V(size.X, 0.36, size.Z), Color = topColor, CanCollide = false }, p)
+	part({ Name = "Base", CFrame = cf * CFrame.new(0, -0.18, 0), Size = V(size.X + 0.3, size.Y - 0.36, size.Z + 0.3), Color = style.Side, CanCollide = false }, p)
+	local extra = style.Extra
+	if extra == "Neon" then
+		part({ Name = "Glow", CFrame = cf * CFrame.new(0, -size.Y / 2 + 0.1, 0), Size = V(size.X + 0.9, 0.2, size.Z + 0.9), Color = c.Theme.Accent, Material = Enum.Material.Neon, Transparency = 0.2, CanCollide = false, CastShadow = false }, p)
+	elseif extra == "Cloud" then
+		part({ Name = "Puff", Shape = Enum.PartType.Ball, Size = V(1, 1, 1) * math.min(size.X, size.Z) * 0.9, CFrame = cf * CFrame.new(0, -size.Y / 2 - 0.6, 0), Color = Color3.new(1, 1, 1), CanCollide = false, CastShadow = false }, p)
+	elseif extra == "Vines" and c.Rng:NextNumber() < 0.5 then
+		part({ Name = "Vine", CFrame = cf * CFrame.new(size.X * 0.3, -size.Y / 2 - 1.6, size.Z * 0.35), Size = V(0.3, 3, 0.3), Color = rgb(95, 180, 80), CanCollide = false, CastShadow = false }, p)
+	elseif extra == "Posts" and size.X >= 5 and size.Z >= 5 then
+		for _, sx in ipairs({ -1, 1 }) do
+			part({ Name = "Post", CFrame = cf * CFrame.new(sx * (size.X / 2 - 0.6), -size.Y / 2 - 1.2, size.Z / 2 - 0.6), Size = V(0.6, 2.4, 0.6), Color = style.Side, CanCollide = false, CastShadow = false }, p)
+		end
+	end
 	walkable(c, p)
 	return p
+end
+
+-- Slippery platform (ice / grease / glass)
+local function icy(p: BasePart)
+	p.CustomPhysicalProperties = PhysicalProperties.new(0.7, 0.02, 0.3)
+	p:SetAttribute("Ice", true)
 end
 
 local function kill(c: Ctx, cf: CFrame, size: Vector3, name: string?): BasePart
@@ -118,10 +146,26 @@ local function kill(c: Ctx, cf: CFrame, size: Vector3, name: string?): BasePart
 	return p
 end
 
--- Lava pool: a glowing neon slab a little below the platforms.
+-- Hazard pool: a glowing slab with floating crust blobs, a light and bubbles.
 local function lavaPool(c: Ctx, center: Vector3, size: Vector3)
 	local pool = kill(c, CFrame.new(center), size, "LavaPool")
-	pool.Transparency = 0.1
+	pool.Transparency = 0.15
+	local dark = c.Theme.Hazard:Lerp(Color3.new(0, 0, 0), 0.55)
+	local blobs = math.clamp(math.floor(size.X * size.Z / 120), 2, 6)
+	for i = 1, blobs do
+		local bx = center.X + c.Rng:NextNumber(-size.X * 0.4, size.X * 0.4)
+		local bz = center.Z + c.Rng:NextNumber(-size.Z * 0.4, size.Z * 0.4)
+		local blob = part({ Name = "Crust", Size = V(c.Rng:NextNumber(2, 4), 0.4, c.Rng:NextNumber(2, 4)), CFrame = CFrame.new(bx, center.Y + 0.35, bz) * CFrame.Angles(0, c.Rng:NextNumber(0, 3), 0), Color = dark, CanCollide = false, CastShadow = false }, c.Model)
+		local mesh = Instance.new("SpecialMesh")
+		mesh.MeshType = Enum.MeshType.Sphere
+		mesh.Parent = blob
+	end
+	local light = Instance.new("PointLight")
+	light.Color = c.Theme.Hazard
+	light.Range = math.clamp(size.X * 0.6, 10, 40)
+	light.Brightness = 0.8
+	light.Shadows = false
+	light.Parent = pool
 	local bubbles = Instance.new("ParticleEmitter")
 	bubbles.Color = ColorSequence.new(c.Theme.Hazard:Lerp(Color3.new(1, 1, 1), 0.4))
 	bubbles.LightEmission = 1
@@ -130,6 +174,24 @@ local function lavaPool(c: Ctx, center: Vector3, size: Vector3)
 	bubbles.Speed = NumberRange.new(2, 4)
 	bubbles.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.6), NumberSequenceKeypoint.new(1, 0) })
 	bubbles.Parent = pool
+end
+
+-- A little flag on a pole (decor between sections).
+local function flag(c: Ctx, position: Vector3)
+	part({ Name = "FlagPole", Size = V(0.3, 5, 0.3), CFrame = CFrame.new(position + V(0, 2.5, 0)), Color = c.Theme.Trim, CanCollide = false, CastShadow = false }, c.Model)
+	part({ Name = "Flag", Wedge = true, Size = V(0.15, 1.6, 2.4), CFrame = CFrame.new(position + V(0, 4.2, 1.2)) * CFrame.Angles(0, 0, math.rad(180)), Color = c.Theme.Accent, CanCollide = false, CastShadow = false }, c.Model)
+end
+
+-- A lamp post that lights the path at night-ish worlds.
+local function lamp(c: Ctx, position: Vector3)
+	part({ Name = "LampPost", Size = V(0.4, 7, 0.4), CFrame = CFrame.new(position + V(0, 3.5, 0)), Color = c.Theme.Trim, CanCollide = false, CastShadow = false }, c.Model)
+	local bulb = part({ Name = "LampBulb", Shape = Enum.PartType.Ball, Size = V(1.3, 1.3, 1.3), CFrame = CFrame.new(position + V(0, 7.3, 0)), Color = c.Theme.Accent, Material = Enum.Material.Neon, CanCollide = false, CastShadow = false }, c.Model)
+	local light = Instance.new("PointLight")
+	light.Color = c.Theme.Accent
+	light.Range = 14
+	light.Brightness = 1
+	light.Shadows = false
+	light.Parent = bulb
 end
 
 --------------------------------------------------------------------------------
@@ -186,6 +248,7 @@ Sections.Movers = function(c: Ctx, cursor: Vector3): Vector3
 		local p = platform(c, CFrame.new(x - span / 2 + 2, cursor.Y - 0.5, cursor.Z), V(size, 1, size), c.Theme.Accent)
 		p.Name = "MovingPlatform"
 		p:SetAttribute("MoveKind", "Slide")
+		p:SetAttribute("Carry", true)
 		p:SetAttribute("MoveAxis", if sideways then V(0, 0, 1) else V(1, 0, 0))
 		p:SetAttribute("MoveDistance", if sideways then lerp(6, 10, c.D) else span - size - 2)
 		p:SetAttribute("MovePeriod", lerp(4.5, 2.6, c.D))
@@ -359,6 +422,176 @@ Sections.Walls = function(c: Ctx, cursor: Vector3): Vector3
 	return V(cursor.X + length + 1, cursor.Y, cursor.Z)
 end
 
+-- Swinging hammers over a bridge.
+Sections.Pendulum = function(c: Ctx, cursor: Vector3): Vector3
+	local length = lerp(22, 30, c.D)
+	local bridge = platform(c, CFrame.new(cursor.X + length / 2 + 1, cursor.Y - 0.5, cursor.Z), V(length, 1, 6))
+	bridge.Name = "Bridge"
+	lavaPool(c, V(cursor.X + length / 2 + 1, cursor.Y - 5, cursor.Z), V(length + 6, 1, 26))
+	local count = c.Rng:NextInteger(2, 3)
+	for i = 1, count do
+		local x = cursor.X + 1 + (i / (count + 1)) * length
+		local pivot = V(x, cursor.Y + 10, cursor.Z)
+		part({ Name = "PendulumFrame", Size = V(1, 1, 16), CFrame = CFrame.new(pivot), Color = c.Theme.Trim, CanCollide = false }, c.Model)
+		for _, side in ipairs({ -1, 1 }) do
+			part({ Name = "FramePost", Size = V(0.8, 11, 0.8), CFrame = CFrame.new(x, cursor.Y + 4.5, cursor.Z + side * 7.6), Color = c.Theme.Trim, CanCollide = false }, c.Model)
+		end
+		local arm = part({ Name = "PendulumArm", Size = V(0.5, 8, 0.5), CFrame = CFrame.new(pivot - V(0, 4, 0)), Color = c.Theme.Trim, CanCollide = false, CastShadow = false }, c.Model)
+		local head = kill(c, CFrame.new(pivot - V(0, 8.5, 0)), V(3.2, 3.2, 3.2), "Hammer")
+		head.Shape = Enum.PartType.Ball
+		head.CanCollide = true
+		for _, p in ipairs({ arm, head }) do
+			p:SetAttribute("MoveKind", "Pendulum")
+			p:SetAttribute("PendulumPivot", pivot)
+			p:SetAttribute("PendulumAmp", math.rad(lerp(40, 70, c.D)))
+			p:SetAttribute("PendulumPeriod", lerp(3.2, 2.2, c.D))
+			p:SetAttribute("PendulumPhase", (i % 2) * 0.5)
+		end
+	end
+	return V(cursor.X + length + 2, cursor.Y, cursor.Z)
+end
+
+-- A spinning disc you have to cross while it turns under you.
+Sections.Turntable = function(c: Ctx, cursor: Vector3): Vector3
+	local radius = lerp(7, 9, c.D)
+	local center = V(cursor.X + radius + 4, cursor.Y - 0.5, cursor.Z)
+	lavaPool(c, V(center.X, cursor.Y - 5, cursor.Z), V(radius * 2 + 14, 1, 30))
+	local disc = part({ Name = "Turntable", Shape = Enum.PartType.Cylinder, Size = V(1, radius * 2, radius * 2), CFrame = CFrame.new(center) * CFrame.Angles(0, 0, math.rad(90)), Color = c.Theme.Accent }, c.Model)
+	walkable(c, disc)
+	disc:SetAttribute("MoveKind", "Turntable")
+	disc:SetAttribute("Carry", true)
+	disc:SetAttribute("SpinSpeed", lerp(25, 60, c.D) * (if c.Rng:NextNumber() < 0.5 then 1 else -1))
+	-- stripes so the spin is visible
+	for i = 0, 3 do
+		part({ Name = "Stripe", Size = V(radius * 1.8, 0.1, 0.8), CFrame = CFrame.new(center + V(0, 0.55, 0)) * CFrame.Angles(0, i * math.pi / 4, 0), Color = c.Theme.Trim, CanCollide = false, CastShadow = false }, c.Model):SetAttribute("FollowTurntable", true)
+	end
+	if c.D > 0.5 then
+		local post = kill(c, CFrame.new(center + V(0, 2, 0)), V(1.6, 3, 1.6), "SpinPost")
+		post.CanCollide = true
+		post:SetAttribute("MoveKind", "Spin")
+		post:SetAttribute("SpinSpeed", disc:GetAttribute("SpinSpeed"))
+		post:SetAttribute("SpinRadius", radius * 0.6)
+	end
+	return V(center.X + radius + 3, cursor.Y, cursor.Z)
+end
+
+-- Slippery ice slabs with gaps.
+Sections.Ice = function(c: Ctx, cursor: Vector3): Vector3
+	local count = c.Rng:NextInteger(3, 5)
+	local length = lerp(9, 7, c.D)
+	local gap = lerp(3, 6, c.D)
+	local x, z = cursor.X, cursor.Z
+	lavaPool(c, V(cursor.X + (length + gap) * count / 2 + 2, cursor.Y - 5, cursor.Z), V((length + gap) * count + 8, 1, 26))
+	for i = 1, count do
+		x += gap + length / 2
+		z += c.Rng:NextNumber(-3, 3) * c.D
+		local slab = platform(c, CFrame.new(x, cursor.Y - 0.5, z), V(length, 1, lerp(5, 3.5, c.D)), rgb(190, 235, 255))
+		slab.Name = "IcePlatform"
+		for _, child in ipairs(slab:GetChildren()) do
+			if child:IsA("BasePart") then
+				child.Material = Enum.Material.Glass
+				child.Transparency = 0.15
+				child.Reflectance = 0.2
+			end
+		end
+		icy(slab)
+		x += length / 2
+	end
+	return V(x + 1, cursor.Y, z)
+end
+
+-- A speed pad that fires you across a long flat gap.
+Sections.SpeedPad = function(c: Ctx, cursor: Vector3): Vector3
+	local gap = lerp(20, 30, c.D)
+	local runway = platform(c, CFrame.new(cursor.X + 6, cursor.Y - 0.5, cursor.Z), V(12, 1, 7))
+	runway.Name = "Runway"
+	local pad = part({ Name = "SpeedPad", Size = V(4, 0.3, 5), CFrame = CFrame.new(cursor.X + 10, cursor.Y + 0.15, cursor.Z), Color = c.Theme.Accent, Material = Enum.Material.Neon, CanCollide = false }, c.Model)
+	pad:SetAttribute("Launch", V(lerp(48, 58, c.D), 22, 0))
+	for i = 0, 2 do
+		part({ Name = "Arrow", Wedge = true, Size = V(1.4, 0.1, 1.2), CFrame = CFrame.new(cursor.X + 7 + i * 1.6, cursor.Y + 0.35, cursor.Z) * CFrame.Angles(0, math.rad(-90), 0), Color = Color3.new(1, 1, 1), CanCollide = false, CastShadow = false }, c.Model)
+	end
+	lavaPool(c, V(cursor.X + 12 + gap / 2, cursor.Y - 6, cursor.Z), V(gap + 2, 1, 24))
+	local landing = platform(c, CFrame.new(cursor.X + 12 + gap + 7, cursor.Y - 0.5, cursor.Z), V(14, 1, 12))
+	landing.Name = "Landing"
+	return V(cursor.X + 12 + gap + 14, cursor.Y, cursor.Z)
+end
+
+-- A narrow corridor with a crosswind pushing you toward the edge.
+Sections.Wind = function(c: Ctx, cursor: Vector3): Vector3
+	local length = lerp(24, 32, c.D)
+	local width = lerp(8, 5, c.D)
+	local corridor = platform(c, CFrame.new(cursor.X + length / 2 + 1, cursor.Y - 0.5, cursor.Z), V(length, 1, width))
+	corridor.Name = "WindCorridor"
+	lavaPool(c, V(cursor.X + length / 2 + 1, cursor.Y - 5, cursor.Z), V(length + 6, 1, 28))
+	local side = if c.Rng:NextNumber() < 0.5 then 1 else -1
+	local zone = part({ Name = "WindZone", Size = V(length, 10, 24), CFrame = CFrame.new(cursor.X + length / 2 + 1, cursor.Y + 5, cursor.Z), Transparency = 1, CanCollide = false, CastShadow = false }, c.Model)
+	zone.CanQuery = false
+	zone:SetAttribute("Wind", V(0, 0, side * lerp(14, 26, c.D)))
+	-- a fan at the windy side so players see where it comes from
+	local fanX = cursor.X + length / 2 + 1
+	part({ Name = "FanPole", Size = V(1, 6, 1), CFrame = CFrame.new(fanX, cursor.Y + 3, cursor.Z - side * 13), Color = c.Theme.Trim, CanCollide = false }, c.Model)
+	local fan = part({ Name = "Fan", Shape = Enum.PartType.Cylinder, Size = V(0.6, 6, 6), CFrame = CFrame.new(fanX, cursor.Y + 6, cursor.Z - side * 13) * CFrame.Angles(0, math.rad(90), 0), Color = c.Theme.Accent, Material = Enum.Material.Neon, CanCollide = false, CastShadow = false }, c.Model)
+	fan:SetAttribute("MoveKind", "Spin")
+	fan:SetAttribute("SpinSpeed", 240)
+	fan:SetAttribute("SpinAxis", "X")
+	local gust = Instance.new("ParticleEmitter")
+	gust.Color = ColorSequence.new(Color3.new(1, 1, 1))
+	gust.Transparency = NumberSequence.new(0.6)
+	gust.Rate = 25
+	gust.Lifetime = NumberRange.new(1, 1.6)
+	gust.Speed = NumberRange.new(18, 24)
+	gust.Size = NumberSequence.new(0.35)
+	gust.EmissionDirection = if side > 0 then Enum.NormalId.Front else Enum.NormalId.Back
+	gust.SpreadAngle = Vector2.new(8, 8)
+	gust.Parent = fan
+	return V(cursor.X + length + 2, cursor.Y, cursor.Z)
+end
+
+-- Laser beams that blink on and off across a corridor.
+Sections.Lasers = function(c: Ctx, cursor: Vector3): Vector3
+	local length = lerp(22, 30, c.D)
+	local width = 8
+	local corridor = platform(c, CFrame.new(cursor.X + length / 2 + 1, cursor.Y - 0.5, cursor.Z), V(length, 1, width))
+	corridor.Name = "LaserCorridor"
+	local count = c.Rng:NextInteger(3, 5)
+	for i = 1, count do
+		local x = cursor.X + 1 + (i / (count + 1)) * length
+		for _, side in ipairs({ -1, 1 }) do
+			part({ Name = "Emitter", Size = V(1, 4, 1), CFrame = CFrame.new(x, cursor.Y + 2, cursor.Z + side * (width / 2 + 0.5)), Color = c.Theme.Trim, CanCollide = false }, c.Model)
+		end
+		local beam = kill(c, CFrame.new(x, cursor.Y + 1.6, cursor.Z), V(0.5, 3, width + 1), "Laser")
+		beam.Color = rgb(255, 40, 60)
+		beam:SetAttribute("MoveKind", "Blink")
+		beam:SetAttribute("BlinkPeriod", lerp(2.4, 1.6, c.D))
+		beam:SetAttribute("BlinkPhase", (i % 2) * 0.5)
+	end
+	return V(cursor.X + length + 2, cursor.Y, cursor.Z)
+end
+
+-- Boulders rolling across a lane.
+Sections.Rollers = function(c: Ctx, cursor: Vector3): Vector3
+	local length = lerp(24, 32, c.D)
+	local width = 10
+	local lane = platform(c, CFrame.new(cursor.X + length / 2 + 1, cursor.Y - 0.5, cursor.Z), V(length, 1, width))
+	lane.Name = "RollerLane"
+	local count = c.Rng:NextInteger(2, 4)
+	for i = 1, count do
+		local x = cursor.X + 1 + (i / (count + 1)) * length
+		local ball = kill(c, CFrame.new(x, cursor.Y + 1.6, cursor.Z - width / 2 - 2), V(3.4, 3.4, 3.4), "Boulder")
+		ball.Shape = Enum.PartType.Ball
+		ball.Material = Enum.Material.SmoothPlastic
+		ball.Color = c.Theme.Hazard:Lerp(Color3.new(0, 0, 0), 0.3)
+		ball.CanCollide = true
+		ball:SetAttribute("MoveKind", "Slide")
+		ball:SetAttribute("MoveAxis", V(0, 0, 1))
+		ball:SetAttribute("MoveDistance", width + 4)
+		ball:SetAttribute("MovePeriod", lerp(3.4, 2.2, c.D))
+		ball:SetAttribute("MovePhase", (i / count) + c.Rng:NextNumber(0, 0.2))
+		ball:SetAttribute("Roll", true)
+	end
+	return V(cursor.X + length + 2, cursor.Y, cursor.Z)
+end
+
 -- Which sections are allowed at a difficulty, with weights.
 local SECTION_TABLE = {
 	{ Name = "Jumps", Min = 0, Weight = 3 },
@@ -372,6 +605,13 @@ local SECTION_TABLE = {
 	{ Name = "Conveyor", Min = 0.4, Weight = 2 },
 	{ Name = "Spinner", Min = 0.45, Weight = 2 },
 	{ Name = "Walls", Min = 0.55, Weight = 2 },
+	{ Name = "SpeedPad", Min = 0.22, Weight = 1.5 },
+	{ Name = "Ice", Min = 0.28, Weight = 2 },
+	{ Name = "Turntable", Min = 0.38, Weight = 2 },
+	{ Name = "Pendulum", Min = 0.42, Weight = 2 },
+	{ Name = "Rollers", Min = 0.5, Weight = 2 },
+	{ Name = "Wind", Min = 0.58, Weight = 1.5 },
+	{ Name = "Lasers", Min = 0.62, Weight = 2 },
 }
 
 local function pickSection(c: Ctx, used: { [string]: boolean }): string
@@ -442,6 +682,14 @@ local function buildCheckpoint(c: Ctx, cursor: Vector3, stage: number)
 	-- glowing ring + beacon
 	local ring = part({ Name = "Ring", Shape = Enum.PartType.Cylinder, Size = V(0.2, 7, 7), CFrame = CFrame.new(pad.Position + V(0, 0.6, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color = c.Theme.Accent, Material = Enum.Material.Neon, CanCollide = false, CastShadow = false }, c.Model)
 	ring.Name = "CheckpointRing"
+	part({ Name = "Inlay", Shape = Enum.PartType.Cylinder, Size = V(0.1, 9, 9), CFrame = CFrame.new(pad.Position + V(0, 0.52, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color = c.Theme.Trim, CanCollide = false, CastShadow = false }, c.Model)
+	for _, sx in ipairs({ -1, 1 }) do
+		for _, sz in ipairs({ -1, 1 }) do
+			if not (sx == -1 and sz == -1) then
+				flag(c, pad.Position + V(sx * (PAD_SIZE / 2 - 0.8), 0.5, sz * (PAD_SIZE / 2 - 0.8)))
+			end
+		end
+	end
 	local trigger = part({ Name = "Checkpoint", CFrame = CFrame.new(pad.Position + V(0, 4, 0)), Size = V(PAD_SIZE, 7, PAD_SIZE), Transparency = 1, CanCollide = false, CastShadow = false }, c.Model)
 	trigger.CanQuery = false
 	trigger:SetAttribute("Stage", stage)
@@ -502,6 +750,137 @@ local function placeCoins(c: Ctx)
 	end
 end
 
+-- A small side platform off a random walkable, reachable with one jump.
+local function sidePlatform(c: Ctx): BasePart?
+	local candidates = {}
+	for _, p in ipairs(c.Walkables) do
+		if p.Size.X >= 5 and p.Shape ~= Enum.PartType.Cylinder then
+			table.insert(candidates, p)
+		end
+	end
+	if #candidates == 0 then
+		return nil
+	end
+	local base = candidates[c.Rng:NextInteger(1, #candidates)]
+	local side = if base.Position.Z > 0 then -1 else 1
+	local position = base.Position + V(0, 0.5, side * (base.Size.Z / 2 + lerp(6, 8, c.D)))
+	local p = platform(c, CFrame.new(position), V(4, 1, 4), c.Theme.Accent)
+	p.Name = "SecretPlatform"
+	return p
+end
+
+-- A glowing crystal shard: find them all for the secret brainrot.
+local function placeFragment(c: Ctx, id: number)
+	local base = sidePlatform(c)
+	if not base then
+		return
+	end
+	local shard = part({
+		Name = "Fragment",
+		Size = V(1.2, 2.4, 1.2),
+		CFrame = CFrame.new(base.Position + V(0, 2.8, 0)) * CFrame.Angles(0, math.rad(45), 0),
+		Color = rgb(190, 90, 255),
+		Material = Enum.Material.Neon,
+		CanCollide = false,
+		CanTouch = false,
+		CanQuery = false,
+		CastShadow = false,
+	}, c.Model)
+	shard:SetAttribute("FragmentId", "F" .. id)
+	shard:SetAttribute("Stage", c.Stage)
+	CollectionService:AddTag(shard, "Fragment")
+	local light = Instance.new("PointLight")
+	light.Color = rgb(190, 90, 255)
+	light.Range = 12
+	light.Parent = shard
+	local sparkle = Instance.new("ParticleEmitter")
+	sparkle.Color = ColorSequence.new(rgb(230, 170, 255))
+	sparkle.LightEmission = 1
+	sparkle.Rate = 8
+	sparkle.Lifetime = NumberRange.new(0.8, 1.4)
+	sparkle.Speed = NumberRange.new(1, 2)
+	sparkle.SpreadAngle = Vector2.new(180, 180)
+	sparkle.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.4), NumberSequenceKeypoint.new(1, 0) })
+	sparkle.Parent = shard
+end
+
+-- A big coin worth 10 normal ones, hidden off the path.
+local function placeLuckyCoin(c: Ctx)
+	local base = sidePlatform(c)
+	if not base then
+		return
+	end
+	local coin = part({
+		Name = "LuckyCoin",
+		Shape = Enum.PartType.Cylinder,
+		Size = V(0.7, 4.4, 4.4),
+		CFrame = CFrame.new(base.Position + V(0, 3.4, 0)) * CFrame.Angles(0, 0, math.rad(90)),
+		Color = rgb(255, 225, 90),
+		Material = Enum.Material.Neon,
+		CanCollide = false,
+		CanTouch = false,
+		CanQuery = false,
+		CastShadow = false,
+	}, c.Model)
+	coin:SetAttribute("CoinId", "L" .. c.Stage)
+	coin:SetAttribute("Stage", c.Stage)
+	coin:SetAttribute("Lucky", true)
+	CollectionService:AddTag(coin, "Coin")
+	local light = Instance.new("PointLight")
+	light.Color = rgb(255, 225, 90)
+	light.Range = 14
+	light.Parent = coin
+end
+
+-- Boss arena: a wide disc with a giant brainrot statue, spinning bars and
+-- swinging hammers. The last stage of every world.
+local function buildBossArena(c: Ctx, cursor: Vector3, bossName: string): Vector3
+	local radius = 17
+	local center = V(cursor.X + radius + 6, cursor.Y - 0.5, cursor.Z)
+	local entry = platform(c, CFrame.new(cursor.X + 3, cursor.Y - 0.5, cursor.Z), V(6, 1, 6))
+	entry.Name = "Landing"
+	lavaPool(c, V(center.X, cursor.Y - 6, cursor.Z), V(radius * 2 + 24, 1, radius * 2 + 20))
+	local disc = part({ Name = "BossArena", Shape = Enum.PartType.Cylinder, Size = V(1, radius * 2, radius * 2), CFrame = CFrame.new(center) * CFrame.Angles(0, 0, math.rad(90)), Color = c.Theme.Platform }, c.Model)
+	walkable(c, disc)
+	part({ Name = "Rim", Shape = Enum.PartType.Cylinder, Size = V(0.5, radius * 2 + 1, radius * 2 + 1), CFrame = CFrame.new(center - V(0, 0.7, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color = c.Theme.Accent, Material = Enum.Material.Neon, CanCollide = false, CastShadow = false }, c.Model)
+	-- the boss on a pedestal in the middle
+	local pedestal = part({ Name = "Pedestal", Shape = Enum.PartType.Cylinder, Size = V(3, 7, 7), CFrame = CFrame.new(center + V(0, 2, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color = c.Theme.Trim }, c.Model)
+	local ok, built = pcall(BrainrotBuilder.Build, bossName, { Effects = true, Weld = false, Scale = 3.2 })
+	if ok and built then
+		built.Model.Name = "Boss"
+		built.Model:PivotTo(CFrame.new(center + V(0, 3.5, 0)) * CFrame.Angles(0, math.rad(90), 0))
+		built.Model.Parent = c.Model
+		billboard(pedestal, "BOSS: " .. string.upper(bossName), "Beat this stage for 4x coins!", c.Theme.Hazard, 18, UDim2.fromOffset(420, 110))
+	end
+	-- two spinning bars at different heights
+	for i = 1, 2 do
+		local bar = kill(c, CFrame.new(center + V(0, 1.6 + (i - 1) * 2.6, 0)) * CFrame.Angles(0, (i - 1) * math.pi / 2, 0), V(radius * 2 - 2, 1.4, 1.2), "SpinBar")
+		bar.CanCollide = true
+		bar:SetAttribute("MoveKind", "Spin")
+		bar:SetAttribute("SpinSpeed", lerp(50, 110, c.D) * (if i == 2 then -1 else 1))
+	end
+	-- hammers guarding the exit
+	for _, side in ipairs({ -1, 1 }) do
+		local pivot = center + V(radius - 4, 10, side * 6)
+		part({ Name = "FramePost", Size = V(0.8, 11, 0.8), CFrame = CFrame.new(pivot - V(0, 5.5, 0)) * CFrame.new(0, 0, side * 2.5), Color = c.Theme.Trim, CanCollide = false }, c.Model)
+		local arm = part({ Name = "PendulumArm", Size = V(0.5, 7, 0.5), CFrame = CFrame.new(pivot - V(0, 3.5, 0)), Color = c.Theme.Trim, CanCollide = false, CastShadow = false }, c.Model)
+		local head = kill(c, CFrame.new(pivot - V(0, 7.5, 0)), V(3, 3, 3), "Hammer")
+		head.Shape = Enum.PartType.Ball
+		head.CanCollide = true
+		for _, p in ipairs({ arm, head }) do
+			p:SetAttribute("MoveKind", "Pendulum")
+			p:SetAttribute("PendulumPivot", pivot)
+			p:SetAttribute("PendulumAmp", math.rad(55))
+			p:SetAttribute("PendulumPeriod", 2.6)
+			p:SetAttribute("PendulumPhase", if side > 0 then 0 else 0.5)
+			p:SetAttribute("PendulumAxis", "X")
+		end
+	end
+	local exit = platform(c, CFrame.new(center.X + radius + 4, cursor.Y - 0.5, cursor.Z), V(8, 1, 8))
+	exit.Name = "Landing"
+	return V(center.X + radius + 8, cursor.Y, cursor.Z)
+end
+
 local function buildFinish(c: Ctx, cursor: Vector3)
 	local pad = platform(c, CFrame.new(cursor.X + 10, cursor.Y - 0.5, cursor.Z), V(20, 1, 20), rgb(255, 215, 80))
 	pad.Name = "FinishPad"
@@ -559,24 +938,40 @@ local function buildStage(stage: number, cursor: Vector3, parent: Instance): Vec
 	stageStartX[stage] = cursor.X
 
 	local pos = buildCheckpoint(c, cursor, stage)
-	local length = rng:NextNumber(Config.Course.StageLengthMin, Config.Course.StageLengthMax)
 	if isBoss then
-		length += 40
-	end
-	local targetX = cursor.X + length
-	local used = {}
-	local sections = 0
-	while pos.X < targetX - 18 and sections < 3 do
-		local name = pickSection(c, used)
-		used[name] = true
-		sections += 1
-		pos = Sections[name](c, pos)
-		-- a small landing between sections
-		if pos.X < targetX - 18 then
-			local landing = platform(c, CFrame.new(pos.X + 3, pos.Y - 0.5, pos.Z), V(6, 1, 8))
-			landing.Name = "Landing"
-			pos = V(pos.X + 6, pos.Y, pos.Z)
+		model:SetAttribute("Boss", true)
+		pos = buildBossArena(c, pos, world.Boss or "Sneaker Shark")
+	else
+		local length = rng:NextNumber(Config.Course.StageLengthMin, Config.Course.StageLengthMax)
+		local targetX = cursor.X + length
+		local used = {}
+		local sections = 0
+		while pos.X < targetX - 18 and sections < 3 do
+			local name = pickSection(c, used)
+			used[name] = true
+			sections += 1
+			pos = Sections[name](c, pos)
+			-- a small landing between sections, with a lamp or flag
+			if pos.X < targetX - 18 then
+				local landing = platform(c, CFrame.new(pos.X + 3, pos.Y - 0.5, pos.Z), V(6, 1, 8))
+				landing.Name = "Landing"
+				if rng:NextNumber() < 0.5 then
+					lamp(c, V(pos.X + 3, pos.Y, pos.Z + 3.6))
+				else
+					flag(c, V(pos.X + 3, pos.Y, pos.Z - 3.6))
+				end
+				pos = V(pos.X + 6, pos.Y, pos.Z)
+			end
 		end
+	end
+	-- secrets: a fragment every few stages, a lucky coin once per world
+	local total = Config.TotalStages()
+	local fragmentEvery = math.floor(total / Config.Fragments.Count)
+	if stage % fragmentEvery == 3 and stage // fragmentEvery < Config.Fragments.Count then
+		placeFragment(c, stage // fragmentEvery + 1)
+	end
+	if inWorld == math.floor(world.Stages / 2) then
+		placeLuckyCoin(c)
 	end
 	-- keep the course rising gently and inside the corridor
 	local nextY = pos.Y + Config.Course.RisePerStage
@@ -744,6 +1139,7 @@ local function buildWorldScenery(parent: Instance, worldIndex: number)
 	end
 	local rng = Random.new(Config.Course.Seed + worldIndex * 104729)
 	CourseDecor.Fill(world.Theme.Decor, parent, minX, maxX, baseY, rng)
+	CourseDecor.Backdrop(world.Theme.Decor, parent, minX, maxX, baseY, rng)
 end
 
 local function setupLighting()

@@ -228,6 +228,74 @@ check(near(Config.Prestige.CoinMultiplierPerPrestige, 0.5) and Config.Prestige.R
 check(Config.AntiCheat.MaxSpeedFactor > 1 and Config.AntiCheat.CheckpointRadius > 5, "Anti-cheat tolerances sane")
 check(Config.Coins.RespawnSeconds > 10 and Config.Coins.PickupRadius < Config.Coins.MaxPickupDistance, "Coin settings sane")
 
+--------------------------------------------------------------------------------
+-- Bosses, trails, fragments, quests, events
+--------------------------------------------------------------------------------
+
+for _, world in ipairs(Config.Worlds) do
+	check(Config.Brainrots[world.Boss] ~= nil, world.Name .. " boss brainrot exists")
+end
+check(Config.Trails.None ~= nil and Config.Trails.None.Price == 0, "Free 'no trail' option")
+local trailOrders = {}
+for key, trail in pairs(Config.Trails) do
+	check(type(trail.Name) == "string" and trail.Price >= 0, "Trail " .. key .. " valid")
+	check(key == "None" or trail.Color ~= nil, "Trail " .. key .. " has a colour")
+	check(trailOrders[trail.Order] == nil, "Trail " .. key .. " order unique")
+	trailOrders[trail.Order] = true
+end
+check(Config.DataTemplate.Trails.None == true and Config.DataTemplate.EquippedTrail == "None", "Trail data template")
+check(Config.Fragments.Count >= 6 and Config.Fragments.Reward > 0, "Fragment settings")
+local secret = 0
+for name, def in pairs(Config.Brainrots) do
+	if def.Unlock and def.Unlock.Fragments then
+		secret += 1
+		check(def.Price == 0, name .. " is free once the fragments are found")
+	end
+end
+check(secret == 1, "Exactly one fragment brainrot")
+local allFound = {}
+for i = 1, Config.Fragments.Count do
+	allFound["F" .. i] = true
+end
+check(select(1, Config.CanUnlock("Fragment Phantom", { Stats = { BestStage = 1 }, Prestige = 0, Coins = 0, Fragments = {} })) == false, "Secret locked without fragments")
+check(select(1, Config.CanUnlock("Fragment Phantom", { Stats = { BestStage = 1 }, Prestige = 0, Coins = 0, Fragments = allFound })) == true, "Secret unlocks with every fragment")
+
+local questIds, statCount, distinct = {}, 0, {}
+for _, quest in ipairs(Config.Quests.Pool) do
+	check(questIds[quest.Id] == nil, "Quest id unique: " .. quest.Id)
+	questIds[quest.Id] = true
+	check(Config.DataTemplate.Stats[quest.Stat] ~= nil, quest.Id .. " tracks a saved stat")
+	check(quest.Goal > 0 and (quest.Reward.Coins or 0) > 0, quest.Id .. " has a goal and reward")
+	check(string.find(quest.Text, "%d", 1, true) ~= nil, quest.Id .. " text shows the goal")
+	if not distinct[quest.Stat] then
+		distinct[quest.Stat] = true
+		statCount += 1
+	end
+end
+check(statCount >= Config.Quests.PerDay, "Enough quest stats for a full day")
+for _, userId in ipairs({ 1, 42, 123456789 }) do
+	for day = 20000, 20010 do
+		local ids = Config.PickQuests(day, userId)
+		check(#ids == Config.Quests.PerDay, "PickQuests count")
+		local stats, ok = {}, true
+		for _, id in ipairs(ids) do
+			local quest = Config.GetQuest(id)
+			if not quest or stats[quest.Stat] then
+				ok = false
+			else
+				stats[quest.Stat] = true
+			end
+		end
+		check(ok, "PickQuests one per stat")
+		check(table.concat(Config.PickQuests(day, userId), ",") == table.concat(ids, ","), "PickQuests deterministic")
+	end
+end
+check(Config.Events.Duration < Config.Events.Interval, "Events shorter than their interval")
+for key, event in pairs(Config.Events.List) do
+	check(type(event.Name) == "string" and (event.CoinMult or event.StageMult), "Event " .. key .. " does something")
+end
+check(Config.DataTemplate.Stats.StagesCleared == 0 and Config.DataTemplate.Stats.CheckpointsTouched == 0 and Config.DataTemplate.Stats.FragmentsFound == 0, "New stats in template")
+
 print(string.format("\n%d passed, %d failed", passed, failed))
 if failed > 0 then
 	error("tests failed")

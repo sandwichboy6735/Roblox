@@ -163,6 +163,9 @@ Config.Brainrots = {
 	["Cloud Croissant"] = { Rarity = "Epic", Price = 0, Speed = 22, Jump = 62, Perk = "Glide", Value = 0.32, Unlock = { Stage = 60 }, Order = 22, Tagline = "Flaky and floaty." },
 	["Prestige Pastaroni"] = { Rarity = "Legendary", Price = 0, Speed = 25, Jump = 66, Perk = "CoinBoost", Value = 0.5, Unlock = { Prestige = 2 }, Order = 23, Tagline = "Finished the obby twice. Still hungry." },
 
+	-- Secret: collect every Brainrot Fragment hidden on the course
+	["Fragment Phantom"] = { Rarity = "Mythic", Price = 0, Speed = 27, Jump = 67, Perk = "Glide", Value = 0.2, Unlock = { Fragments = true }, Order = 25, Tagline = "Pieced together from pure brainrot." },
+
 	-- Gamepass
 	["Golden Goatini"] = { Rarity = "Legendary", Price = 0, Speed = 25, Jump = 64, Perk = "CoinBoost", Value = 0.4, Unlock = { Gamepass = "VIP" }, Order = 24, Tagline = "VIP only. Shiny." },
 }
@@ -179,6 +182,50 @@ Config.Perks = {
 
 Config.DashCooldown = 2.5 -- seconds
 
+-- Cosmetic trails bought with coins (the Rainbow Trail gamepass is separate).
+Config.Trails = {
+	None = { Name = "No Trail", Price = 0, Order = 0 },
+	Mint = { Name = "Mint", Price = 400, Color = Color3.fromRGB(110, 235, 190), Order = 1 },
+	Sky = { Name = "Sky", Price = 800, Color = Color3.fromRGB(90, 180, 255), Order = 2 },
+	Lava = { Name = "Lava", Price = 1500, Color = Color3.fromRGB(255, 110, 40), Order = 3 },
+	Grape = { Name = "Grape", Price = 2500, Color = Color3.fromRGB(190, 110, 255), Order = 4 },
+	Gold = { Name = "Gold", Price = 5000, Color = Color3.fromRGB(255, 210, 60), Order = 5 },
+	Void = { Name = "Void", Price = 12000, Color = Color3.fromRGB(40, 20, 60), Order = 6 },
+}
+
+-- Hidden Brainrot Fragments: one per world section, off the path. Find them
+-- all to unlock the secret brainrot.
+Config.Fragments = {
+	Count = 12,
+	Reward = 150, -- coins per fragment on top of the unlock
+}
+
+-- DAILY QUESTS - three are picked per player per UTC day from this pool.
+-- Progress = how much a Stat grew since the day started.
+Config.Quests = {
+	PerDay = 3,
+	Pool = {
+		{ Id = "Coins", Text = "Collect %d coins", Stat = "CoinsCollected", Goal = 60, Reward = { Coins = 300 } },
+		{ Id = "Stages", Text = "Beat %d new stages", Stat = "StagesCleared", Goal = 8, Reward = { Coins = 500 } },
+		{ Id = "Play", Text = "Play for %d minutes", Stat = "Playtime", Scale = 60, Goal = 15, Reward = { Coins = 350 } },
+		{ Id = "Checkpoints", Text = "Touch %d checkpoints", Stat = "CheckpointsTouched", Goal = 20, Reward = { Coins = 250 } },
+		{ Id = "Deaths", Text = "Die %d times (it happens)", Stat = "Deaths", Goal = 25, Reward = { Coins = 200 } },
+		{ Id = "BigCoins", Text = "Collect %d coins", Stat = "CoinsCollected", Goal = 200, Reward = { Coins = 900 } },
+		{ Id = "BigStages", Text = "Beat %d new stages", Stat = "StagesCleared", Goal = 25, Reward = { Coins = 1500 } },
+	},
+	BonusReward = { Coins = 1000 }, -- for finishing all of today's quests
+}
+
+-- SERVER EVENTS - every Interval seconds a Coin Rush doubles coins for everyone.
+Config.Events = {
+	Interval = 600,
+	Duration = 120,
+	List = {
+		CoinRush = { Name = "COIN RUSH", Description = "x2 coins for everyone!", CoinMult = 2, Color = Color3.fromRGB(255, 200, 40) },
+		LuckyStages = { Name = "LUCKY STAGES", Description = "x3 coins for new stages!", StageMult = 3, Color = Color3.fromRGB(120, 255, 160) },
+	},
+}
+
 --------------------------------------------------------------------------------
 -- WORLDS - the course is 100 stages in a row, split into themed worlds.
 -- Difficulty ramps inside each world and resets a little at the next one.
@@ -193,6 +240,7 @@ Config.Worlds = {
 		CoinValue = 5,
 		StageReward = 15,
 		Difficulty = { 0.05, 0.3 }, -- start / end of the world (0 = tutorial, 1 = extreme)
+		Boss = "Sneaker Shark",
 		Theme = {
 			Platform = Color3.fromRGB(120, 210, 90),
 			Trim = Color3.fromRGB(70, 150, 60),
@@ -209,6 +257,7 @@ Config.Worlds = {
 		CoinValue = 10,
 		StageReward = 30,
 		Difficulty = { 0.25, 0.45 },
+		Boss = "Croco Jet",
 		Theme = {
 			Platform = Color3.fromRGB(255, 225, 150),
 			Trim = Color3.fromRGB(225, 170, 90),
@@ -225,6 +274,7 @@ Config.Worlds = {
 		CoinValue = 20,
 		StageReward = 60,
 		Difficulty = { 0.4, 0.6 },
+		Boss = "Timber Tapper",
 		Theme = {
 			Platform = Color3.fromRGB(70, 160, 80),
 			Trim = Color3.fromRGB(120, 85, 50),
@@ -241,6 +291,7 @@ Config.Worlds = {
 		CoinValue = 40,
 		StageReward = 120,
 		Difficulty = { 0.55, 0.72 },
+		Boss = "Ballerina Latte",
 		Theme = {
 			Platform = Color3.fromRGB(120, 85, 65),
 			Trim = Color3.fromRGB(255, 235, 200),
@@ -257,6 +308,7 @@ Config.Worlds = {
 		CoinValue = 80,
 		StageReward = 240,
 		Difficulty = { 0.68, 0.85 },
+		Boss = "Tralala Titan",
 		Theme = {
 			Platform = Color3.fromRGB(240, 245, 255),
 			Trim = Color3.fromRGB(150, 200, 255),
@@ -273,6 +325,7 @@ Config.Worlds = {
 		CoinValue = 160,
 		StageReward = 480,
 		Difficulty = { 0.82, 1 },
+		Boss = "Omega Brainrot",
 		Theme = {
 			Platform = Color3.fromRGB(90, 60, 170),
 			Trim = Color3.fromRGB(200, 120, 255),
@@ -376,12 +429,19 @@ Config.DataTemplate = {
 	Prestige = 0,
 	Owned = { ["Pasta Panda"] = true }, -- { [BrainrotName] = true }
 	Equipped = "Pasta Panda",
+	Trails = { None = true },
+	EquippedTrail = "None",
+	Fragments = {}, -- { [FragmentId] = true }
+	Quests = { Day = 0, Ids = {}, Baseline = {}, Claimed = {}, BonusClaimed = false },
 	Stats = {
 		TotalCoins = 0,
 		BestStage = 1, -- highest stage ever reached (plus 100 per prestige)
 		Deaths = 0,
 		StagesSkipped = 0,
+		StagesCleared = 0,
+		CheckpointsTouched = 0,
 		CoinsCollected = 0,
+		FragmentsFound = 0,
 		BestTime = 0, -- fastest full run in seconds (0 = never finished)
 		RunStart = 0, -- unix time the current run began
 		Playtime = 0,
@@ -471,6 +531,15 @@ function Config.CanUnlock(name: string, data): (boolean, string?)
 		if unlock.Gamepass then
 			return false, "Buy the " .. (Config.Gamepasses[unlock.Gamepass] and Config.Gamepasses[unlock.Gamepass].Name or unlock.Gamepass) .. " gamepass"
 		end
+		if unlock.Fragments then
+			local found = 0
+			for _ in pairs(data.Fragments or {}) do
+				found += 1
+			end
+			if found < Config.Fragments.Count then
+				return false, string.format("Find all %d hidden fragments (%d/%d)", Config.Fragments.Count, found, Config.Fragments.Count)
+			end
+		end
 	end
 	if def.Price > 0 and (data.Coins or 0) < def.Price then
 		return false, "Need " .. def.Price .. " coins"
@@ -494,6 +563,53 @@ function Config.GetProductById(id: number)
 		end
 	end
 	return nil, nil
+end
+
+-- Today's quests for a player: a stable pick per (day, userId), one per stat.
+function Config.PickQuests(day: number, userId: number): { string }
+	local pool = Config.Quests.Pool
+	local order = {}
+	for index = 1, #pool do
+		order[index] = index
+	end
+	local seed = (day * 7919 + userId * 104729) % 2147483647
+	for i = #order, 2, -1 do
+		seed = (seed * 16807) % 2147483647
+		local j = (seed % i) + 1
+		order[i], order[j] = order[j], order[i]
+	end
+	local picked, usedStats = {}, {}
+	for _, index in ipairs(order) do
+		local quest = pool[index]
+		if not usedStats[quest.Stat] then
+			usedStats[quest.Stat] = true
+			table.insert(picked, quest.Id)
+			if #picked >= Config.Quests.PerDay then
+				break
+			end
+		end
+	end
+	return picked
+end
+
+function Config.GetQuest(id: string)
+	for _, quest in ipairs(Config.Quests.Pool) do
+		if quest.Id == id then
+			return quest
+		end
+	end
+	return nil
+end
+
+function Config.SortedTrails(): { { Key: string, Def: any } }
+	local list = {}
+	for key, def in pairs(Config.Trails) do
+		table.insert(list, { Key = key, Def = def })
+	end
+	table.sort(list, function(a, b)
+		return a.Def.Order < b.Def.Order
+	end)
+	return list
 end
 
 -- Brainrots sorted for menus: by rarity, then price.

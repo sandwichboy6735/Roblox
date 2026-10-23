@@ -29,14 +29,19 @@ local START_ORDER = {
 	"BrainrotsUI",
 	"ShopUI",
 	"StagesUI",
+	"QuestsUI",
 	"RewardsUI",
+	"StatsUI",
 	"SettingsUI",
 	"MovementController",
 	"CoinController",
 	"ObbyFxController",
+	"EventUI",
 	"AmbienceController",
+	"PlayerVisualsController",
 	"TrailController",
 	"ChatController",
+	"IntroController",
 }
 
 for _, name in ipairs(START_ORDER) do

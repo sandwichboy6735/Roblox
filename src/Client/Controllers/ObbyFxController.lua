@@ -95,6 +95,9 @@ local function watchCharacter(character: Model)
 end
 
 local rings: { BasePart } = {}
+local ringBase: { [BasePart]: CFrame } = {}
+local beacon: Part
+local checkpointPads: { [number]: Vector3 } = {}
 
 local function pulseRings()
 	local camera = Workspace.CurrentCamera
@@ -104,13 +107,29 @@ local function pulseRings()
 	local t = os.clock()
 	local cameraPosition = camera.CFrame.Position
 	local current = State.Get("Stage", 1)
+	local parts, cframes = {}, {}
 	for _, ring in ipairs(rings) do
-		if (ring.Position - cameraPosition).Magnitude < 150 then
+		local base = ringBase[ring]
+		if base and (base.Position - cameraPosition).Magnitude < 150 then
 			local stage = ring.Parent and ring.Parent:GetAttribute("Stage")
 			local isNext = stage == current + 1
 			ring.Transparency = if isNext then 0.1 + math.sin(t * 5) * 0.1 else 0.45
 			ring.Color = if isNext then Color3.fromRGB(255, 240, 120) elseif stage and stage <= current then Color3.fromRGB(110, 235, 120) else ring.Color
+			table.insert(parts, ring)
+			table.insert(cframes, base * CFrame.new(math.sin(t * 2) * 0.15, 0, 0) * CFrame.Angles(t * 0.8, 0, 0))
 		end
+	end
+	if #parts > 0 then
+		Workspace:BulkMoveTo(parts, cframes, Enum.BulkMoveMode.FireCFrameChanged)
+	end
+	-- a tall light column over the next checkpoint
+	local target = checkpointPads[current + 1]
+	if target then
+		beacon.CFrame = CFrame.new(target + Vector3.new(0, 40, 0))
+		beacon.Transparency = 0.6 + math.sin(t * 3) * 0.1
+		beacon.Parent = Workspace
+	else
+		beacon.Parent = nil
 	end
 end
 
@@ -159,11 +178,32 @@ function ObbyFxController.Init()
 		end
 	end)
 
+	beacon = Instance.new("Part")
+	beacon.Name = "NextCheckpointBeacon"
+	beacon.Anchored = true
+	beacon.CanCollide = false
+	beacon.CanQuery = false
+	beacon.CanTouch = false
+	beacon.CastShadow = false
+	beacon.Material = Enum.Material.Neon
+	beacon.Color = Color3.fromRGB(255, 240, 120)
+	beacon.Size = Vector3.new(2.5, 80, 2.5)
+	beacon.Transparency = 0.65
+	local mesh = Instance.new("SpecialMesh")
+	mesh.MeshType = Enum.MeshType.Cylinder
+	mesh.Parent = beacon
+
 	task.spawn(function()
 		local course = Workspace:WaitForChild("Course")
 		for _, descendant in ipairs(course:GetDescendants()) do
 			if descendant:IsA("BasePart") and descendant.Name == "CheckpointRing" then
 				table.insert(rings, descendant)
+				ringBase[descendant] = descendant.CFrame
+			elseif descendant:IsA("BasePart") and descendant.Name == "Checkpoint" then
+				local stage = descendant:GetAttribute("Stage")
+				if type(stage) == "number" then
+					checkpointPads[stage] = descendant.Position
+				end
 			end
 		end
 	end)

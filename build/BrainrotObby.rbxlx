@@ -1366,6 +1366,8 @@ local Characters = {
 	["Cloud Croissant"] = { Archetype = "Banana", Primary = rgb(235, 180, 110), Secondary = rgb(255, 235, 200), Accent = rgb(255, 255, 255), Extras = { "AngelWings" } },
 	["Prestige Pastaroni"] = { Archetype = "Blob", Primary = rgb(255, 200, 90), Secondary = rgb(230, 60, 60), Accent = rgb(255, 250, 230), Extras = { "Crown", "Sprinkles", "Glow" } },
 
+	["Fragment Phantom"] = { Archetype = "Squid", Primary = rgb(60, 20, 90), Secondary = rgb(170, 90, 255), Accent = rgb(120, 255, 240), Material = "Glass", Transparency = 0.25, Extras = { "Glow", "Halo", "Aurora" } },
+
 	["Golden Goatini"] = { Archetype = "Deer", Primary = GOLD, Secondary = rgb(255, 240, 190), Accent = rgb(200, 140, 20), Material = "Foil", Extras = { "Crown", "Glow" } },
 }
 
@@ -1604,6 +1606,9 @@ Config.Brainrots = {
 	["Cloud Croissant"] = { Rarity = "Epic", Price = 0, Speed = 22, Jump = 62, Perk = "Glide", Value = 0.32, Unlock = { Stage = 60 }, Order = 22, Tagline = "Flaky and floaty." },
 	["Prestige Pastaroni"] = { Rarity = "Legendary", Price = 0, Speed = 25, Jump = 66, Perk = "CoinBoost", Value = 0.5, Unlock = { Prestige = 2 }, Order = 23, Tagline = "Finished the obby twice. Still hungry." },
 
+	-- Secret: collect every Brainrot Fragment hidden on the course
+	["Fragment Phantom"] = { Rarity = "Mythic", Price = 0, Speed = 27, Jump = 67, Perk = "Glide", Value = 0.2, Unlock = { Fragments = true }, Order = 25, Tagline = "Pieced together from pure brainrot." },
+
 	-- Gamepass
 	["Golden Goatini"] = { Rarity = "Legendary", Price = 0, Speed = 25, Jump = 64, Perk = "CoinBoost", Value = 0.4, Unlock = { Gamepass = "VIP" }, Order = 24, Tagline = "VIP only. Shiny." },
 }
@@ -1620,6 +1625,50 @@ Config.Perks = {
 
 Config.DashCooldown = 2.5 -- seconds
 
+-- Cosmetic trails bought with coins (the Rainbow Trail gamepass is separate).
+Config.Trails = {
+	None = { Name = "No Trail", Price = 0, Order = 0 },
+	Mint = { Name = "Mint", Price = 400, Color = Color3.fromRGB(110, 235, 190), Order = 1 },
+	Sky = { Name = "Sky", Price = 800, Color = Color3.fromRGB(90, 180, 255), Order = 2 },
+	Lava = { Name = "Lava", Price = 1500, Color = Color3.fromRGB(255, 110, 40), Order = 3 },
+	Grape = { Name = "Grape", Price = 2500, Color = Color3.fromRGB(190, 110, 255), Order = 4 },
+	Gold = { Name = "Gold", Price = 5000, Color = Color3.fromRGB(255, 210, 60), Order = 5 },
+	Void = { Name = "Void", Price = 12000, Color = Color3.fromRGB(40, 20, 60), Order = 6 },
+}
+
+-- Hidden Brainrot Fragments: one per world section, off the path. Find them
+-- all to unlock the secret brainrot.
+Config.Fragments = {
+	Count = 12,
+	Reward = 150, -- coins per fragment on top of the unlock
+}
+
+-- DAILY QUESTS - three are picked per player per UTC day from this pool.
+-- Progress = how much a Stat grew since the day started.
+Config.Quests = {
+	PerDay = 3,
+	Pool = {
+		{ Id = "Coins", Text = "Collect %d coins", Stat = "CoinsCollected", Goal = 60, Reward = { Coins = 300 } },
+		{ Id = "Stages", Text = "Beat %d new stages", Stat = "StagesCleared", Goal = 8, Reward = { Coins = 500 } },
+		{ Id = "Play", Text = "Play for %d minutes", Stat = "Playtime", Scale = 60, Goal = 15, Reward = { Coins = 350 } },
+		{ Id = "Checkpoints", Text = "Touch %d checkpoints", Stat = "CheckpointsTouched", Goal = 20, Reward = { Coins = 250 } },
+		{ Id = "Deaths", Text = "Die %d times (it happens)", Stat = "Deaths", Goal = 25, Reward = { Coins = 200 } },
+		{ Id = "BigCoins", Text = "Collect %d coins", Stat = "CoinsCollected", Goal = 200, Reward = { Coins = 900 } },
+		{ Id = "BigStages", Text = "Beat %d new stages", Stat = "StagesCleared", Goal = 25, Reward = { Coins = 1500 } },
+	},
+	BonusReward = { Coins = 1000 }, -- for finishing all of today's quests
+}
+
+-- SERVER EVENTS - every Interval seconds a Coin Rush doubles coins for everyone.
+Config.Events = {
+	Interval = 600,
+	Duration = 120,
+	List = {
+		CoinRush = { Name = "COIN RUSH", Description = "x2 coins for everyone!", CoinMult = 2, Color = Color3.fromRGB(255, 200, 40) },
+		LuckyStages = { Name = "LUCKY STAGES", Description = "x3 coins for new stages!", StageMult = 3, Color = Color3.fromRGB(120, 255, 160) },
+	},
+}
+
 --------------------------------------------------------------------------------
 -- WORLDS - the course is 100 stages in a row, split into themed worlds.
 -- Difficulty ramps inside each world and resets a little at the next one.
@@ -1634,6 +1683,7 @@ Config.Worlds = {
 		CoinValue = 5,
 		StageReward = 15,
 		Difficulty = { 0.05, 0.3 }, -- start / end of the world (0 = tutorial, 1 = extreme)
+		Boss = "Sneaker Shark",
 		Theme = {
 			Platform = Color3.fromRGB(120, 210, 90),
 			Trim = Color3.fromRGB(70, 150, 60),
@@ -1650,6 +1700,7 @@ Config.Worlds = {
 		CoinValue = 10,
 		StageReward = 30,
 		Difficulty = { 0.25, 0.45 },
+		Boss = "Croco Jet",
 		Theme = {
 			Platform = Color3.fromRGB(255, 225, 150),
 			Trim = Color3.fromRGB(225, 170, 90),
@@ -1666,6 +1717,7 @@ Config.Worlds = {
 		CoinValue = 20,
 		StageReward = 60,
 		Difficulty = { 0.4, 0.6 },
+		Boss = "Timber Tapper",
 		Theme = {
 			Platform = Color3.fromRGB(70, 160, 80),
 			Trim = Color3.fromRGB(120, 85, 50),
@@ -1682,6 +1734,7 @@ Config.Worlds = {
 		CoinValue = 40,
 		StageReward = 120,
 		Difficulty = { 0.55, 0.72 },
+		Boss = "Ballerina Latte",
 		Theme = {
 			Platform = Color3.fromRGB(120, 85, 65),
 			Trim = Color3.fromRGB(255, 235, 200),
@@ -1698,6 +1751,7 @@ Config.Worlds = {
 		CoinValue = 80,
 		StageReward = 240,
 		Difficulty = { 0.68, 0.85 },
+		Boss = "Tralala Titan",
 		Theme = {
 			Platform = Color3.fromRGB(240, 245, 255),
 			Trim = Color3.fromRGB(150, 200, 255),
@@ -1714,6 +1768,7 @@ Config.Worlds = {
 		CoinValue = 160,
 		StageReward = 480,
 		Difficulty = { 0.82, 1 },
+		Boss = "Omega Brainrot",
 		Theme = {
 			Platform = Color3.fromRGB(90, 60, 170),
 			Trim = Color3.fromRGB(200, 120, 255),
@@ -1817,12 +1872,19 @@ Config.DataTemplate = {
 	Prestige = 0,
 	Owned = { ["Pasta Panda"] = true }, -- { [BrainrotName] = true }
 	Equipped = "Pasta Panda",
+	Trails = { None = true },
+	EquippedTrail = "None",
+	Fragments = {}, -- { [FragmentId] = true }
+	Quests = { Day = 0, Ids = {}, Baseline = {}, Claimed = {}, BonusClaimed = false },
 	Stats = {
 		TotalCoins = 0,
 		BestStage = 1, -- highest stage ever reached (plus 100 per prestige)
 		Deaths = 0,
 		StagesSkipped = 0,
+		StagesCleared = 0,
+		CheckpointsTouched = 0,
 		CoinsCollected = 0,
+		FragmentsFound = 0,
 		BestTime = 0, -- fastest full run in seconds (0 = never finished)
 		RunStart = 0, -- unix time the current run began
 		Playtime = 0,
@@ -1912,6 +1974,15 @@ function Config.CanUnlock(name: string, data): (boolean, string?)
 		if unlock.Gamepass then
 			return false, "Buy the " .. (Config.Gamepasses[unlock.Gamepass] and Config.Gamepasses[unlock.Gamepass].Name or unlock.Gamepass) .. " gamepass"
 		end
+		if unlock.Fragments then
+			local found = 0
+			for _ in pairs(data.Fragments or {}) do
+				found += 1
+			end
+			if found < Config.Fragments.Count then
+				return false, string.format("Find all %d hidden fragments (%d/%d)", Config.Fragments.Count, found, Config.Fragments.Count)
+			end
+		end
 	end
 	if def.Price > 0 and (data.Coins or 0) < def.Price then
 		return false, "Need " .. def.Price .. " coins"
@@ -1935,6 +2006,53 @@ function Config.GetProductById(id: number)
 		end
 	end
 	return nil, nil
+end
+
+-- Today's quests for a player: a stable pick per (day, userId), one per stat.
+function Config.PickQuests(day: number, userId: number): { string }
+	local pool = Config.Quests.Pool
+	local order = {}
+	for index = 1, #pool do
+		order[index] = index
+	end
+	local seed = (day * 7919 + userId * 104729) % 2147483647
+	for i = #order, 2, -1 do
+		seed = (seed * 16807) % 2147483647
+		local j = (seed % i) + 1
+		order[i], order[j] = order[j], order[i]
+	end
+	local picked, usedStats = {}, {}
+	for _, index in ipairs(order) do
+		local quest = pool[index]
+		if not usedStats[quest.Stat] then
+			usedStats[quest.Stat] = true
+			table.insert(picked, quest.Id)
+			if #picked >= Config.Quests.PerDay then
+				break
+			end
+		end
+	end
+	return picked
+end
+
+function Config.GetQuest(id: string)
+	for _, quest in ipairs(Config.Quests.Pool) do
+		if quest.Id == id then
+			return quest
+		end
+	end
+	return nil
+end
+
+function Config.SortedTrails(): { { Key: string, Def: any } }
+	local list = {}
+	for key, def in pairs(Config.Trails) do
+		table.insert(list, { Key = key, Def = def })
+	end
+	table.sort(list, function(a, b)
+		return a.Def.Order < b.Def.Order
+	end)
+	return list
 end
 
 -- Brainrots sorted for menus: by rarity, then price.
@@ -1973,6 +2091,11 @@ local DEFINITIONS: { [string]: string } = {
 	-- Client -> Server
 	RequestData = "RemoteEvent",
 	CollectCoin = "RemoteEvent",
+	CollectFragment = "RemoteEvent",
+	FragmentTaken = "RemoteEvent",
+	ClaimQuest = "RemoteEvent",
+	BuyTrail = "RemoteEvent",
+	EquipTrail = "RemoteEvent",
 	EquipBrainrot = "RemoteEvent",
 	BuyBrainrot = "RemoteEvent",
 	TeleportStage = "RemoteEvent",
@@ -2339,11 +2462,14 @@ local START_ORDER = {
 	"DataService",
 	"GamepassService",
 	"EconomyService",
+	"EventService",
 	"MoverService",
 	"StageService",
 	"CoinService",
 	"BrainrotService",
+	"FragmentService",
 	"RewardService",
+	"QuestService",
 	"ShopService",
 	"LeaderboardService",
 	"PlayerService",
@@ -2486,12 +2612,12 @@ function BrainrotService.ApplyCostume(player: Player)
 	humanoid.WalkSpeed = speed
 	humanoid.JumpPower = def.Jump
 	player:SetAttribute("Brainrot", name)
-	-- trail colour: prestige tier, or the galaxy trail from the gamepass
-	local tier = math.clamp(profile.Data.Prestige, 0, 5)
+	-- trail: the Rainbow Trail gamepass beats everything, else the equipped one
 	if GamepassService.Owns(player, "RainbowTrail") then
-		tier = 6
+		player:SetAttribute("Trail", "Rainbow")
+	else
+		player:SetAttribute("Trail", profile.Data.EquippedTrail or "None")
 	end
-	player:SetAttribute("TrailTier", tier)
 end
 
 --------------------------------------------------------------------------------
@@ -2584,6 +2710,30 @@ local function grantEarned(player: Player)
 end
 BrainrotService.GrantEarned = grantEarned
 
+--------------------------------------------------------------------------------
+-- Trails (coin cosmetics)
+--------------------------------------------------------------------------------
+
+function BrainrotService.BuyTrail(player: Player, key: string)
+	local profile = DataService:GetProfile(player)
+	local def = Config.Trails[key]
+	if not profile or not def then
+		return
+	end
+	local data = profile.Data
+	if not data.Trails[key] then
+		if def.Price > 0 and not EconomyService.SpendCoins(player, def.Price) then
+			notify(player, "You need " .. Util.FormatNumber(def.Price - data.Coins) .. " more coins for that trail.", "error")
+			return
+		end
+		data.Trails[key] = true
+		notify(player, "Unlocked the " .. def.Name .. " trail!", "reward")
+	end
+	data.EquippedTrail = key
+	DataService:Replicate(player, { Trails = data.Trails, EquippedTrail = key })
+	BrainrotService.ApplyCostume(player)
+end
+
 function BrainrotService.Init()
 	local function watch(player: Player)
 		player.CharacterAdded:Connect(function(character)
@@ -2627,6 +2777,13 @@ function BrainrotService.Init()
 			BrainrotService.Buy(player, name)
 		end
 	end)
+	local function trailRequest(player, key)
+		if type(key) == "string" and RateLimiter.Allow(player, "Trail", 3, 1) then
+			BrainrotService.BuyTrail(player, key)
+		end
+	end
+	Remotes.Get("BuyTrail").OnServerEvent:Connect(trailRequest)
+	Remotes.Get("EquipTrail").OnServerEvent:Connect(trailRequest)
 end
 
 return BrainrotService
@@ -2700,6 +2857,9 @@ local function onCollect(player: Player, coinId: any)
 	record[coinId] = now
 	local stage = coin:GetAttribute("Stage")
 	local value = Config.GetCoinValue(if type(stage) == "number" then stage else 1)
+	if coin:GetAttribute("Lucky") then
+		value *= 10
+	end
 	local amount = EconomyService.AddCoins(player, value, true)
 	profile.Data.Stats.CoinsCollected += 1
 	Remotes.Get("CoinTaken"):FireClient(player, coinId, amount)
@@ -2815,19 +2975,47 @@ local function walkable(c: Ctx, p: BasePart)
 	c.MinY = math.min(c.MinY, p.Position.Y + p.Size.Y / 2)
 end
 
--- A platform with a darker rim so edges read clearly from above.
+-- Per-theme platform looks: a lighter top plate on a darker base, plus a
+-- themed extra (neon underglow, a cloud puff, hanging vines, wooden posts).
+local STYLES = {
+	Meadow = { Top = rgb(130, 222, 95), Side = rgb(150, 105, 65), Extra = "Posts" },
+	Beach = { Top = rgb(255, 234, 170), Side = rgb(205, 165, 110), Extra = "Posts" },
+	Jungle = { Top = rgb(80, 175, 90), Side = rgb(95, 70, 50), Extra = "Vines" },
+	City = { Top = rgb(150, 110, 90), Side = rgb(80, 62, 58), Extra = "Neon" },
+	Sky = { Top = rgb(248, 250, 255), Side = rgb(175, 208, 255), Extra = "Cloud" },
+	Void = { Top = rgb(110, 80, 200), Side = rgb(40, 26, 80), Extra = "Neon" },
+}
+
 local function platform(c: Ctx, cf: CFrame, size: Vector3, color: Color3?): BasePart
-	local p = part({ Name = "Platform", CFrame = cf, Size = size, Color = color or c.Theme.Platform }, c.Model)
-	part({
-		Name = "Rim",
-		CFrame = cf * CFrame.new(0, -size.Y / 2 - 0.2, 0),
-		Size = V(size.X + 0.6, 0.4, size.Z + 0.6),
-		Color = c.Theme.Trim,
-		CanCollide = false,
-		CastShadow = false,
-	}, c.Model)
+	local style = STYLES[c.Theme.Decor] or STYLES.Meadow
+	local topColor = color or style.Top
+	-- the walkable part is the whole slab; the plate and base are the look
+	-- The slab is invisible and does the colliding; its look is made of child
+	-- parts so moving / vanishing platforms carry their look with them.
+	local p = part({ Name = "Platform", CFrame = cf, Size = size, Color = topColor, Transparency = 1 }, c.Model)
+	p.CastShadow = false
+	part({ Name = "Plate", CFrame = cf * CFrame.new(0, size.Y / 2 - 0.18, 0), Size = V(size.X, 0.36, size.Z), Color = topColor, CanCollide = false }, p)
+	part({ Name = "Base", CFrame = cf * CFrame.new(0, -0.18, 0), Size = V(size.X + 0.3, size.Y - 0.36, size.Z + 0.3), Color = style.Side, CanCollide = false }, p)
+	local extra = style.Extra
+	if extra == "Neon" then
+		part({ Name = "Glow", CFrame = cf * CFrame.new(0, -size.Y / 2 + 0.1, 0), Size = V(size.X + 0.9, 0.2, size.Z + 0.9), Color = c.Theme.Accent, Material = Enum.Material.Neon, Transparency = 0.2, CanCollide = false, CastShadow = false }, p)
+	elseif extra == "Cloud" then
+		part({ Name = "Puff", Shape = Enum.PartType.Ball, Size = V(1, 1, 1) * math.min(size.X, size.Z) * 0.9, CFrame = cf * CFrame.new(0, -size.Y / 2 - 0.6, 0), Color = Color3.new(1, 1, 1), CanCollide = false, CastShadow = false }, p)
+	elseif extra == "Vines" and c.Rng:NextNumber() < 0.5 then
+		part({ Name = "Vine", CFrame = cf * CFrame.new(size.X * 0.3, -size.Y / 2 - 1.6, size.Z * 0.35), Size = V(0.3, 3, 0.3), Color = rgb(95, 180, 80), CanCollide = false, CastShadow = false }, p)
+	elseif extra == "Posts" and size.X >= 5 and size.Z >= 5 then
+		for _, sx in ipairs({ -1, 1 }) do
+			part({ Name = "Post", CFrame = cf * CFrame.new(sx * (size.X / 2 - 0.6), -size.Y / 2 - 1.2, size.Z / 2 - 0.6), Size = V(0.6, 2.4, 0.6), Color = style.Side, CanCollide = false, CastShadow = false }, p)
+		end
+	end
 	walkable(c, p)
 	return p
+end
+
+-- Slippery platform (ice / grease / glass)
+local function icy(p: BasePart)
+	p.CustomPhysicalProperties = PhysicalProperties.new(0.7, 0.02, 0.3)
+	p:SetAttribute("Ice", true)
 end
 
 local function kill(c: Ctx, cf: CFrame, size: Vector3, name: string?): BasePart
@@ -2845,10 +3033,26 @@ local function kill(c: Ctx, cf: CFrame, size: Vector3, name: string?): BasePart
 	return p
 end
 
--- Lava pool: a glowing neon slab a little below the platforms.
+-- Hazard pool: a glowing slab with floating crust blobs, a light and bubbles.
 local function lavaPool(c: Ctx, center: Vector3, size: Vector3)
 	local pool = kill(c, CFrame.new(center), size, "LavaPool")
-	pool.Transparency = 0.1
+	pool.Transparency = 0.15
+	local dark = c.Theme.Hazard:Lerp(Color3.new(0, 0, 0), 0.55)
+	local blobs = math.clamp(math.floor(size.X * size.Z / 120), 2, 6)
+	for i = 1, blobs do
+		local bx = center.X + c.Rng:NextNumber(-size.X * 0.4, size.X * 0.4)
+		local bz = center.Z + c.Rng:NextNumber(-size.Z * 0.4, size.Z * 0.4)
+		local blob = part({ Name = "Crust", Size = V(c.Rng:NextNumber(2, 4), 0.4, c.Rng:NextNumber(2, 4)), CFrame = CFrame.new(bx, center.Y + 0.35, bz) * CFrame.Angles(0, c.Rng:NextNumber(0, 3), 0), Color = dark, CanCollide = false, CastShadow = false }, c.Model)
+		local mesh = Instance.new("SpecialMesh")
+		mesh.MeshType = Enum.MeshType.Sphere
+		mesh.Parent = blob
+	end
+	local light = Instance.new("PointLight")
+	light.Color = c.Theme.Hazard
+	light.Range = math.clamp(size.X * 0.6, 10, 40)
+	light.Brightness = 0.8
+	light.Shadows = false
+	light.Parent = pool
 	local bubbles = Instance.new("ParticleEmitter")
 	bubbles.Color = ColorSequence.new(c.Theme.Hazard:Lerp(Color3.new(1, 1, 1), 0.4))
 	bubbles.LightEmission = 1
@@ -2857,6 +3061,24 @@ local function lavaPool(c: Ctx, center: Vector3, size: Vector3)
 	bubbles.Speed = NumberRange.new(2, 4)
 	bubbles.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.6), NumberSequenceKeypoint.new(1, 0) })
 	bubbles.Parent = pool
+end
+
+-- A little flag on a pole (decor between sections).
+local function flag(c: Ctx, position: Vector3)
+	part({ Name = "FlagPole", Size = V(0.3, 5, 0.3), CFrame = CFrame.new(position + V(0, 2.5, 0)), Color = c.Theme.Trim, CanCollide = false, CastShadow = false }, c.Model)
+	part({ Name = "Flag", Wedge = true, Size = V(0.15, 1.6, 2.4), CFrame = CFrame.new(position + V(0, 4.2, 1.2)) * CFrame.Angles(0, 0, math.rad(180)), Color = c.Theme.Accent, CanCollide = false, CastShadow = false }, c.Model)
+end
+
+-- A lamp post that lights the path at night-ish worlds.
+local function lamp(c: Ctx, position: Vector3)
+	part({ Name = "LampPost", Size = V(0.4, 7, 0.4), CFrame = CFrame.new(position + V(0, 3.5, 0)), Color = c.Theme.Trim, CanCollide = false, CastShadow = false }, c.Model)
+	local bulb = part({ Name = "LampBulb", Shape = Enum.PartType.Ball, Size = V(1.3, 1.3, 1.3), CFrame = CFrame.new(position + V(0, 7.3, 0)), Color = c.Theme.Accent, Material = Enum.Material.Neon, CanCollide = false, CastShadow = false }, c.Model)
+	local light = Instance.new("PointLight")
+	light.Color = c.Theme.Accent
+	light.Range = 14
+	light.Brightness = 1
+	light.Shadows = false
+	light.Parent = bulb
 end
 
 --------------------------------------------------------------------------------
@@ -2913,6 +3135,7 @@ Sections.Movers = function(c: Ctx, cursor: Vector3): Vector3
 		local p = platform(c, CFrame.new(x - span / 2 + 2, cursor.Y - 0.5, cursor.Z), V(size, 1, size), c.Theme.Accent)
 		p.Name = "MovingPlatform"
 		p:SetAttribute("MoveKind", "Slide")
+		p:SetAttribute("Carry", true)
 		p:SetAttribute("MoveAxis", if sideways then V(0, 0, 1) else V(1, 0, 0))
 		p:SetAttribute("MoveDistance", if sideways then lerp(6, 10, c.D) else span - size - 2)
 		p:SetAttribute("MovePeriod", lerp(4.5, 2.6, c.D))
@@ -3086,6 +3309,176 @@ Sections.Walls = function(c: Ctx, cursor: Vector3): Vector3
 	return V(cursor.X + length + 1, cursor.Y, cursor.Z)
 end
 
+-- Swinging hammers over a bridge.
+Sections.Pendulum = function(c: Ctx, cursor: Vector3): Vector3
+	local length = lerp(22, 30, c.D)
+	local bridge = platform(c, CFrame.new(cursor.X + length / 2 + 1, cursor.Y - 0.5, cursor.Z), V(length, 1, 6))
+	bridge.Name = "Bridge"
+	lavaPool(c, V(cursor.X + length / 2 + 1, cursor.Y - 5, cursor.Z), V(length + 6, 1, 26))
+	local count = c.Rng:NextInteger(2, 3)
+	for i = 1, count do
+		local x = cursor.X + 1 + (i / (count + 1)) * length
+		local pivot = V(x, cursor.Y + 10, cursor.Z)
+		part({ Name = "PendulumFrame", Size = V(1, 1, 16), CFrame = CFrame.new(pivot), Color = c.Theme.Trim, CanCollide = false }, c.Model)
+		for _, side in ipairs({ -1, 1 }) do
+			part({ Name = "FramePost", Size = V(0.8, 11, 0.8), CFrame = CFrame.new(x, cursor.Y + 4.5, cursor.Z + side * 7.6), Color = c.Theme.Trim, CanCollide = false }, c.Model)
+		end
+		local arm = part({ Name = "PendulumArm", Size = V(0.5, 8, 0.5), CFrame = CFrame.new(pivot - V(0, 4, 0)), Color = c.Theme.Trim, CanCollide = false, CastShadow = false }, c.Model)
+		local head = kill(c, CFrame.new(pivot - V(0, 8.5, 0)), V(3.2, 3.2, 3.2), "Hammer")
+		head.Shape = Enum.PartType.Ball
+		head.CanCollide = true
+		for _, p in ipairs({ arm, head }) do
+			p:SetAttribute("MoveKind", "Pendulum")
+			p:SetAttribute("PendulumPivot", pivot)
+			p:SetAttribute("PendulumAmp", math.rad(lerp(40, 70, c.D)))
+			p:SetAttribute("PendulumPeriod", lerp(3.2, 2.2, c.D))
+			p:SetAttribute("PendulumPhase", (i % 2) * 0.5)
+		end
+	end
+	return V(cursor.X + length + 2, cursor.Y, cursor.Z)
+end
+
+-- A spinning disc you have to cross while it turns under you.
+Sections.Turntable = function(c: Ctx, cursor: Vector3): Vector3
+	local radius = lerp(7, 9, c.D)
+	local center = V(cursor.X + radius + 4, cursor.Y - 0.5, cursor.Z)
+	lavaPool(c, V(center.X, cursor.Y - 5, cursor.Z), V(radius * 2 + 14, 1, 30))
+	local disc = part({ Name = "Turntable", Shape = Enum.PartType.Cylinder, Size = V(1, radius * 2, radius * 2), CFrame = CFrame.new(center) * CFrame.Angles(0, 0, math.rad(90)), Color = c.Theme.Accent }, c.Model)
+	walkable(c, disc)
+	disc:SetAttribute("MoveKind", "Turntable")
+	disc:SetAttribute("Carry", true)
+	disc:SetAttribute("SpinSpeed", lerp(25, 60, c.D) * (if c.Rng:NextNumber() < 0.5 then 1 else -1))
+	-- stripes so the spin is visible
+	for i = 0, 3 do
+		part({ Name = "Stripe", Size = V(radius * 1.8, 0.1, 0.8), CFrame = CFrame.new(center + V(0, 0.55, 0)) * CFrame.Angles(0, i * math.pi / 4, 0), Color = c.Theme.Trim, CanCollide = false, CastShadow = false }, c.Model):SetAttribute("FollowTurntable", true)
+	end
+	if c.D > 0.5 then
+		local post = kill(c, CFrame.new(center + V(0, 2, 0)), V(1.6, 3, 1.6), "SpinPost")
+		post.CanCollide = true
+		post:SetAttribute("MoveKind", "Spin")
+		post:SetAttribute("SpinSpeed", disc:GetAttribute("SpinSpeed"))
+		post:SetAttribute("SpinRadius", radius * 0.6)
+	end
+	return V(center.X + radius + 3, cursor.Y, cursor.Z)
+end
+
+-- Slippery ice slabs with gaps.
+Sections.Ice = function(c: Ctx, cursor: Vector3): Vector3
+	local count = c.Rng:NextInteger(3, 5)
+	local length = lerp(9, 7, c.D)
+	local gap = lerp(3, 6, c.D)
+	local x, z = cursor.X, cursor.Z
+	lavaPool(c, V(cursor.X + (length + gap) * count / 2 + 2, cursor.Y - 5, cursor.Z), V((length + gap) * count + 8, 1, 26))
+	for i = 1, count do
+		x += gap + length / 2
+		z += c.Rng:NextNumber(-3, 3) * c.D
+		local slab = platform(c, CFrame.new(x, cursor.Y - 0.5, z), V(length, 1, lerp(5, 3.5, c.D)), rgb(190, 235, 255))
+		slab.Name = "IcePlatform"
+		for _, child in ipairs(slab:GetChildren()) do
+			if child:IsA("BasePart") then
+				child.Material = Enum.Material.Glass
+				child.Transparency = 0.15
+				child.Reflectance = 0.2
+			end
+		end
+		icy(slab)
+		x += length / 2
+	end
+	return V(x + 1, cursor.Y, z)
+end
+
+-- A speed pad that fires you across a long flat gap.
+Sections.SpeedPad = function(c: Ctx, cursor: Vector3): Vector3
+	local gap = lerp(20, 30, c.D)
+	local runway = platform(c, CFrame.new(cursor.X + 6, cursor.Y - 0.5, cursor.Z), V(12, 1, 7))
+	runway.Name = "Runway"
+	local pad = part({ Name = "SpeedPad", Size = V(4, 0.3, 5), CFrame = CFrame.new(cursor.X + 10, cursor.Y + 0.15, cursor.Z), Color = c.Theme.Accent, Material = Enum.Material.Neon, CanCollide = false }, c.Model)
+	pad:SetAttribute("Launch", V(lerp(48, 58, c.D), 22, 0))
+	for i = 0, 2 do
+		part({ Name = "Arrow", Wedge = true, Size = V(1.4, 0.1, 1.2), CFrame = CFrame.new(cursor.X + 7 + i * 1.6, cursor.Y + 0.35, cursor.Z) * CFrame.Angles(0, math.rad(-90), 0), Color = Color3.new(1, 1, 1), CanCollide = false, CastShadow = false }, c.Model)
+	end
+	lavaPool(c, V(cursor.X + 12 + gap / 2, cursor.Y - 6, cursor.Z), V(gap + 2, 1, 24))
+	local landing = platform(c, CFrame.new(cursor.X + 12 + gap + 7, cursor.Y - 0.5, cursor.Z), V(14, 1, 12))
+	landing.Name = "Landing"
+	return V(cursor.X + 12 + gap + 14, cursor.Y, cursor.Z)
+end
+
+-- A narrow corridor with a crosswind pushing you toward the edge.
+Sections.Wind = function(c: Ctx, cursor: Vector3): Vector3
+	local length = lerp(24, 32, c.D)
+	local width = lerp(8, 5, c.D)
+	local corridor = platform(c, CFrame.new(cursor.X + length / 2 + 1, cursor.Y - 0.5, cursor.Z), V(length, 1, width))
+	corridor.Name = "WindCorridor"
+	lavaPool(c, V(cursor.X + length / 2 + 1, cursor.Y - 5, cursor.Z), V(length + 6, 1, 28))
+	local side = if c.Rng:NextNumber() < 0.5 then 1 else -1
+	local zone = part({ Name = "WindZone", Size = V(length, 10, 24), CFrame = CFrame.new(cursor.X + length / 2 + 1, cursor.Y + 5, cursor.Z), Transparency = 1, CanCollide = false, CastShadow = false }, c.Model)
+	zone.CanQuery = false
+	zone:SetAttribute("Wind", V(0, 0, side * lerp(14, 26, c.D)))
+	-- a fan at the windy side so players see where it comes from
+	local fanX = cursor.X + length / 2 + 1
+	part({ Name = "FanPole", Size = V(1, 6, 1), CFrame = CFrame.new(fanX, cursor.Y + 3, cursor.Z - side * 13), Color = c.Theme.Trim, CanCollide = false }, c.Model)
+	local fan = part({ Name = "Fan", Shape = Enum.PartType.Cylinder, Size = V(0.6, 6, 6), CFrame = CFrame.new(fanX, cursor.Y + 6, cursor.Z - side * 13) * CFrame.Angles(0, math.rad(90), 0), Color = c.Theme.Accent, Material = Enum.Material.Neon, CanCollide = false, CastShadow = false }, c.Model)
+	fan:SetAttribute("MoveKind", "Spin")
+	fan:SetAttribute("SpinSpeed", 240)
+	fan:SetAttribute("SpinAxis", "X")
+	local gust = Instance.new("ParticleEmitter")
+	gust.Color = ColorSequence.new(Color3.new(1, 1, 1))
+	gust.Transparency = NumberSequence.new(0.6)
+	gust.Rate = 25
+	gust.Lifetime = NumberRange.new(1, 1.6)
+	gust.Speed = NumberRange.new(18, 24)
+	gust.Size = NumberSequence.new(0.35)
+	gust.EmissionDirection = if side > 0 then Enum.NormalId.Front else Enum.NormalId.Back
+	gust.SpreadAngle = Vector2.new(8, 8)
+	gust.Parent = fan
+	return V(cursor.X + length + 2, cursor.Y, cursor.Z)
+end
+
+-- Laser beams that blink on and off across a corridor.
+Sections.Lasers = function(c: Ctx, cursor: Vector3): Vector3
+	local length = lerp(22, 30, c.D)
+	local width = 8
+	local corridor = platform(c, CFrame.new(cursor.X + length / 2 + 1, cursor.Y - 0.5, cursor.Z), V(length, 1, width))
+	corridor.Name = "LaserCorridor"
+	local count = c.Rng:NextInteger(3, 5)
+	for i = 1, count do
+		local x = cursor.X + 1 + (i / (count + 1)) * length
+		for _, side in ipairs({ -1, 1 }) do
+			part({ Name = "Emitter", Size = V(1, 4, 1), CFrame = CFrame.new(x, cursor.Y + 2, cursor.Z + side * (width / 2 + 0.5)), Color = c.Theme.Trim, CanCollide = false }, c.Model)
+		end
+		local beam = kill(c, CFrame.new(x, cursor.Y + 1.6, cursor.Z), V(0.5, 3, width + 1), "Laser")
+		beam.Color = rgb(255, 40, 60)
+		beam:SetAttribute("MoveKind", "Blink")
+		beam:SetAttribute("BlinkPeriod", lerp(2.4, 1.6, c.D))
+		beam:SetAttribute("BlinkPhase", (i % 2) * 0.5)
+	end
+	return V(cursor.X + length + 2, cursor.Y, cursor.Z)
+end
+
+-- Boulders rolling across a lane.
+Sections.Rollers = function(c: Ctx, cursor: Vector3): Vector3
+	local length = lerp(24, 32, c.D)
+	local width = 10
+	local lane = platform(c, CFrame.new(cursor.X + length / 2 + 1, cursor.Y - 0.5, cursor.Z), V(length, 1, width))
+	lane.Name = "RollerLane"
+	local count = c.Rng:NextInteger(2, 4)
+	for i = 1, count do
+		local x = cursor.X + 1 + (i / (count + 1)) * length
+		local ball = kill(c, CFrame.new(x, cursor.Y + 1.6, cursor.Z - width / 2 - 2), V(3.4, 3.4, 3.4), "Boulder")
+		ball.Shape = Enum.PartType.Ball
+		ball.Material = Enum.Material.SmoothPlastic
+		ball.Color = c.Theme.Hazard:Lerp(Color3.new(0, 0, 0), 0.3)
+		ball.CanCollide = true
+		ball:SetAttribute("MoveKind", "Slide")
+		ball:SetAttribute("MoveAxis", V(0, 0, 1))
+		ball:SetAttribute("MoveDistance", width + 4)
+		ball:SetAttribute("MovePeriod", lerp(3.4, 2.2, c.D))
+		ball:SetAttribute("MovePhase", (i / count) + c.Rng:NextNumber(0, 0.2))
+		ball:SetAttribute("Roll", true)
+	end
+	return V(cursor.X + length + 2, cursor.Y, cursor.Z)
+end
+
 -- Which sections are allowed at a difficulty, with weights.
 local SECTION_TABLE = {
 	{ Name = "Jumps", Min = 0, Weight = 3 },
@@ -3099,6 +3492,13 @@ local SECTION_TABLE = {
 	{ Name = "Conveyor", Min = 0.4, Weight = 2 },
 	{ Name = "Spinner", Min = 0.45, Weight = 2 },
 	{ Name = "Walls", Min = 0.55, Weight = 2 },
+	{ Name = "SpeedPad", Min = 0.22, Weight = 1.5 },
+	{ Name = "Ice", Min = 0.28, Weight = 2 },
+	{ Name = "Turntable", Min = 0.38, Weight = 2 },
+	{ Name = "Pendulum", Min = 0.42, Weight = 2 },
+	{ Name = "Rollers", Min = 0.5, Weight = 2 },
+	{ Name = "Wind", Min = 0.58, Weight = 1.5 },
+	{ Name = "Lasers", Min = 0.62, Weight = 2 },
 }
 
 local function pickSection(c: Ctx, used: { [string]: boolean }): string
@@ -3169,6 +3569,14 @@ local function buildCheckpoint(c: Ctx, cursor: Vector3, stage: number)
 	-- glowing ring + beacon
 	local ring = part({ Name = "Ring", Shape = Enum.PartType.Cylinder, Size = V(0.2, 7, 7), CFrame = CFrame.new(pad.Position + V(0, 0.6, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color = c.Theme.Accent, Material = Enum.Material.Neon, CanCollide = false, CastShadow = false }, c.Model)
 	ring.Name = "CheckpointRing"
+	part({ Name = "Inlay", Shape = Enum.PartType.Cylinder, Size = V(0.1, 9, 9), CFrame = CFrame.new(pad.Position + V(0, 0.52, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color = c.Theme.Trim, CanCollide = false, CastShadow = false }, c.Model)
+	for _, sx in ipairs({ -1, 1 }) do
+		for _, sz in ipairs({ -1, 1 }) do
+			if not (sx == -1 and sz == -1) then
+				flag(c, pad.Position + V(sx * (PAD_SIZE / 2 - 0.8), 0.5, sz * (PAD_SIZE / 2 - 0.8)))
+			end
+		end
+	end
 	local trigger = part({ Name = "Checkpoint", CFrame = CFrame.new(pad.Position + V(0, 4, 0)), Size = V(PAD_SIZE, 7, PAD_SIZE), Transparency = 1, CanCollide = false, CastShadow = false }, c.Model)
 	trigger.CanQuery = false
 	trigger:SetAttribute("Stage", stage)
@@ -3229,6 +3637,137 @@ local function placeCoins(c: Ctx)
 	end
 end
 
+-- A small side platform off a random walkable, reachable with one jump.
+local function sidePlatform(c: Ctx): BasePart?
+	local candidates = {}
+	for _, p in ipairs(c.Walkables) do
+		if p.Size.X >= 5 and p.Shape ~= Enum.PartType.Cylinder then
+			table.insert(candidates, p)
+		end
+	end
+	if #candidates == 0 then
+		return nil
+	end
+	local base = candidates[c.Rng:NextInteger(1, #candidates)]
+	local side = if base.Position.Z > 0 then -1 else 1
+	local position = base.Position + V(0, 0.5, side * (base.Size.Z / 2 + lerp(6, 8, c.D)))
+	local p = platform(c, CFrame.new(position), V(4, 1, 4), c.Theme.Accent)
+	p.Name = "SecretPlatform"
+	return p
+end
+
+-- A glowing crystal shard: find them all for the secret brainrot.
+local function placeFragment(c: Ctx, id: number)
+	local base = sidePlatform(c)
+	if not base then
+		return
+	end
+	local shard = part({
+		Name = "Fragment",
+		Size = V(1.2, 2.4, 1.2),
+		CFrame = CFrame.new(base.Position + V(0, 2.8, 0)) * CFrame.Angles(0, math.rad(45), 0),
+		Color = rgb(190, 90, 255),
+		Material = Enum.Material.Neon,
+		CanCollide = false,
+		CanTouch = false,
+		CanQuery = false,
+		CastShadow = false,
+	}, c.Model)
+	shard:SetAttribute("FragmentId", "F" .. id)
+	shard:SetAttribute("Stage", c.Stage)
+	CollectionService:AddTag(shard, "Fragment")
+	local light = Instance.new("PointLight")
+	light.Color = rgb(190, 90, 255)
+	light.Range = 12
+	light.Parent = shard
+	local sparkle = Instance.new("ParticleEmitter")
+	sparkle.Color = ColorSequence.new(rgb(230, 170, 255))
+	sparkle.LightEmission = 1
+	sparkle.Rate = 8
+	sparkle.Lifetime = NumberRange.new(0.8, 1.4)
+	sparkle.Speed = NumberRange.new(1, 2)
+	sparkle.SpreadAngle = Vector2.new(180, 180)
+	sparkle.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.4), NumberSequenceKeypoint.new(1, 0) })
+	sparkle.Parent = shard
+end
+
+-- A big coin worth 10 normal ones, hidden off the path.
+local function placeLuckyCoin(c: Ctx)
+	local base = sidePlatform(c)
+	if not base then
+		return
+	end
+	local coin = part({
+		Name = "LuckyCoin",
+		Shape = Enum.PartType.Cylinder,
+		Size = V(0.7, 4.4, 4.4),
+		CFrame = CFrame.new(base.Position + V(0, 3.4, 0)) * CFrame.Angles(0, 0, math.rad(90)),
+		Color = rgb(255, 225, 90),
+		Material = Enum.Material.Neon,
+		CanCollide = false,
+		CanTouch = false,
+		CanQuery = false,
+		CastShadow = false,
+	}, c.Model)
+	coin:SetAttribute("CoinId", "L" .. c.Stage)
+	coin:SetAttribute("Stage", c.Stage)
+	coin:SetAttribute("Lucky", true)
+	CollectionService:AddTag(coin, "Coin")
+	local light = Instance.new("PointLight")
+	light.Color = rgb(255, 225, 90)
+	light.Range = 14
+	light.Parent = coin
+end
+
+-- Boss arena: a wide disc with a giant brainrot statue, spinning bars and
+-- swinging hammers. The last stage of every world.
+local function buildBossArena(c: Ctx, cursor: Vector3, bossName: string): Vector3
+	local radius = 17
+	local center = V(cursor.X + radius + 6, cursor.Y - 0.5, cursor.Z)
+	local entry = platform(c, CFrame.new(cursor.X + 3, cursor.Y - 0.5, cursor.Z), V(6, 1, 6))
+	entry.Name = "Landing"
+	lavaPool(c, V(center.X, cursor.Y - 6, cursor.Z), V(radius * 2 + 24, 1, radius * 2 + 20))
+	local disc = part({ Name = "BossArena", Shape = Enum.PartType.Cylinder, Size = V(1, radius * 2, radius * 2), CFrame = CFrame.new(center) * CFrame.Angles(0, 0, math.rad(90)), Color = c.Theme.Platform }, c.Model)
+	walkable(c, disc)
+	part({ Name = "Rim", Shape = Enum.PartType.Cylinder, Size = V(0.5, radius * 2 + 1, radius * 2 + 1), CFrame = CFrame.new(center - V(0, 0.7, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color = c.Theme.Accent, Material = Enum.Material.Neon, CanCollide = false, CastShadow = false }, c.Model)
+	-- the boss on a pedestal in the middle
+	local pedestal = part({ Name = "Pedestal", Shape = Enum.PartType.Cylinder, Size = V(3, 7, 7), CFrame = CFrame.new(center + V(0, 2, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color = c.Theme.Trim }, c.Model)
+	local ok, built = pcall(BrainrotBuilder.Build, bossName, { Effects = true, Weld = false, Scale = 3.2 })
+	if ok and built then
+		built.Model.Name = "Boss"
+		built.Model:PivotTo(CFrame.new(center + V(0, 3.5, 0)) * CFrame.Angles(0, math.rad(90), 0))
+		built.Model.Parent = c.Model
+		billboard(pedestal, "BOSS: " .. string.upper(bossName), "Beat this stage for 4x coins!", c.Theme.Hazard, 18, UDim2.fromOffset(420, 110))
+	end
+	-- two spinning bars at different heights
+	for i = 1, 2 do
+		local bar = kill(c, CFrame.new(center + V(0, 1.6 + (i - 1) * 2.6, 0)) * CFrame.Angles(0, (i - 1) * math.pi / 2, 0), V(radius * 2 - 2, 1.4, 1.2), "SpinBar")
+		bar.CanCollide = true
+		bar:SetAttribute("MoveKind", "Spin")
+		bar:SetAttribute("SpinSpeed", lerp(50, 110, c.D) * (if i == 2 then -1 else 1))
+	end
+	-- hammers guarding the exit
+	for _, side in ipairs({ -1, 1 }) do
+		local pivot = center + V(radius - 4, 10, side * 6)
+		part({ Name = "FramePost", Size = V(0.8, 11, 0.8), CFrame = CFrame.new(pivot - V(0, 5.5, 0)) * CFrame.new(0, 0, side * 2.5), Color = c.Theme.Trim, CanCollide = false }, c.Model)
+		local arm = part({ Name = "PendulumArm", Size = V(0.5, 7, 0.5), CFrame = CFrame.new(pivot - V(0, 3.5, 0)), Color = c.Theme.Trim, CanCollide = false, CastShadow = false }, c.Model)
+		local head = kill(c, CFrame.new(pivot - V(0, 7.5, 0)), V(3, 3, 3), "Hammer")
+		head.Shape = Enum.PartType.Ball
+		head.CanCollide = true
+		for _, p in ipairs({ arm, head }) do
+			p:SetAttribute("MoveKind", "Pendulum")
+			p:SetAttribute("PendulumPivot", pivot)
+			p:SetAttribute("PendulumAmp", math.rad(55))
+			p:SetAttribute("PendulumPeriod", 2.6)
+			p:SetAttribute("PendulumPhase", if side > 0 then 0 else 0.5)
+			p:SetAttribute("PendulumAxis", "X")
+		end
+	end
+	local exit = platform(c, CFrame.new(center.X + radius + 4, cursor.Y - 0.5, cursor.Z), V(8, 1, 8))
+	exit.Name = "Landing"
+	return V(center.X + radius + 8, cursor.Y, cursor.Z)
+end
+
 local function buildFinish(c: Ctx, cursor: Vector3)
 	local pad = platform(c, CFrame.new(cursor.X + 10, cursor.Y - 0.5, cursor.Z), V(20, 1, 20), rgb(255, 215, 80))
 	pad.Name = "FinishPad"
@@ -3286,24 +3825,40 @@ local function buildStage(stage: number, cursor: Vector3, parent: Instance): Vec
 	stageStartX[stage] = cursor.X
 
 	local pos = buildCheckpoint(c, cursor, stage)
-	local length = rng:NextNumber(Config.Course.StageLengthMin, Config.Course.StageLengthMax)
 	if isBoss then
-		length += 40
-	end
-	local targetX = cursor.X + length
-	local used = {}
-	local sections = 0
-	while pos.X < targetX - 18 and sections < 3 do
-		local name = pickSection(c, used)
-		used[name] = true
-		sections += 1
-		pos = Sections[name](c, pos)
-		-- a small landing between sections
-		if pos.X < targetX - 18 then
-			local landing = platform(c, CFrame.new(pos.X + 3, pos.Y - 0.5, pos.Z), V(6, 1, 8))
-			landing.Name = "Landing"
-			pos = V(pos.X + 6, pos.Y, pos.Z)
+		model:SetAttribute("Boss", true)
+		pos = buildBossArena(c, pos, world.Boss or "Sneaker Shark")
+	else
+		local length = rng:NextNumber(Config.Course.StageLengthMin, Config.Course.StageLengthMax)
+		local targetX = cursor.X + length
+		local used = {}
+		local sections = 0
+		while pos.X < targetX - 18 and sections < 3 do
+			local name = pickSection(c, used)
+			used[name] = true
+			sections += 1
+			pos = Sections[name](c, pos)
+			-- a small landing between sections, with a lamp or flag
+			if pos.X < targetX - 18 then
+				local landing = platform(c, CFrame.new(pos.X + 3, pos.Y - 0.5, pos.Z), V(6, 1, 8))
+				landing.Name = "Landing"
+				if rng:NextNumber() < 0.5 then
+					lamp(c, V(pos.X + 3, pos.Y, pos.Z + 3.6))
+				else
+					flag(c, V(pos.X + 3, pos.Y, pos.Z - 3.6))
+				end
+				pos = V(pos.X + 6, pos.Y, pos.Z)
+			end
 		end
+	end
+	-- secrets: a fragment every few stages, a lucky coin once per world
+	local total = Config.TotalStages()
+	local fragmentEvery = math.floor(total / Config.Fragments.Count)
+	if stage % fragmentEvery == 3 and stage // fragmentEvery < Config.Fragments.Count then
+		placeFragment(c, stage // fragmentEvery + 1)
+	end
+	if inWorld == math.floor(world.Stages / 2) then
+		placeLuckyCoin(c)
 	end
 	-- keep the course rising gently and inside the corridor
 	local nextY = pos.Y + Config.Course.RisePerStage
@@ -3471,6 +4026,7 @@ local function buildWorldScenery(parent: Instance, worldIndex: number)
 	end
 	local rng = Random.new(Config.Course.Seed + worldIndex * 104729)
 	CourseDecor.Fill(world.Theme.Decor, parent, minX, maxX, baseY, rng)
+	CourseDecor.Backdrop(world.Theme.Decor, parent, minX, maxX, baseY, rng)
 end
 
 local function setupLighting()
@@ -3828,6 +4384,85 @@ function CourseDecor.Fill(themeName: string, parent: Instance, minX: number, max
 			local x = rng:NextNumber(minX, maxX)
 			local z = rng:NextNumber(-60, 60)
 			pick(theme.Ground, rng)(folder, V(x, groundY, z), rng)
+		end
+	end
+end
+
+--------------------------------------------------------------------------------
+-- Backdrops: the big things on the horizon that give each world its skyline.
+--------------------------------------------------------------------------------
+
+local function mountains(folder, minX, maxX, groundY, rng, colors)
+	for x = minX, maxX, 90 do
+		for _, side in ipairs({ -1, 1 }) do
+			local w = rng:NextNumber(90, 160)
+			local h = rng:NextNumber(60, 130)
+			part({ Sphere = true, Size = V(w, h, w * 0.8), Position = V(x + rng:NextNumber(-30, 30), groundY + h * 0.2, side * rng:NextNumber(260, 340)), Color = pick(colors, rng) }, folder)
+		end
+	end
+end
+
+local function skyline(folder, minX, maxX, groundY, rng)
+	for x = minX, maxX, 22 do
+		for _, side in ipairs({ -1, 1 }) do
+			local w = rng:NextNumber(14, 22)
+			local h = rng:NextNumber(50, 120)
+			local z = side * rng:NextNumber(240, 300)
+			part({ Size = V(w, h, 18), Position = V(x, groundY + h / 2, z), Color = pick({ rgb(60, 50, 70), rgb(80, 60, 75), rgb(50, 45, 65) }, rng) }, folder)
+			for y = 6, h - 6, 7 do
+				if rng:NextNumber() < 0.5 then
+					part({ Size = V(w * 0.7, 2.2, 0.3), Position = V(x, groundY + y, z - side * 9.2), Color = pick({ rgb(255, 225, 120), rgb(120, 210, 255), rgb(255, 120, 200) }, rng), Material = Enum.Material.Neon }, folder)
+				end
+			end
+		end
+	end
+end
+
+local function sun(folder, x, y, z, color)
+	local body = ball(folder, V(x, y, z), 70, color, Enum.Material.Neon)
+	local light = Instance.new("PointLight")
+	light.Color = color
+	light.Range = 200
+	light.Brightness = 0.4
+	light.Parent = body
+end
+
+function CourseDecor.Backdrop(themeName: string, parent: Instance, minX: number, maxX: number, groundY: number, rng: Random)
+	local folder = Instance.new("Folder")
+	folder.Name = themeName .. "Backdrop"
+	folder.Parent = parent
+	if themeName == "Meadow" then
+		mountains(folder, minX, maxX, groundY, rng, { rgb(90, 180, 80), rgb(70, 150, 75), rgb(110, 195, 90) })
+	elseif themeName == "Beach" then
+		mountains(folder, minX, maxX, groundY - 10, rng, { rgb(230, 200, 150), rgb(210, 180, 130) })
+		sun(folder, (minX + maxX) / 2, groundY + 260, 480, rgb(255, 230, 150))
+	elseif themeName == "Jungle" then
+		mountains(folder, minX, maxX, groundY, rng, { rgb(40, 110, 60), rgb(55, 130, 70) })
+		-- giant trees towering over the course
+		for x = minX, maxX, 120 do
+			for _, side in ipairs({ -1, 1 }) do
+				local z = side * rng:NextNumber(150, 220)
+				pillar(folder, V(x, groundY, z), 120, 6, rgb(90, 60, 45))
+				ball(folder, V(x, groundY + 125, z), 70, rgb(45, 140, 65))
+			end
+		end
+	elseif themeName == "City" then
+		skyline(folder, minX, maxX, groundY, rng)
+		sun(folder, (minX + maxX) / 2, groundY + 120, 520, rgb(255, 150, 90))
+	elseif themeName == "Sky" then
+		for x = minX, maxX, 70 do
+			for _, side in ipairs({ -1, 1 }) do
+				cloud(folder, V(x + rng:NextNumber(-20, 20), groundY + 60 + rng:NextNumber(-20, 50) + (x - minX) * 0.02, side * rng:NextNumber(230, 330)), rng)
+			end
+		end
+		sun(folder, (minX + maxX) / 2, groundY + 330, -420, rgb(255, 245, 200))
+	elseif themeName == "Void" then
+		for _ = 1, 4 do
+			planet(folder, V(rng:NextNumber(minX, maxX), groundY + rng:NextNumber(120, 260), (if rng:NextNumber() < 0.5 then -1 else 1) * rng:NextNumber(260, 420)), rng)
+		end
+		-- a nebula of big soft blobs
+		for _ = 1, 10 do
+			part({ Sphere = true, Size = V(1, 1, 1) * rng:NextNumber(60, 140), Position = V(rng:NextNumber(minX, maxX), groundY + rng:NextNumber(0, 300), (if rng:NextNumber() < 0.5 then -1 else 1) * rng:NextNumber(300, 480)), Color = pick({ rgb(120, 60, 200), rgb(60, 40, 160), rgb(200, 80, 220) }, rng), Transparency = 0.6 }, folder)
 		end
 	end
 end
@@ -4340,8 +4975,18 @@ local function updateLeaderstats(player: Player, data)
 end
 EconomyService.UpdateLeaderstats = updateLeaderstats
 
+-- Injected by EventService (it requires this module, so requiring it here
+-- would create a cycle).
+local eventMultiplier: () -> number = function()
+	return 1
+end
+
+function EconomyService.SetEventMultiplierSource(source: () -> number)
+	eventMultiplier = source
+end
+
 function EconomyService.GetMultiplierInfo(player: Player)
-	local info = { Prestige = 1, Gamepass = 1, Group = 1, Brainrot = 1, Total = 1 }
+	local info = { Prestige = 1, Gamepass = 1, Group = 1, Brainrot = 1, Event = 1, Total = 1 }
 	local profile = DataService:GetProfile(player)
 	if not profile then
 		return info
@@ -4361,7 +5006,8 @@ function EconomyService.GetMultiplierInfo(player: Player)
 	if brainrot and brainrot.Perk == "CoinBoost" then
 		info.Brainrot = 1 + brainrot.Value
 	end
-	info.Total = info.Prestige * info.Gamepass * info.Group * info.Brainrot
+	info.Event = eventMultiplier()
+	info.Total = info.Prestige * info.Gamepass * info.Group * info.Brainrot * info.Event
 	return info
 end
 
@@ -4426,6 +5072,167 @@ return EconomyService
         </Properties>
       </Item>
       <Item class="ModuleScript" referent="21">
+        <Properties>
+          <string name="Name">EventService</string>
+          <string name="Source"><![CDATA[--------------------------------------------------------------------------------
+-- EventService - server-wide events (Coin Rush, Lucky Stages) on a timer.
+-- State is published as attributes on ReplicatedStorage so every client can
+-- show a banner and countdown:
+--   EventName (string, "" when none), EventEndsAt, NextEventAt (unix seconds)
+--------------------------------------------------------------------------------
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared.Config)
+
+local EconomyService = require(script.Parent.EconomyService)
+
+local EventService = {}
+
+local active: string? = nil
+
+function EventService.GetActive()
+	if not active then
+		return nil, nil
+	end
+	return active, Config.Events.List[active]
+end
+
+function EventService.GetCoinMultiplier(): number
+	local _, event = EventService.GetActive()
+	return if event and event.CoinMult then event.CoinMult else 1
+end
+
+function EventService.GetStageMultiplier(): number
+	local _, event = EventService.GetActive()
+	return if event and event.StageMult then event.StageMult else 1
+end
+
+local function refreshAll()
+	for _, player in ipairs(Players:GetPlayers()) do
+		EconomyService.RefreshMultiplier(player)
+	end
+end
+
+function EventService.Init()
+	EconomyService.SetEventMultiplierSource(EventService.GetCoinMultiplier)
+	ReplicatedStorage:SetAttribute("EventName", "")
+	local names = {}
+	for name in pairs(Config.Events.List) do
+		table.insert(names, name)
+	end
+	table.sort(names)
+	task.spawn(function()
+		local rng = Random.new()
+		while true do
+			local wait = Config.Events.Interval - Config.Events.Duration
+			ReplicatedStorage:SetAttribute("NextEventAt", os.time() + wait)
+			task.wait(wait)
+			active = names[rng:NextInteger(1, #names)]
+			ReplicatedStorage:SetAttribute("EventName", active)
+			ReplicatedStorage:SetAttribute("EventEndsAt", os.time() + Config.Events.Duration)
+			refreshAll()
+			task.wait(Config.Events.Duration)
+			active = nil
+			ReplicatedStorage:SetAttribute("EventName", "")
+			refreshAll()
+		end
+	end)
+end
+
+return EventService
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="22">
+        <Properties>
+          <string name="Name">FragmentService</string>
+          <string name="Source"><![CDATA[--------------------------------------------------------------------------------
+-- FragmentService - the hidden Brainrot Fragments. Each is collected once per
+-- player forever; finding all of them unlocks the secret brainrot.
+--------------------------------------------------------------------------------
+
+local CollectionService = game:GetService("CollectionService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared.Config)
+local Remotes = require(Shared.Remotes)
+
+local DataService = require(script.Parent.DataService)
+local EconomyService = require(script.Parent.EconomyService)
+local BrainrotService = require(script.Parent.BrainrotService)
+local RateLimiter = require(script.Parent.RateLimiter)
+
+local FragmentService = {}
+
+local fragments: { [string]: BasePart } = {}
+
+local function notify(player: Player, message: string, kind: string?)
+	Remotes.Get("Notify"):FireClient(player, message, kind or "info")
+end
+
+local function count(data): number
+	local found = 0
+	for _ in pairs(data.Fragments) do
+		found += 1
+	end
+	return found
+end
+
+local function onCollect(player: Player, id: any)
+	if type(id) ~= "string" then
+		return
+	end
+	local shard = fragments[id]
+	local profile = DataService:GetProfile(player)
+	if not shard or not profile or profile.Data.Fragments[id] then
+		return
+	end
+	local character = player.Character
+	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
+	if not root or (root.Position - shard.Position).Magnitude > Config.Coins.MaxPickupDistance then
+		return
+	end
+	if not RateLimiter.Allow(player, "Fragment", 3, 1) then
+		return
+	end
+	local data = profile.Data
+	data.Fragments[id] = true
+	data.Stats.FragmentsFound += 1
+	local reward = EconomyService.AddCoins(player, Config.Fragments.Reward, true)
+	DataService:Replicate(player, { Fragments = data.Fragments, Stats = data.Stats })
+	Remotes.Get("FragmentTaken"):FireClient(player, id, reward)
+	local found = count(data)
+	if found >= Config.Fragments.Count then
+		for name, def in pairs(Config.Brainrots) do
+			if def.Unlock and def.Unlock.Fragments then
+				BrainrotService.Give(player, name)
+			end
+		end
+		notify(player, "You found EVERY fragment! The secret brainrot is yours.", "reward")
+	else
+		notify(player, string.format("Brainrot Fragment found! (%d/%d) +%d coins", found, Config.Fragments.Count, reward), "reward")
+	end
+end
+
+function FragmentService.Init()
+	for _, shard in ipairs(CollectionService:GetTagged("Fragment")) do
+		local id = shard:GetAttribute("FragmentId")
+		if type(id) == "string" and shard:IsA("BasePart") then
+			fragments[id] = shard
+		end
+	end
+	Remotes.Get("CollectFragment").OnServerEvent:Connect(onCollect)
+end
+
+return FragmentService
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="23">
         <Properties>
           <string name="Name">GamepassService</string>
           <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -4599,7 +5406,7 @@ return GamepassService
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="22">
+      <Item class="ModuleScript" referent="24">
         <Properties>
           <string name="Name">LeaderboardService</string>
           <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -4849,15 +5656,22 @@ return LeaderboardService
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="23">
+      <Item class="ModuleScript" referent="25">
         <Properties>
           <string name="Name">MoverService</string>
           <string name="Source"><![CDATA[--------------------------------------------------------------------------------
 -- MoverService - animates the course's moving parts on the server so every
--- player sees the same thing:
---   MoveKind = "Slide": MoveAxis, MoveDistance, MovePeriod, MovePhase
---   MoveKind = "Spin":  SpinSpeed (degrees per second) around the part's centre
---   MoveKind = "Vanish": VanishPeriod, VanishPhase (platform fades out/in)
+-- player sees the same thing.
+--
+-- Walkable movers ("Carry" = true) are driven with physics constraints so
+-- players standing on them are carried along. Hazards are moved by CFrame.
+--   MoveKind = "Slide":     MoveAxis, MoveDistance, MovePeriod, MovePhase (Roll = spin while sliding)
+--   MoveKind = "Spin":      SpinSpeed (deg/s) around the part's centre (SpinAxis = "X" for fans,
+--                           SpinRadius to orbit around the original centre)
+--   MoveKind = "Turntable": SpinSpeed, a walkable disc that turns (physics)
+--   MoveKind = "Pendulum":  PendulumPivot, PendulumAmp, PendulumPeriod, PendulumPhase, PendulumAxis
+--   MoveKind = "Vanish":    VanishPeriod, VanishPhase (platform fades out/in)
+--   MoveKind = "Blink":     BlinkPeriod, BlinkPhase (hazard turns off/on)
 --------------------------------------------------------------------------------
 
 local RunService = game:GetService("RunService")
@@ -4865,32 +5679,134 @@ local Workspace = game:GetService("Workspace")
 
 local MoverService = {}
 
-type Slide = { Part: BasePart, Base: CFrame, Axis: Vector3, Distance: number, Period: number, Phase: number }
-type Spin = { Part: BasePart, Base: CFrame, Speed: number }
-type Vanish = { Part: BasePart, Period: number, Phase: number, Visible: boolean }
+type Slide = { Part: BasePart, Base: CFrame, Axis: Vector3, Distance: number, Period: number, Phase: number, Roll: boolean, Align: AlignPosition? }
+type Spin = { Part: BasePart, Base: CFrame, Speed: number, Axis: string, Radius: number, Orient: AlignOrientation?, Followers: { { Part: BasePart, Offset: CFrame } } }
+type Pendulum = { Part: BasePart, Pivot: CFrame, Offset: CFrame, Amp: number, Period: number, Phase: number }
+type Toggle = { Part: BasePart, Period: number, Phase: number, On: boolean, Hazard: boolean }
 
 local slides: { Slide } = {}
 local spins: { Spin } = {}
-local vanishers: { Vanish } = {}
+local pendulums: { Pendulum } = {}
+local toggles: { Toggle } = {}
+local turntableFollowers: { BasePart } = {}
+
+-- Turns an anchored part into a physics-driven one that follows a target.
+local function makeCarried(part: BasePart): (AlignPosition, AlignOrientation)
+	local attachment = Instance.new("Attachment")
+	attachment.Name = "MoverAttachment"
+	attachment.Parent = part
+	local alignPosition = Instance.new("AlignPosition")
+	alignPosition.Mode = Enum.PositionAlignmentMode.OneAttachment
+	alignPosition.Attachment0 = attachment
+	alignPosition.RigidityEnabled = true
+	alignPosition.MaxForce = math.huge
+	alignPosition.Responsiveness = 200
+	alignPosition.Position = part.Position
+	alignPosition.Parent = part
+	local alignOrientation = Instance.new("AlignOrientation")
+	alignOrientation.Mode = Enum.OrientationAlignmentMode.OneAttachment
+	alignOrientation.Attachment0 = attachment
+	alignOrientation.RigidityEnabled = true
+	alignOrientation.MaxTorque = math.huge
+	alignOrientation.Responsiveness = 200
+	alignOrientation.CFrame = part.CFrame.Rotation
+	alignOrientation.Parent = part
+	-- the platform's look (child parts) rides along
+	for _, child in ipairs(part:GetChildren()) do
+		if child:IsA("BasePart") then
+			local weld = Instance.new("WeldConstraint")
+			weld.Part0 = part
+			weld.Part1 = child
+			weld.Parent = child
+			child.Anchored = false
+			child.Massless = true
+			child.CanCollide = false
+		end
+	end
+	part.Anchored = false
+	part.Massless = false
+	part.CustomPhysicalProperties = part.CustomPhysicalProperties or PhysicalProperties.new(1, 0.5, 0)
+	part:SetNetworkOwner(nil)
+	return alignPosition, alignOrientation
+end
 
 local function register(part: Instance)
 	if not part:IsA("BasePart") then
 		return
 	end
+	if part:GetAttribute("FollowTurntable") then
+		table.insert(turntableFollowers, part)
+		return
+	end
 	local kind = part:GetAttribute("MoveKind")
 	if kind == "Slide" then
-		table.insert(slides, {
+		local slide: Slide = {
 			Part = part,
 			Base = part.CFrame,
 			Axis = (part:GetAttribute("MoveAxis") or Vector3.new(1, 0, 0)) :: Vector3,
 			Distance = (part:GetAttribute("MoveDistance") or 8) :: number,
 			Period = (part:GetAttribute("MovePeriod") or 3) :: number,
 			Phase = (part:GetAttribute("MovePhase") or 0) :: number,
-		})
-	elseif kind == "Spin" then
-		table.insert(spins, { Part = part, Base = part.CFrame, Speed = (part:GetAttribute("SpinSpeed") or 90) :: number })
+			Roll = part:GetAttribute("Roll") == true,
+			Align = nil,
+		}
+		if part:GetAttribute("Carry") then
+			slide.Align = makeCarried(part)
+		end
+		table.insert(slides, slide)
+	elseif kind == "Spin" or kind == "Turntable" then
+		local spin: Spin = {
+			Part = part,
+			Base = part.CFrame,
+			Speed = (part:GetAttribute("SpinSpeed") or 90) :: number,
+			Axis = (part:GetAttribute("SpinAxis") or "Y") :: string,
+			Radius = (part:GetAttribute("SpinRadius") or 0) :: number,
+			Orient = nil,
+			Followers = {},
+		}
+		if part:GetAttribute("Carry") then
+			local _, orient = makeCarried(part)
+			spin.Orient = orient
+		end
+		table.insert(spins, spin)
+	elseif kind == "Pendulum" then
+		local pivot = part:GetAttribute("PendulumPivot")
+		if typeof(pivot) == "Vector3" then
+			local pivotCF = CFrame.new(pivot)
+			table.insert(pendulums, {
+				Part = part,
+				Pivot = pivotCF,
+				Offset = pivotCF:ToObjectSpace(part.CFrame),
+				Amp = (part:GetAttribute("PendulumAmp") or 1) :: number,
+				Period = (part:GetAttribute("PendulumPeriod") or 3) :: number,
+				Phase = (part:GetAttribute("PendulumPhase") or 0) :: number,
+			})
+			if part:GetAttribute("PendulumAxis") == "X" then
+				part:SetAttribute("PendulumAxisX", true)
+			end
+		end
 	elseif kind == "Vanish" then
-		table.insert(vanishers, { Part = part, Period = (part:GetAttribute("VanishPeriod") or 3) :: number, Phase = (part:GetAttribute("VanishPhase") or 0) :: number, Visible = true })
+		table.insert(toggles, { Part = part, Period = (part:GetAttribute("VanishPeriod") or 3) :: number, Phase = (part:GetAttribute("VanishPhase") or 0) :: number, On = true, Hazard = false })
+	elseif kind == "Blink" then
+		table.insert(toggles, { Part = part, Period = (part:GetAttribute("BlinkPeriod") or 2) :: number, Phase = (part:GetAttribute("BlinkPhase") or 0) :: number, On = true, Hazard = true })
+	end
+end
+
+-- Attach the turntable stripes to the nearest turntable disc.
+local function linkFollowers()
+	for _, follower in ipairs(turntableFollowers) do
+		local best, bestDistance = nil, math.huge
+		for _, spin in ipairs(spins) do
+			if spin.Orient then
+				local distance = (spin.Base.Position - follower.Position).Magnitude
+				if distance < bestDistance then
+					best, bestDistance = spin, distance
+				end
+			end
+		end
+		if best then
+			table.insert(best.Followers, { Part = follower, Offset = best.Base:ToObjectSpace(follower.CFrame) })
+		end
 	end
 end
 
@@ -4898,30 +5814,72 @@ local function step()
 	local t = os.clock()
 	local parts, cframes = {}, {}
 	for _, slide in ipairs(slides) do
-		-- smooth back-and-forth: 0..1..0 over one period
 		local phase = (t / slide.Period + slide.Phase) % 1
 		local k = 0.5 - 0.5 * math.cos(phase * math.pi * 2)
-		table.insert(parts, slide.Part)
-		table.insert(cframes, slide.Base * CFrame.new(slide.Axis * (slide.Distance * k)))
+		local target = slide.Base * CFrame.new(slide.Axis * (slide.Distance * k))
+		if slide.Align then
+			slide.Align.Position = target.Position
+		else
+			if slide.Roll then
+				target = target * CFrame.Angles(slide.Distance * k * 0.6, 0, 0)
+			end
+			table.insert(parts, slide.Part)
+			table.insert(cframes, target)
+		end
 	end
 	for _, spin in ipairs(spins) do
-		table.insert(parts, spin.Part)
-		table.insert(cframes, spin.Base * CFrame.Angles(0, math.rad(spin.Speed * t), 0))
+		local angle = math.rad(spin.Speed * t)
+		local rotation = if spin.Axis == "X" then CFrame.Angles(angle, 0, 0) else CFrame.Angles(0, angle, 0)
+		if spin.Orient then
+			-- discs lie on their side (cylinder axis up), so spin about world Y
+			local target = CFrame.Angles(0, angle, 0) * spin.Base.Rotation
+			spin.Orient.CFrame = target
+			for _, follower in ipairs(spin.Followers) do
+				table.insert(parts, follower.Part)
+				table.insert(cframes, CFrame.new(spin.Base.Position) * CFrame.Angles(0, angle, 0) * CFrame.new(-spin.Base.Position) * spin.Base * follower.Offset)
+			end
+		elseif spin.Radius > 0 then
+			local orbit = CFrame.new(spin.Base.Position) * CFrame.Angles(0, angle, 0) * CFrame.new(spin.Radius, 0, 0)
+			table.insert(parts, spin.Part)
+			table.insert(cframes, orbit)
+		else
+			table.insert(parts, spin.Part)
+			table.insert(cframes, spin.Base * rotation)
+		end
+	end
+	for _, pendulum in ipairs(pendulums) do
+		local swing = math.sin((t / pendulum.Period + pendulum.Phase) * math.pi * 2) * pendulum.Amp
+		local rotation = if pendulum.Part:GetAttribute("PendulumAxisX") then CFrame.Angles(0, 0, swing) else CFrame.Angles(swing, 0, 0)
+		table.insert(parts, pendulum.Part)
+		table.insert(cframes, pendulum.Pivot * rotation * pendulum.Offset)
 	end
 	if #parts > 0 then
 		Workspace:BulkMoveTo(parts, cframes, Enum.BulkMoveMode.FireCFrameChanged)
 	end
-	for _, vanish in ipairs(vanishers) do
-		local phase = (t / vanish.Period + vanish.Phase) % 1
-		local visible = phase < 0.55
-		if visible ~= vanish.Visible then
-			vanish.Visible = visible
-			vanish.Part.CanCollide = visible
-			vanish.Part.Transparency = if visible then 0 else 0.85
+	for _, toggle in ipairs(toggles) do
+		local phase = (t / toggle.Period + toggle.Phase) % 1
+		local on = phase < 0.55
+		if on ~= toggle.On then
+			toggle.On = on
+			if toggle.Hazard then
+				toggle.Part.CanTouch = on
+				toggle.Part.CanCollide = false
+				toggle.Part.Transparency = if on then 0 else 0.9
+			else
+				toggle.Part.CanCollide = on
+				for _, child in ipairs(toggle.Part:GetChildren()) do
+					if child:IsA("BasePart") then
+						child.Transparency = if on then (if child.Name == "Glow" then 0.2 else 0) else 0.85
+					end
+				end
+			end
 		end
-		-- warning flicker just before it vanishes
-		if visible and phase > 0.42 then
-			vanish.Part.Transparency = if math.floor(phase * 30) % 2 == 0 then 0.4 else 0
+		-- warning flicker just before a platform vanishes
+		if not toggle.Hazard and on and phase > 0.42 then
+			local plate = toggle.Part:FindFirstChild("Plate")
+			if plate and plate:IsA("BasePart") then
+				plate.Transparency = if math.floor(phase * 30) % 2 == 0 then 0.4 else 0
+			end
 		end
 	end
 end
@@ -4931,6 +5889,7 @@ function MoverService.Init()
 	for _, descendant in ipairs(course:GetDescendants()) do
 		register(descendant)
 	end
+	linkFollowers()
 	RunService.Heartbeat:Connect(step)
 end
 
@@ -4938,7 +5897,7 @@ return MoverService
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="24">
+      <Item class="ModuleScript" referent="26">
         <Properties>
           <string name="Name">PlayerService</string>
           <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -5022,7 +5981,119 @@ return PlayerService
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="25">
+      <Item class="ModuleScript" referent="27">
+        <Properties>
+          <string name="Name">QuestService</string>
+          <string name="Source"><![CDATA[--------------------------------------------------------------------------------
+-- QuestService - three daily quests per player plus a bonus for all three.
+-- Progress is measured from Stats, so no gameplay code needs quest hooks.
+--------------------------------------------------------------------------------
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared.Config)
+local Util = require(Shared.Util)
+local Remotes = require(Shared.Remotes)
+
+local DataService = require(script.Parent.DataService)
+local RateLimiter = require(script.Parent.RateLimiter)
+local RewardService = require(script.Parent.RewardService)
+
+local QuestService = {}
+
+local function notify(player: Player, message: string, kind: string?)
+	Remotes.Get("Notify"):FireClient(player, message, kind or "info")
+end
+
+local function ensureToday(player: Player, profile)
+	local data = profile.Data
+	local quests = data.Quests
+	local today = Util.DayNumber(os.time())
+	if quests.Day == today and #quests.Ids > 0 then
+		return
+	end
+	quests.Day = today
+	quests.Ids = Config.PickQuests(today, player.UserId)
+	quests.Baseline = {}
+	for _, id in ipairs(quests.Ids) do
+		local quest = Config.GetQuest(id)
+		if quest then
+			quests.Baseline[quest.Stat] = data.Stats[quest.Stat] or 0
+		end
+	end
+	quests.Claimed = {}
+	quests.BonusClaimed = false
+	DataService:Replicate(player, { Quests = quests })
+end
+
+function QuestService.GetProgress(profile, quest): number
+	local data = profile.Data
+	local raw = (data.Stats[quest.Stat] or 0) - (data.Quests.Baseline[quest.Stat] or 0)
+	return math.floor(raw / (quest.Scale or 1))
+end
+
+function QuestService.Claim(player: Player, slot: number)
+	local profile = DataService:GetProfile(player)
+	if not profile then
+		return
+	end
+	ensureToday(player, profile)
+	local quests = profile.Data.Quests
+	local id = quests.Ids[slot]
+	local quest = id and Config.GetQuest(id)
+	if not quest or quests.Claimed[id] then
+		return
+	end
+	if QuestService.GetProgress(profile, quest) < quest.Goal then
+		notify(player, "That quest isn't finished yet!", "error")
+		return
+	end
+	quests.Claimed[id] = true
+	local summary = RewardService.Grant(player, quest.Reward, 1)
+	notify(player, "Quest complete! " .. summary, "reward")
+	local all = true
+	for _, questId in ipairs(quests.Ids) do
+		if not quests.Claimed[questId] then
+			all = false
+		end
+	end
+	if all and not quests.BonusClaimed then
+		quests.BonusClaimed = true
+		local bonus = RewardService.Grant(player, Config.Quests.BonusReward, 1)
+		notify(player, "All daily quests done! Bonus: " .. bonus, "reward")
+	end
+	DataService:Replicate(player, { Quests = quests })
+end
+
+function QuestService.Init()
+	DataService.ProfileLoaded:Connect(function(player, profile)
+		ensureToday(player, profile)
+	end)
+	Remotes.Get("ClaimQuest").OnServerEvent:Connect(function(player, slot)
+		if type(slot) == "number" and slot == math.floor(slot) and RateLimiter.Allow(player, "ClaimQuest", 4, 1) then
+			QuestService.Claim(player, slot)
+		end
+	end)
+	task.spawn(function()
+		while true do
+			task.wait(60)
+			for _, player in ipairs(Players:GetPlayers()) do
+				local profile = DataService:GetProfile(player)
+				if profile then
+					ensureToday(player, profile)
+				end
+			end
+		end
+	end)
+end
+
+return QuestService
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="28">
         <Properties>
           <string name="Name">RateLimiter</string>
           <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -5067,7 +6138,7 @@ return RateLimiter
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="26">
+      <Item class="ModuleScript" referent="29">
         <Properties>
           <string name="Name">RewardService</string>
           <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -5311,7 +6382,7 @@ return RewardService
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="27">
+      <Item class="ModuleScript" referent="30">
         <Properties>
           <string name="Name">ShopService</string>
           <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -5412,7 +6483,7 @@ return ShopService
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="28">
+      <Item class="ModuleScript" referent="31">
         <Properties>
           <string name="Name">StageService</string>
           <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -5436,6 +6507,7 @@ local EconomyService = require(script.Parent.EconomyService)
 local GamepassService = require(script.Parent.GamepassService)
 local CourseBuilder = require(script.Parent.CourseBuilder)
 local RateLimiter = require(script.Parent.RateLimiter)
+local EventService = require(script.Parent.EventService)
 
 local StageService = {}
 StageService.StageChanged = Signal.new() -- (player, stage)
@@ -5553,8 +6625,18 @@ function StageService.ReachStage(player: Player, stage: number, viaSkip: boolean
 		isNew = true
 	end
 	local reward = 0
+	data.Stats.CheckpointsTouched += 1
 	if isNew and not viaSkip then
-		reward = EconomyService.AddCoins(player, Config.GetStageReward(stage), true)
+		data.Stats.StagesCleared += 1
+		-- the stage you just finished (stage - 1) pays; boss stages pay 4x
+		local finished = stage - 1
+		local world, _ = Config.GetWorld(finished)
+		local _, inWorld = Config.GetWorldForStage(finished)
+		local amount = Config.GetStageReward(finished) * EventService.GetStageMultiplier()
+		if inWorld == world.Stages then
+			amount *= 4
+		end
+		reward = EconomyService.AddCoins(player, amount, true)
 	end
 	DataService:Replicate(player, { Stage = stage, Stats = data.Stats })
 	EconomyService.UpdateLeaderstats(player, data)
@@ -5750,19 +6832,19 @@ return StageService
       </Item>
     </Item>
   </Item>
-  <Item class="SoundService" referent="29">
+  <Item class="SoundService" referent="32">
     <Properties>
       <string name="Name">SoundService</string>
       <bool name="RespectFilteringEnabled">true</bool>
     </Properties>
   </Item>
-  <Item class="StarterGui" referent="30">
+  <Item class="StarterGui" referent="33">
     <Properties>
       <string name="Name">StarterGui</string>
       <bool name="ShowDevelopmentGui">true</bool>
     </Properties>
   </Item>
-  <Item class="StarterPlayer" referent="31">
+  <Item class="StarterPlayer" referent="34">
     <Properties>
       <string name="Name">StarterPlayer</string>
       <float name="CharacterJumpPower">50</float>
@@ -5770,11 +6852,11 @@ return StageService
       <float name="CharacterWalkSpeed">16</float>
       <bool name="EnableMouseLockOption">true</bool>
     </Properties>
-    <Item class="StarterPlayerScripts" referent="32">
+    <Item class="StarterPlayerScripts" referent="35">
       <Properties>
         <string name="Name">StarterPlayerScripts</string>
       </Properties>
-      <Item class="LocalScript" referent="33">
+      <Item class="LocalScript" referent="36">
         <Properties>
           <string name="Name">Client</string>
           <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -5808,14 +6890,19 @@ local START_ORDER = {
 	"BrainrotsUI",
 	"ShopUI",
 	"StagesUI",
+	"QuestsUI",
 	"RewardsUI",
+	"StatsUI",
 	"SettingsUI",
 	"MovementController",
 	"CoinController",
 	"ObbyFxController",
+	"EventUI",
 	"AmbienceController",
+	"PlayerVisualsController",
 	"TrailController",
 	"ChatController",
+	"IntroController",
 }
 
 for _, name in ipairs(START_ORDER) do
@@ -5848,11 +6935,11 @@ end)
 ]]></string>
         </Properties>
       </Item>
-      <Item class="Folder" referent="34">
+      <Item class="Folder" referent="37">
         <Properties>
           <string name="Name">Controllers</string>
         </Properties>
-        <Item class="ModuleScript" referent="35">
+        <Item class="ModuleScript" referent="38">
           <Properties>
             <string name="Name">AmbienceController</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -5935,6 +7022,7 @@ local weatherPart: Part
 local emitter: ParticleEmitter
 local activeTweens: { Tween } = {}
 local worldStarts: { number } = {}
+local drifters: { { Part: BasePart, Base: CFrame, Phase: number, Kind: string } } = {}
 
 local function worldAt(x: number): number
 	local index = 1
@@ -6016,6 +7104,21 @@ function AmbienceController.Init()
 
 	task.spawn(function()
 		local course = Workspace:WaitForChild("Course")
+		-- clouds drift and planets turn (client-side, so no network cost)
+		local scenery = course:WaitForChild("Scenery", 30)
+		if scenery then
+			local rng = Random.new(7)
+			for _, folder in ipairs(scenery:GetChildren()) do
+				local name = folder.Name
+				if name:find("Sky") or name:find("Void") then
+					for _, part in ipairs(folder:GetChildren()) do
+						if part:IsA("BasePart") and part.Size.X > 25 and #drifters < 160 then
+							table.insert(drifters, { Part = part, Base = part.CFrame, Phase = rng:NextNumber(0, 6), Kind = if name:find("Void") then "Spin" else "Drift" })
+						end
+					end
+				end
+			end
+		end
 		for index in ipairs(Config.Worlds) do
 			local startX = course:GetAttribute("World" .. index .. "StartX")
 			worldStarts[index] = if type(startX) == "number" then startX else (index - 1) * 1000
@@ -6033,6 +7136,23 @@ function AmbienceController.Init()
 		end
 		local height = weatherPart:GetAttribute("Height")
 		weatherPart.CFrame = CFrame.new(focus + Vector3.new(0, if type(height) == "number" then height else 20, 0))
+		if #drifters > 0 then
+			local t = os.clock()
+			local parts, cframes = {}, {}
+			for _, drifter in ipairs(drifters) do
+				if (drifter.Base.Position - focus).Magnitude < 900 then
+					table.insert(parts, drifter.Part)
+					if drifter.Kind == "Spin" then
+						table.insert(cframes, drifter.Base * CFrame.Angles(0, t * 0.05 + drifter.Phase, 0))
+					else
+						table.insert(cframes, drifter.Base * CFrame.new(math.sin(t * 0.08 + drifter.Phase) * 18, math.sin(t * 0.15 + drifter.Phase) * 3, 0))
+					end
+				end
+			end
+			if #parts > 0 then
+				Workspace:BulkMoveTo(parts, cframes, Enum.BulkMoveMode.FireCFrameChanged)
+			end
+		end
 		accumulator += dt
 		if accumulator >= 0.5 and #worldStarts > 0 then
 			accumulator = 0
@@ -6046,7 +7166,7 @@ return AmbienceController
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="36">
+        <Item class="ModuleScript" referent="39">
           <Properties>
             <string name="Name">BrainrotsUI</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -6327,7 +7447,7 @@ return BrainrotsUI
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="37">
+        <Item class="ModuleScript" referent="40">
           <Properties>
             <string name="Name">ChatController</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -6361,7 +7481,7 @@ return ChatController
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="38">
+        <Item class="ModuleScript" referent="41">
           <Properties>
             <string name="Name">CoinController</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -6414,6 +7534,28 @@ local function setHidden(coin: BasePart, hidden: boolean)
 	coin.Transparency = if hidden then 1 else 0
 end
 
+local fragments: { [BasePart]: { Id: string, Base: CFrame, Phase: number } } = {}
+
+local function trackFragment(shard: Instance)
+	if shard:IsA("BasePart") then
+		local id = shard:GetAttribute("FragmentId")
+		if type(id) == "string" then
+			fragments[shard] = { Id = id, Base = shard.CFrame, Phase = math.random() * 6 }
+		end
+	end
+end
+
+local function stepFragments(root: BasePart)
+	local found = State.Get("Fragments", {})
+	for shard, info in pairs(fragments) do
+		local taken = found[info.Id] == true
+		shard.Transparency = if taken then 1 else 0
+		if not taken and (shard.Position - root.Position).Magnitude <= Config.Coins.PickupRadius + 1 then
+			Remotes.Get("CollectFragment"):FireServer(info.Id)
+		end
+	end
+end
+
 local function step()
 	local character = player.Character
 	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
@@ -6422,6 +7564,7 @@ local function step()
 	end
 	local radius = Config.Coins.PickupRadius + (State.GetPerk("Magnet") or 0)
 	local now = os.clock()
+	stepFragments(root)
 	for coin, info in pairs(coins) do
 		if info.HiddenUntil > 0 and now >= info.HiddenUntil then
 			info.HiddenUntil = 0
@@ -6448,8 +7591,27 @@ local function animate()
 			table.insert(cframes, info.Base * CFrame.new(0, math.sin(t * 2.5 + info.Phase) * 0.35, 0) * CFrame.Angles(t * 2 + info.Phase, 0, 0))
 		end
 	end
+	for shard, info in pairs(fragments) do
+		if shard.Transparency < 1 and (info.Base.Position - cameraPosition).Magnitude < ANIMATE_DISTANCE then
+			table.insert(parts, shard)
+			table.insert(cframes, info.Base * CFrame.new(0, math.sin(t * 2 + info.Phase) * 0.5, 0) * CFrame.Angles(0, t * 1.5, 0))
+		end
+	end
 	if #parts > 0 then
 		Workspace:BulkMoveTo(parts, cframes, Enum.BulkMoveMode.FireCFrameChanged)
+	end
+end
+
+local function onFragmentTaken(id: string, reward: number)
+	for shard, info in pairs(fragments) do
+		if info.Id == id then
+			burstPart.CFrame = CFrame.new(shard.Position)
+			burst.Color = ColorSequence.new(Color3.fromRGB(200, 120, 255), Color3.new(1, 1, 1))
+			burst:Emit(40)
+			burst.Color = ColorSequence.new(GOLD, Color3.new(1, 1, 1))
+			FloatingText.Show(shard.Position, "FRAGMENT! +" .. Util.FormatNumber(reward), Color3.fromRGB(220, 150, 255), Vector2.new(220, 56))
+			UIController.PlaySound("Checkpoint", 0.6)
+		end
 	end
 end
 
@@ -6459,8 +7621,9 @@ local function onTaken(coinId: string, amount: number)
 		return
 	end
 	burstPart.CFrame = CFrame.new(coin.Position)
-	burst:Emit(10)
-	FloatingText.Show(coin.Position, "+" .. Util.FormatNumber(amount), GOLD)
+	local lucky = coin:GetAttribute("Lucky") == true
+	burst:Emit(if lucky then 40 else 10)
+	FloatingText.Show(coin.Position, (if lucky then "LUCKY! +" else "+") .. Util.FormatNumber(amount), GOLD, if lucky then Vector2.new(220, 56) else nil)
 	UIController.PlaySound("Coin", 0.4)
 end
 
@@ -6490,7 +7653,11 @@ function CoinController.Init()
 	end
 	CollectionService:GetInstanceAddedSignal("Coin"):Connect(track)
 
+	for _, shard in ipairs(CollectionService:GetTagged("Fragment")) do
+		trackFragment(shard)
+	end
 	Remotes.Get("CoinTaken").OnClientEvent:Connect(onTaken)
+	Remotes.Get("FragmentTaken").OnClientEvent:Connect(onFragmentTaken)
 	RunService.Heartbeat:Connect(step)
 	RunService.RenderStepped:Connect(animate)
 end
@@ -6499,7 +7666,179 @@ return CoinController
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="39">
+        <Item class="ModuleScript" referent="42">
+          <Properties>
+            <string name="Name">EventUI</string>
+            <string name="Source"><![CDATA[--------------------------------------------------------------------------------
+-- EventUI - shows the running server event (or the countdown to the next one)
+-- and celebrates when an event starts.
+--------------------------------------------------------------------------------
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared.Config)
+local Util = require(Shared.Util)
+
+local Modules = script.Parent.Parent:WaitForChild("Modules")
+local State = require(Modules.ClientState)
+local UIKit = require(Modules.UIKit)
+local UIController = require(script.Parent.UIController)
+local ObbyFxController = require(script.Parent.ObbyFxController)
+
+local EventUI = {}
+
+local chip: Frame
+local label: TextLabel
+local stroke: UIStroke
+
+local function refresh()
+	local name = ReplicatedStorage:GetAttribute("EventName")
+	local now = State.Now()
+	local event = type(name) == "string" and Config.Events.List[name] or nil
+	if event then
+		local endsAt = ReplicatedStorage:GetAttribute("EventEndsAt")
+		local left = if type(endsAt) == "number" then math.max(0, endsAt - now) else 0
+		label.Text = string.format("%s  %s", event.Name, Util.FormatTime(left))
+		label.TextColor3 = event.Color
+		stroke.Color = event.Color
+		chip.Visible = true
+	else
+		local nextAt = ReplicatedStorage:GetAttribute("NextEventAt")
+		if type(nextAt) == "number" then
+			label.Text = "Next event in " .. Util.FormatTime(math.max(0, nextAt - now))
+			label.TextColor3 = UIKit.Colors.Muted
+			stroke.Color = UIKit.Colors.Stroke
+			chip.Visible = true
+		else
+			chip.Visible = false
+		end
+	end
+end
+
+function EventUI.Init()
+	chip = UIKit.Frame({
+		Name = "EventChip",
+		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, -16, 0, 66),
+		Size = UDim2.fromOffset(250, 30),
+		BackgroundColor3 = UIKit.Colors.Background,
+		BackgroundTransparency = 0.2,
+		Visible = false,
+		Parent = UIController.Root,
+	})
+	UIKit.Corner(chip, 15)
+	stroke = UIKit.Stroke(chip, UIKit.Colors.Stroke, 2)
+	label = UIKit.Label({ Size = UDim2.fromScale(1, 1), TextSize = 15, Font = UIKit.Fonts.Black, TextXAlignment = Enum.TextXAlignment.Center, Parent = chip })
+
+	ReplicatedStorage:GetAttributeChangedSignal("EventName"):Connect(function()
+		local name = ReplicatedStorage:GetAttribute("EventName")
+		local event = type(name) == "string" and Config.Events.List[name] or nil
+		if event then
+			UIController.Banner(event.Name .. "!", event.Description, event.Color)
+			ObbyFxController.Confetti(80)
+		end
+		refresh()
+	end)
+	task.spawn(function()
+		while true do
+			refresh()
+			task.wait(1)
+		end
+	end)
+end
+
+return EventUI
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="43">
+          <Properties>
+            <string name="Name">IntroController</string>
+            <string name="Source"><![CDATA[--------------------------------------------------------------------------------
+-- IntroController - a short camera sweep over the lobby with the game's title
+-- when you join, so the first thing new players see is the whole course.
+--------------------------------------------------------------------------------
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
+local Workspace = game:GetService("Workspace")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared.Config)
+
+local Modules = script.Parent.Parent:WaitForChild("Modules")
+local UIKit = require(Modules.UIKit)
+local UIController = require(script.Parent.UIController)
+
+local player = Players.LocalPlayer
+
+local IntroController = {}
+
+local DURATION = 4.5
+
+local function play()
+	local camera = Workspace.CurrentCamera
+	local course = Workspace:WaitForChild("Course", 20)
+	if not camera or not course then
+		return
+	end
+	local character = player.Character or player.CharacterAdded:Wait()
+	local root = character:WaitForChild("HumanoidRootPart", 10)
+	if not root then
+		return
+	end
+	-- sweep from high above the lobby down toward the player
+	local lobbyX = -Config.Course.LobbyLength / 2
+	local startCF = CFrame.lookAt(Vector3.new(lobbyX - 120, 110, -160), Vector3.new(200, 20, 0))
+	local endCF = CFrame.lookAt(root.Position + Vector3.new(-14, 8, -14), root.Position + Vector3.new(6, 2, 0))
+	camera.CameraType = Enum.CameraType.Scriptable
+	camera.CFrame = startCF
+	local tween = TweenService:Create(camera, TweenInfo.new(DURATION, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), { CFrame = endCF })
+	tween:Play()
+
+	-- title splash
+	local holder = UIKit.Frame({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.32), Size = UDim2.fromOffset(900, 220), BackgroundTransparency = 1, ZIndex = 160, Parent = UIController.Root })
+	local title = UIKit.Label({ Size = UDim2.new(1, 0, 0, 130), Text = string.upper(Config.GameName), Font = UIKit.Fonts.Display, TextSize = 110, TextColor3 = Color3.fromRGB(255, 215, 60), TextStrokeColor3 = UIKit.Ink, TextStrokeTransparency = 0, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 161, Parent = holder })
+	UIKit.Shine(title, "Gold")
+	local sub = UIKit.Label({ Position = UDim2.fromOffset(0, 135), Size = UDim2.new(1, 0, 0, 50), Text = string.format("%d stages  -  %d worlds  -  collect every brainrot", Config.TotalStages(), #Config.Worlds), Font = UIKit.Fonts.Title, TextSize = 30, TextStrokeColor3 = UIKit.Ink, TextStrokeTransparency = 0, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 161, Parent = holder })
+	local scale = UIKit.Create("UIScale", { Scale = 0.3, Parent = holder })
+	TweenService:Create(scale, TweenInfo.new(0.7, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+
+	local skip = UIKit.Button({ AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -20, 1, -20), Size = UDim2.fromOffset(120, 40), Color = UIKit.Colors.PanelLight, Text = "SKIP", TextSize = 16, ZIndex = 161 }, function()
+		tween:Cancel()
+	end)
+	skip.Parent = UIController.Root
+
+	tween.Completed:Wait()
+	camera.CameraType = Enum.CameraType.Custom
+	skip:Destroy()
+	UIKit.Tween(title, { TextTransparency = 1, TextStrokeTransparency = 1 }, 0.5)
+	UIKit.Tween(sub, { TextTransparency = 1, TextStrokeTransparency = 1 }, 0.5)
+	task.delay(0.55, function()
+		holder:Destroy()
+	end)
+end
+
+function IntroController.Init()
+	task.spawn(function()
+		local ok, err = pcall(play)
+		if not ok then
+			warn("[Intro] " .. tostring(err))
+			local camera = Workspace.CurrentCamera
+			if camera then
+				camera.CameraType = Enum.CameraType.Custom
+			end
+		end
+	end)
+end
+
+return IntroController
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="44">
           <Properties>
             <string name="Name">MovementController</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -6533,6 +7872,7 @@ local canDoubleJump = false
 local jumpHeld = false
 local lastDash = -math.huge
 local lastPad: { [BasePart]: number } = {}
+local windZones: { BasePart } = {}
 local dashButton: TextButton
 local dashCooldownFill: Frame
 
@@ -6620,8 +7960,24 @@ local function onDashAction(_, inputState)
 	return Enum.ContextActionResult.Pass
 end
 
--- Glide: while holding jump in the air, fall slower.
-local function step()
+local function insideZone(zone: BasePart, position: Vector3): boolean
+	local rel = zone.CFrame:PointToObjectSpace(position)
+	local half = zone.Size / 2
+	return math.abs(rel.X) <= half.X and math.abs(rel.Y) <= half.Y and math.abs(rel.Z) <= half.Z
+end
+
+-- Glide: while holding jump in the air, fall slower. Wind zones push sideways.
+local function step(dt: number)
+	if root then
+		for _, zone in ipairs(windZones) do
+			if insideZone(zone, root.Position) then
+				local wind = zone:GetAttribute("Wind")
+				if typeof(wind) == "Vector3" then
+					root.AssemblyLinearVelocity += wind * dt * 2.2
+				end
+			end
+		end
+	end
 	local glide = State.GetPerk("Glide")
 	if glide and jumpHeld and humanoid and root and humanoid:GetState() == Enum.HumanoidStateType.Freefall then
 		local velocity = root.AssemblyLinearVelocity
@@ -6669,7 +8025,18 @@ function MovementController.Init()
 	ContextActionService:BindAction("BrainrotJump", onJumpAction, false, Enum.KeyCode.Space, Enum.KeyCode.ButtonA)
 	ContextActionService:BindAction("BrainrotDash", onDashAction, false, Enum.KeyCode.Q, Enum.KeyCode.ButtonX)
 	-- mobile jump button goes through the Humanoid.Jump property
-	RunService.RenderStepped:Connect(function()
+	task.spawn(function()
+		local course = Workspace:WaitForChild("Course", 30)
+		if course then
+			for _, part in ipairs(course:GetDescendants()) do
+				if part:IsA("BasePart") and part:GetAttribute("Wind") then
+					table.insert(windZones, part)
+				end
+			end
+		end
+	end)
+
+	RunService.RenderStepped:Connect(function(dt)
 		if humanoid then
 			local jumping = humanoid.Jump
 			if jumping and not jumpHeld then
@@ -6679,7 +8046,7 @@ function MovementController.Init()
 				jumpHeld = false
 			end
 		end
-		step()
+		step(dt)
 	end)
 
 	if player.Character then
@@ -6699,7 +8066,7 @@ return MovementController
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="40">
+        <Item class="ModuleScript" referent="45">
           <Properties>
             <string name="Name">ObbyFxController</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -6799,6 +8166,9 @@ local function watchCharacter(character: Model)
 end
 
 local rings: { BasePart } = {}
+local ringBase: { [BasePart]: CFrame } = {}
+local beacon: Part
+local checkpointPads: { [number]: Vector3 } = {}
 
 local function pulseRings()
 	local camera = Workspace.CurrentCamera
@@ -6808,13 +8178,29 @@ local function pulseRings()
 	local t = os.clock()
 	local cameraPosition = camera.CFrame.Position
 	local current = State.Get("Stage", 1)
+	local parts, cframes = {}, {}
 	for _, ring in ipairs(rings) do
-		if (ring.Position - cameraPosition).Magnitude < 150 then
+		local base = ringBase[ring]
+		if base and (base.Position - cameraPosition).Magnitude < 150 then
 			local stage = ring.Parent and ring.Parent:GetAttribute("Stage")
 			local isNext = stage == current + 1
 			ring.Transparency = if isNext then 0.1 + math.sin(t * 5) * 0.1 else 0.45
 			ring.Color = if isNext then Color3.fromRGB(255, 240, 120) elseif stage and stage <= current then Color3.fromRGB(110, 235, 120) else ring.Color
+			table.insert(parts, ring)
+			table.insert(cframes, base * CFrame.new(math.sin(t * 2) * 0.15, 0, 0) * CFrame.Angles(t * 0.8, 0, 0))
 		end
+	end
+	if #parts > 0 then
+		Workspace:BulkMoveTo(parts, cframes, Enum.BulkMoveMode.FireCFrameChanged)
+	end
+	-- a tall light column over the next checkpoint
+	local target = checkpointPads[current + 1]
+	if target then
+		beacon.CFrame = CFrame.new(target + Vector3.new(0, 40, 0))
+		beacon.Transparency = 0.6 + math.sin(t * 3) * 0.1
+		beacon.Parent = Workspace
+	else
+		beacon.Parent = nil
 	end
 end
 
@@ -6863,11 +8249,32 @@ function ObbyFxController.Init()
 		end
 	end)
 
+	beacon = Instance.new("Part")
+	beacon.Name = "NextCheckpointBeacon"
+	beacon.Anchored = true
+	beacon.CanCollide = false
+	beacon.CanQuery = false
+	beacon.CanTouch = false
+	beacon.CastShadow = false
+	beacon.Material = Enum.Material.Neon
+	beacon.Color = Color3.fromRGB(255, 240, 120)
+	beacon.Size = Vector3.new(2.5, 80, 2.5)
+	beacon.Transparency = 0.65
+	local mesh = Instance.new("SpecialMesh")
+	mesh.MeshType = Enum.MeshType.Cylinder
+	mesh.Parent = beacon
+
 	task.spawn(function()
 		local course = Workspace:WaitForChild("Course")
 		for _, descendant in ipairs(course:GetDescendants()) do
 			if descendant:IsA("BasePart") and descendant.Name == "CheckpointRing" then
 				table.insert(rings, descendant)
+				ringBase[descendant] = descendant.CFrame
+			elseif descendant:IsA("BasePart") and descendant.Name == "Checkpoint" then
+				local stage = descendant:GetAttribute("Stage")
+				if type(stage) == "number" then
+					checkpointPads[stage] = descendant.Position
+				end
 			end
 		end
 	end)
@@ -6885,7 +8292,464 @@ return ObbyFxController
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="41">
+        <Item class="ModuleScript" referent="46">
+          <Properties>
+            <string name="Name">PlayerVisualsController</string>
+            <string name="Source"><![CDATA[--------------------------------------------------------------------------------
+-- PlayerVisualsController - what makes characters feel alive:
+--   name tags over every player (brainrot, rarity colour, stage),
+--   a cartoon outline on your own costume,
+--   landing dust, and a death explosion that flings costume pieces around.
+--------------------------------------------------------------------------------
+
+local Debris = game:GetService("Debris")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared.Config)
+
+local Modules = script.Parent.Parent:WaitForChild("Modules")
+local State = require(Modules.ClientState)
+local UIKit = require(Modules.UIKit)
+
+local player = Players.LocalPlayer
+
+local PlayerVisualsController = {}
+
+local INK = Color3.fromRGB(28, 22, 40)
+local tags: { [Player]: { Name: TextLabel, Stage: TextLabel } } = {}
+local dustPart: Part
+local dust: ParticleEmitter
+
+local function effectsOn(): boolean
+	local settings = State.Get("Settings", {})
+	return settings.Effects ~= false
+end
+
+--------------------------------------------------------------------------------
+-- Name tags
+--------------------------------------------------------------------------------
+
+local function refreshTag(target: Player)
+	local tag = tags[target]
+	if not tag then
+		return
+	end
+	local brainrot = target:GetAttribute("Brainrot")
+	local def = type(brainrot) == "string" and Config.Brainrots[brainrot] or nil
+	local color = if def then Config.Rarities[def.Rarity].Color:Lerp(Color3.new(1, 1, 1), 0.3) else Color3.new(1, 1, 1)
+	tag.Name.Text = target.DisplayName .. (if def then "  -  " .. brainrot else "")
+	tag.Name.TextColor3 = color
+	local oldShine = tag.Name:FindFirstChildOfClass("UIGradient")
+	if oldShine then
+		oldShine:Destroy()
+	end
+	local shine = def and UIKit.ShineFor(def.Rarity, 0) or nil
+	if shine then
+		tag.Name.TextColor3 = Color3.new(1, 1, 1)
+		UIKit.Shine(tag.Name, shine)
+	end
+	local leaderstats = target:FindFirstChild("leaderstats")
+	local stage = leaderstats and leaderstats:FindFirstChild("Stage")
+	local prestige = leaderstats and leaderstats:FindFirstChild("Prestige")
+	local stageText = if stage and stage:IsA("IntValue") then "Stage " .. stage.Value else ""
+	if prestige and prestige:IsA("IntValue") and prestige.Value > 0 then
+		stageText ..= "  -  Prestige " .. prestige.Value
+	end
+	tag.Stage.Text = stageText
+end
+
+local function addTag(target: Player, character: Model)
+	local head = character:WaitForChild("Head", 10)
+	if not head then
+		return
+	end
+	local gui = Instance.new("BillboardGui")
+	gui.Name = "NameTag"
+	gui.Size = UDim2.new(6, 0, 1.6, 0)
+	gui.StudsOffset = Vector3.new(0, 4.2, 0)
+	gui.MaxDistance = if target == player then 0 else 70
+	gui.LightInfluence = 0
+	gui.Adornee = head
+	local name = Instance.new("TextLabel")
+	name.BackgroundTransparency = 1
+	name.Size = UDim2.fromScale(1, 0.6)
+	name.Font = Enum.Font.FredokaOne
+	name.TextScaled = true
+	name.TextStrokeTransparency = 0
+	name.TextStrokeColor3 = INK
+	name.Parent = gui
+	local stage = Instance.new("TextLabel")
+	stage.BackgroundTransparency = 1
+	stage.Position = UDim2.fromScale(0, 0.6)
+	stage.Size = UDim2.fromScale(1, 0.4)
+	stage.Font = Enum.Font.LuckiestGuy
+	stage.TextScaled = true
+	stage.TextColor3 = Color3.fromRGB(255, 225, 90)
+	stage.TextStrokeTransparency = 0
+	stage.TextStrokeColor3 = INK
+	stage.Parent = gui
+	gui.Parent = head
+	tags[target] = { Name = name, Stage = stage }
+	refreshTag(target)
+	-- hide the default Roblox name (we draw our own)
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	if humanoid then
+		humanoid.DisplayDistanceType = Enum.HumanoidDisplayDistanceType.None
+	end
+end
+
+--------------------------------------------------------------------------------
+-- Outline on my own costume
+--------------------------------------------------------------------------------
+
+local outline: Highlight
+
+local function attachOutline(character: Model)
+	local costume = character:WaitForChild("Costume", 10)
+	if costume then
+		outline.Adornee = costume
+		outline.Enabled = true
+	end
+	character.ChildAdded:Connect(function(child)
+		if child.Name == "Costume" then
+			outline.Adornee = child
+			outline.Enabled = true
+		end
+	end)
+end
+
+--------------------------------------------------------------------------------
+-- Dust and death explosion
+--------------------------------------------------------------------------------
+
+local function puff(position: Vector3, amount: number)
+	if not effectsOn() then
+		return
+	end
+	dustPart.CFrame = CFrame.new(position)
+	dust:Emit(amount)
+end
+
+local function explode(character: Model)
+	if not effectsOn() then
+		return
+	end
+	local costume = character:FindFirstChild("Costume")
+	local root = character:FindFirstChild("HumanoidRootPart")
+	if not costume or not root or not root:IsA("BasePart") then
+		return
+	end
+	local rng = Random.new()
+	local count = 0
+	for _, part in ipairs(costume:GetDescendants()) do
+		if part:IsA("BasePart") and part.Transparency < 1 and count < 24 then
+			count += 1
+			local chunk = part:Clone()
+			for _, child in ipairs(chunk:GetChildren()) do
+				if not child:IsA("SpecialMesh") then
+					child:Destroy()
+				end
+			end
+			chunk.Anchored = false
+			chunk.CanCollide = true
+			chunk.CanQuery = false
+			chunk.CanTouch = false
+			chunk.Massless = false
+			chunk.Parent = Workspace
+			chunk.AssemblyLinearVelocity = Vector3.new(rng:NextNumber(-25, 25), rng:NextNumber(20, 45), rng:NextNumber(-25, 25))
+			chunk.AssemblyAngularVelocity = Vector3.new(rng:NextNumber(-10, 10), rng:NextNumber(-10, 10), rng:NextNumber(-10, 10))
+			Debris:AddItem(chunk, 2.5)
+		end
+	end
+	puff(root.Position, 20)
+end
+
+local function watchCharacter(target: Player, character: Model)
+	addTag(target, character)
+	local humanoid = character:WaitForChild("Humanoid", 10) :: Humanoid?
+	if not humanoid then
+		return
+	end
+	humanoid.Died:Connect(function()
+		explode(character)
+	end)
+	if target == player then
+		attachOutline(character)
+		humanoid.StateChanged:Connect(function(_, new)
+			if new == Enum.HumanoidStateType.Landed then
+				local root = character:FindFirstChild("HumanoidRootPart")
+				if root and root:IsA("BasePart") then
+					puff(root.Position - Vector3.new(0, 2.6, 0), 8)
+				end
+			end
+		end)
+	end
+end
+
+local function watch(target: Player)
+	target.CharacterAdded:Connect(function(character)
+		watchCharacter(target, character)
+	end)
+	if target.Character then
+		task.spawn(watchCharacter, target, target.Character)
+	end
+	target:GetAttributeChangedSignal("Brainrot"):Connect(function()
+		refreshTag(target)
+	end)
+end
+
+function PlayerVisualsController.Init()
+	dustPart = Instance.new("Part")
+	dustPart.Name = "DustFx"
+	dustPart.Anchored = true
+	dustPart.CanCollide = false
+	dustPart.CanQuery = false
+	dustPart.CanTouch = false
+	dustPart.Transparency = 1
+	dustPart.Size = Vector3.new(1, 1, 1)
+	dustPart.Parent = Workspace
+	dust = Instance.new("ParticleEmitter")
+	dust.Rate = 0
+	dust.Color = ColorSequence.new(Color3.fromRGB(240, 235, 225))
+	dust.Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.3), NumberSequenceKeypoint.new(1, 1) })
+	dust.Lifetime = NumberRange.new(0.4, 0.7)
+	dust.Speed = NumberRange.new(4, 9)
+	dust.SpreadAngle = Vector2.new(70, 70)
+	dust.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0.8), NumberSequenceKeypoint.new(1, 1.6) })
+	dust.EmissionDirection = Enum.NormalId.Top
+	dust.Parent = dustPart
+
+	outline = Instance.new("Highlight")
+	outline.Name = "CostumeOutline"
+	outline.FillTransparency = 1
+	outline.OutlineColor = INK
+	outline.OutlineTransparency = 0.1
+	outline.DepthMode = Enum.HighlightDepthMode.Occluded
+	outline.Enabled = false
+	outline.Parent = dustPart
+
+	for _, target in ipairs(Players:GetPlayers()) do
+		watch(target)
+	end
+	Players.PlayerAdded:Connect(watch)
+	Players.PlayerRemoving:Connect(function(target)
+		tags[target] = nil
+	end)
+
+	-- stage numbers on tags change often; refresh them a few times a second
+	local accumulator = 0
+	RunService.Heartbeat:Connect(function(dt)
+		accumulator += dt
+		if accumulator >= 0.5 then
+			accumulator = 0
+			for target in pairs(tags) do
+				refreshTag(target)
+			end
+		end
+	end)
+end
+
+return PlayerVisualsController
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="47">
+          <Properties>
+            <string name="Name">QuestsUI</string>
+            <string name="Source"><![CDATA[--------------------------------------------------------------------------------
+-- QuestsUI - daily quests window plus a compact on-screen tracker.
+--------------------------------------------------------------------------------
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared.Config)
+local Util = require(Shared.Util)
+local Remotes = require(Shared.Remotes)
+
+local Modules = script.Parent.Parent:WaitForChild("Modules")
+local State = require(Modules.ClientState)
+local UIKit = require(Modules.UIKit)
+local RewardText = require(Modules.RewardText)
+local UIController = require(script.Parent.UIController)
+
+local QuestsUI = {}
+
+type Row = { Frame: Frame, Title: TextLabel, Fill: Frame, Count: TextLabel, Reward: TextLabel, Button: TextButton }
+
+local window
+local rows: { Row } = {}
+local bonusLabel: TextLabel
+local resetLabel: TextLabel
+local tracker: Frame
+local trackerRows: { { Label: TextLabel, Fill: Frame } } = {}
+
+local function questState()
+	local quests = State.Get("Quests")
+	local stats = State.Get("Stats", {})
+	local list = {}
+	if not quests or not quests.Ids then
+		return list, quests
+	end
+	for slot, id in ipairs(quests.Ids) do
+		local quest = Config.GetQuest(id)
+		if quest then
+			local raw = (stats[quest.Stat] or 0) - ((quests.Baseline or {})[quest.Stat] or 0)
+			local progress = math.clamp(math.floor(raw / (quest.Scale or 1)), 0, quest.Goal)
+			table.insert(list, {
+				Slot = slot,
+				Quest = quest,
+				Progress = progress,
+				Done = progress >= quest.Goal,
+				Claimed = (quests.Claimed or {})[id] == true,
+			})
+		end
+	end
+	return list, quests
+end
+
+local function refresh()
+	local list, quests = questState()
+	local claimable = false
+	for index, row in ipairs(rows) do
+		local entry = list[index]
+		row.Frame.Visible = entry ~= nil
+		if entry then
+			local quest = entry.Quest
+			row.Title.Text = string.format(quest.Text, quest.Goal)
+			row.Fill.Size = UDim2.fromScale(entry.Progress / quest.Goal, 1)
+			row.Count.Text = string.format("%d / %d", entry.Progress, quest.Goal)
+			row.Reward.Text = RewardText.Describe(quest.Reward, 1, "  ")
+			if entry.Claimed then
+				UIKit.SetButtonEnabled(row.Button, false, "DONE")
+			elseif entry.Done then
+				UIKit.SetButtonEnabled(row.Button, true)
+				row.Button.Text = "CLAIM"
+				claimable = true
+			else
+				UIKit.SetButtonEnabled(row.Button, false, "IN PROGRESS")
+			end
+		end
+		local trackerRow = trackerRows[index]
+		if trackerRow then
+			trackerRow.Label.Parent.Visible = entry ~= nil and not entry.Claimed
+			if entry then
+				trackerRow.Label.Text = string.format("%s  %d/%d", string.format(entry.Quest.Text, entry.Quest.Goal), entry.Progress, entry.Quest.Goal)
+				trackerRow.Fill.Size = UDim2.fromScale(entry.Progress / entry.Quest.Goal, 1)
+				trackerRow.Fill.BackgroundColor3 = if entry.Done then UIKit.Colors.Success else UIKit.Colors.Accent
+			end
+		end
+	end
+	local bonusText = RewardText.Describe(Config.Quests.BonusReward, 1, "  ")
+	if quests and quests.BonusClaimed then
+		bonusLabel.Text = "All quests done today!  Bonus claimed: " .. bonusText
+	else
+		bonusLabel.Text = "Finish all " .. Config.Quests.PerDay .. " quests for a bonus: " .. bonusText
+	end
+	local now = State.Now()
+	local nextReset = (Util.DayNumber(now) + 1) * 86400
+	resetLabel.Text = "New quests in " .. Util.FormatTime(nextReset - now)
+	UIController.SetBadge("Quests", claimable)
+	tracker.Visible = State.Loaded and #list > 0
+end
+
+local function buildRow(parent: Instance, order: number): Row
+	local frame = UIKit.Frame({ Size = UDim2.new(1, 0, 0, 84), BackgroundColor3 = UIKit.Colors.Panel, LayoutOrder = order, Parent = parent })
+	UIKit.Corner(frame, 12)
+	UIKit.Padding(frame, 12, 8)
+	local title = UIKit.Label({ Size = UDim2.new(1, -150, 0, 24), TextSize = 18, Parent = frame })
+	local bar = UIKit.Frame({ Position = UDim2.fromOffset(0, 30), Size = UDim2.new(1, -150, 0, 16), BackgroundColor3 = UIKit.Colors.PanelDark, Parent = frame })
+	UIKit.Corner(bar, 8)
+	local fill = UIKit.Frame({ Size = UDim2.fromScale(0, 1), BackgroundColor3 = UIKit.Colors.Accent, Parent = bar })
+	UIKit.Corner(fill, 8)
+	local count = UIKit.Label({ Size = UDim2.fromScale(1, 1), TextSize = 12, Font = UIKit.Fonts.Black, TextXAlignment = Enum.TextXAlignment.Center, ZIndex = 2, TextStrokeTransparency = 0.5, Parent = bar })
+	local reward = UIKit.Label({ Position = UDim2.fromOffset(0, 50), Size = UDim2.new(1, -150, 0, 20), TextSize = 14, Parent = frame })
+	local button = UIKit.Button({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, 0, 0.5, 0), Size = UDim2.fromOffset(136, 44), Color = UIKit.Colors.Success, TextSize = 15 }, function()
+		Remotes.Get("ClaimQuest"):FireServer(order)
+	end)
+	button.Parent = frame
+	return { Frame = frame, Title = title, Fill = fill, Count = count, Reward = reward, Button = button }
+end
+
+local function buildTracker()
+	tracker = UIKit.Frame({
+		Name = "QuestTracker",
+		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, -16, 0, 120),
+		Size = UDim2.fromOffset(250, 0),
+		AutomaticSize = Enum.AutomaticSize.Y,
+		BackgroundColor3 = UIKit.Colors.Background,
+		BackgroundTransparency = 0.25,
+		Visible = false,
+		Parent = UIController.Root,
+	})
+	UIKit.Corner(tracker, 10)
+	UIKit.Padding(tracker, 8, 6)
+	UIKit.Create("UIListLayout", { Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder, Parent = tracker })
+	local header = UIKit.Create("TextButton", {
+		Size = UDim2.new(1, 0, 0, 20),
+		BackgroundTransparency = 1,
+		Font = UIKit.Fonts.Title,
+		TextSize = 16,
+		TextColor3 = UIKit.Colors.Accent,
+		TextXAlignment = Enum.TextXAlignment.Left,
+		Text = "DAILY QUESTS  >",
+		LayoutOrder = 0,
+		Parent = tracker,
+	})
+	header.Activated:Connect(function()
+		UIController.Toggle("Quests")
+	end)
+	for index = 1, Config.Quests.PerDay do
+		local row = UIKit.Frame({ Size = UDim2.new(1, 0, 0, 30), BackgroundTransparency = 1, LayoutOrder = index, Parent = tracker })
+		local label = UIKit.Label({ Size = UDim2.new(1, 0, 0, 16), TextSize = 13, TextTruncate = Enum.TextTruncate.AtEnd, Parent = row })
+		local bar = UIKit.Frame({ Position = UDim2.fromOffset(0, 20), Size = UDim2.new(1, 0, 0, 6), BackgroundColor3 = UIKit.Colors.PanelDark, Parent = row })
+		UIKit.Corner(bar, 3)
+		local fill = UIKit.Frame({ Size = UDim2.fromScale(0, 1), BackgroundColor3 = UIKit.Colors.Accent, Parent = bar })
+		UIKit.Corner(fill, 3)
+		trackerRows[index] = { Label = label, Fill = fill }
+	end
+end
+
+function QuestsUI.Init()
+	window = UIController.CreateWindow("Quests", "DAILY QUESTS", UDim2.fromOffset(620, 430), UIKit.Colors.Accent)
+	local list = UIKit.Frame({ Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Parent = window.Content })
+	UIKit.Create("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder, Parent = list })
+	for index = 1, Config.Quests.PerDay do
+		rows[index] = buildRow(list, index)
+	end
+	bonusLabel = UIKit.Label({ Size = UDim2.new(1, 0, 0, 26), TextSize = 15, TextWrapped = true, LayoutOrder = 10, Parent = list })
+	resetLabel = UIKit.Label({ Size = UDim2.new(1, 0, 0, 20), TextSize = 13, TextColor3 = UIKit.Colors.Muted, LayoutOrder = 11, Parent = list })
+
+	buildTracker()
+	window.OnOpen = refresh
+	State.Changed:Connect(function(patch)
+		if patch.Quests ~= nil or patch.Stats ~= nil or patch.Multiplier ~= nil then
+			refresh()
+		end
+	end)
+	UIController.AddSideButton("Quests", "QUESTS", UIKit.Colors.Success:Lerp(UIKit.Colors.Accent, 0.5), 3, function()
+		UIController.Toggle("Quests")
+	end)
+	task.spawn(function()
+		while true do
+			task.wait(1)
+			if window.IsOpen() then
+				refresh()
+			end
+		end
+	end)
+end
+
+return QuestsUI
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="48">
           <Properties>
             <string name="Name">RewardsUI</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -7310,7 +9174,7 @@ function RewardsUI.Init()
 		end
 	end)
 
-	UIController.AddSideButton("Rewards", "REWARDS", UIKit.Colors.Pink, 4, function()
+	UIController.AddSideButton("Rewards", "REWARDS", UIKit.Colors.Pink, 5, function()
 		UIController.Toggle("Rewards")
 	end)
 
@@ -7331,7 +9195,7 @@ return RewardsUI
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="42">
+        <Item class="ModuleScript" referent="49">
           <Properties>
             <string name="Name">SettingsUI</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -7442,7 +9306,7 @@ function SettingsUI.Init()
 		end
 	end)
 
-	UIController.AddSideButton("Settings", "SETTINGS", UIKit.Colors.Stroke, 5, function()
+	UIController.AddSideButton("Settings", "SETTINGS", UIKit.Colors.Stroke, 7, function()
 		UIController.Toggle("Settings")
 	end)
 end
@@ -7451,7 +9315,7 @@ return SettingsUI
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="43">
+        <Item class="ModuleScript" referent="50">
           <Properties>
             <string name="Name">ShopUI</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -7465,6 +9329,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared.Config)
 local Util = require(Shared.Util)
+local Remotes = require(Shared.Remotes)
 
 local Modules = script.Parent.Parent:WaitForChild("Modules")
 local State = require(Modules.ClientState)
@@ -7612,6 +9477,33 @@ local function card(parent: Instance, order: number, color: Color3, title: strin
 	end
 end
 
+local function trailCard(parent: Instance, order: number, key: string, def)
+	local owned = State.Get("Trails", {})[key] == true
+	local equipped = State.Get("EquippedTrail", "None") == key
+	local color = def.Color or UIKit.Colors.Muted
+	local frame = UIKit.Frame({ BackgroundColor3 = UIKit.Colors.Panel, LayoutOrder = order, Parent = parent })
+	UIKit.Corner(frame, 12)
+	UIKit.Stroke(frame, color, 1.5)
+	local swatch = UIKit.Frame({ Position = UDim2.fromOffset(10, 10), Size = UDim2.new(1, -20, 0, 60), BackgroundColor3 = color, Parent = frame })
+	UIKit.Corner(swatch, 10)
+	UIKit.Gradient(swatch, Color3.new(1, 1, 1), color:Lerp(Color3.new(0, 0, 0), 0.3), 0)
+	UIKit.Label({ Position = UDim2.fromOffset(10, 76), Size = UDim2.new(1, -20, 0, 24), Text = def.Name .. " Trail", Font = UIKit.Fonts.Title, TextSize = 18, Parent = frame })
+	local button = UIKit.Button({
+		AnchorPoint = Vector2.new(0.5, 1),
+		Position = UDim2.new(0.5, 0, 1, -10),
+		Size = UDim2.new(1, -20, 0, 38),
+		Color = if equipped then UIKit.Colors.Info elseif owned then UIKit.Colors.Success else UIKit.Colors.Accent,
+		Text = if equipped then "EQUIPPED" elseif owned then "EQUIP" elseif def.Price > 0 then "BUY  " .. Util.FormatNumber(def.Price) .. " coins" else "EQUIP",
+		TextSize = 16,
+	}, function()
+		Remotes.Get(if owned then "EquipTrail" else "BuyTrail"):FireServer(key)
+	end)
+	button.Parent = frame
+	if equipped then
+		UIKit.SetButtonEnabled(button, false, "EQUIPPED")
+	end
+end
+
 local function rebuild()
 	if not window or not window.IsOpen() then
 		return
@@ -7642,6 +9534,13 @@ local function rebuild()
 			promptProduct(entry.Key, product)
 		end, false, blocked)
 	end
+
+	local trails = Config.SortedTrails()
+	sectionHeader("TRAILS (COINS)", 5, UIKit.Colors.Pink)
+	local trailGrid = gridContainer(#trails, 6)
+	for index, entry in ipairs(trails) do
+		trailCard(trailGrid, index, entry.Key, entry.Def)
+	end
 end
 
 function ShopUI.Init()
@@ -7657,7 +9556,7 @@ function ShopUI.Init()
 
 	window.OnOpen = rebuild
 	State.Changed:Connect(function(patch)
-		if patch.Gamepasses ~= nil then
+		if patch.Gamepasses ~= nil or patch.Trails ~= nil or patch.EquippedTrail ~= nil then
 			rebuild()
 		end
 	end)
@@ -7682,7 +9581,7 @@ return ShopUI
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="44">
+        <Item class="ModuleScript" referent="51">
           <Properties>
             <string name="Name">StagesUI</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -7775,7 +9674,7 @@ function StagesUI.Init()
 		end
 	end)
 
-	UIController.AddSideButton("Stages", "STAGES", UIKit.Colors.Info, 3, function()
+	UIController.AddSideButton("Stages", "STAGES", UIKit.Colors.Info, 4, function()
 		UIController.Toggle("Stages")
 	end)
 end
@@ -7784,7 +9683,100 @@ return StagesUI
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="45">
+        <Item class="ModuleScript" referent="52">
+          <Properties>
+            <string name="Name">StatsUI</string>
+            <string name="Source"><![CDATA[--------------------------------------------------------------------------------
+-- StatsUI - the player's numbers: stages, deaths, coins, fragments, best run.
+--------------------------------------------------------------------------------
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared.Config)
+local Util = require(Shared.Util)
+
+local Modules = script.Parent.Parent:WaitForChild("Modules")
+local State = require(Modules.ClientState)
+local UIKit = require(Modules.UIKit)
+local UIController = require(script.Parent.UIController)
+
+local StatsUI = {}
+
+local window
+local rows: { { Label: TextLabel, Get: () -> string } } = {}
+
+local function fragmentsFound(): number
+	local found = 0
+	for _ in pairs(State.Get("Fragments", {})) do
+		found += 1
+	end
+	return found
+end
+
+local function ownedCount(): number
+	local count = 0
+	for _ in pairs(State.Get("Owned", {})) do
+		count += 1
+	end
+	return count
+end
+
+local STATS = {
+	{ Name = "Current stage", Get = function() return tostring(State.Get("Stage", 1)) .. " / " .. Config.TotalStages() end },
+	{ Name = "Best stage ever", Get = function()
+		local best = State.Get("Stats", {}).BestStage or 1
+		local total = Config.TotalStages()
+		return if best > total then string.format("%d (prestige %d)", (best - 1) % total + 1, (best - 1) // total) else tostring(best)
+	end },
+	{ Name = "Prestige", Get = function() return tostring(State.Get("Prestige", 0)) end },
+	{ Name = "Fastest full run", Get = function()
+		local best = State.Get("Stats", {}).BestTime or 0
+		return if best > 0 then Util.FormatTime(best) else "not yet"
+	end },
+	{ Name = "Deaths", Get = function() return Util.FormatCommas(State.Get("Stats", {}).Deaths or 0) end },
+	{ Name = "Coins collected", Get = function() return Util.FormatCommas(State.Get("Stats", {}).CoinsCollected or 0) end },
+	{ Name = "Total coins earned", Get = function() return Util.FormatNumber(State.Get("Stats", {}).TotalCoins or 0) end },
+	{ Name = "Stages skipped", Get = function() return tostring(State.Get("Stats", {}).StagesSkipped or 0) end },
+	{ Name = "Brainrots owned", Get = function() return ownedCount() .. " / " .. #Config.SortedBrainrots() end },
+	{ Name = "Fragments found", Get = function() return fragmentsFound() .. " / " .. Config.Fragments.Count end },
+	{ Name = "Time played", Get = function() return Util.FormatTime(State.Get("Stats", {}).Playtime or 0) end },
+}
+
+local function refresh()
+	if not window or not window.IsOpen() then
+		return
+	end
+	for _, row in ipairs(rows) do
+		row.Label.Text = row.Get()
+	end
+end
+
+function StatsUI.Init()
+	window = UIController.CreateWindow("Stats", "MY STATS", UDim2.fromOffset(460, 520), UIKit.Colors.Purple)
+	local holder = UIKit.Frame({ Size = UDim2.fromScale(1, 1), BackgroundColor3 = UIKit.Colors.PanelDark, Parent = window.Content })
+	UIKit.Corner(holder, 12)
+	UIKit.Padding(holder, 10)
+	local list = UIKit.ScrollList(holder, nil, 6)
+	for order, stat in ipairs(STATS) do
+		local row = UIKit.Frame({ Size = UDim2.new(1, 0, 0, 36), BackgroundColor3 = UIKit.Colors.Panel, LayoutOrder = order, Parent = list })
+		UIKit.Corner(row, 8)
+		UIKit.Label({ Position = UDim2.fromOffset(12, 0), Size = UDim2.new(0.55, 0, 1, 0), Text = stat.Name, TextSize = 16, TextColor3 = UIKit.Colors.Muted, Parent = row })
+		local value = UIKit.Label({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -12, 0, 0), Size = UDim2.new(0.45, 0, 1, 0), Font = UIKit.Fonts.Display, TextSize = 18, TextColor3 = UIKit.Colors.Accent, TextXAlignment = Enum.TextXAlignment.Right, Parent = row })
+		table.insert(rows, { Label = value, Get = stat.Get })
+	end
+	window.OnOpen = refresh
+	State.Changed:Connect(refresh)
+	UIController.AddSideButton("Stats", "STATS", UIKit.Colors.Purple, 6, function()
+		UIController.Toggle("Stats")
+	end)
+end
+
+return StatsUI
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="53">
           <Properties>
             <string name="Name">TrailController</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -7794,22 +9786,30 @@ return StagesUI
 --------------------------------------------------------------------------------
 
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared.Config)
 
 local TrailController = {}
 
 local rgb = Color3.fromRGB
-local TIERS = {
-	ColorSequence.new(rgb(230, 230, 240)), -- grey
-	ColorSequence.new(rgb(110, 235, 120)), -- green
-	ColorSequence.new(rgb(90, 180, 255)), -- blue
-	ColorSequence.new(rgb(185, 110, 255)), -- purple
-	ColorSequence.new(rgb(255, 215, 70), rgb(255, 160, 30)), -- golden
-	ColorSequence.new({ -- galaxy (max speed + a rebirth)
-		ColorSequenceKeypoint.new(0, rgb(120, 70, 255)),
-		ColorSequenceKeypoint.new(0.5, rgb(255, 110, 220)),
-		ColorSequenceKeypoint.new(1, rgb(80, 220, 255)),
-	}),
-}
+local RAINBOW = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, rgb(120, 70, 255)),
+	ColorSequenceKeypoint.new(0.5, rgb(255, 110, 220)),
+	ColorSequenceKeypoint.new(1, rgb(80, 220, 255)),
+})
+
+local function colorsFor(key: any): ColorSequence?
+	if key == "Rainbow" then
+		return RAINBOW
+	end
+	local def = type(key) == "string" and Config.Trails[key]
+	if def and def.Color then
+		return ColorSequence.new(def.Color, def.Color:Lerp(Color3.new(1, 1, 1), 0.5))
+	end
+	return nil
+end
 
 local function apply(player: Player, character: Model)
 	local root = character:WaitForChild("HumanoidRootPart", 10)
@@ -7839,8 +9839,7 @@ local function apply(player: Player, character: Model)
 		newTrail.Parent = root
 		trail = newTrail
 	end
-	local tier = player:GetAttribute("TrailTier")
-	local colors = if type(tier) == "number" then TIERS[math.clamp(tier, 0, #TIERS)] else nil
+	local colors = colorsFor(player:GetAttribute("Trail"))
 	local t = trail :: Trail
 	t.Enabled = colors ~= nil
 	if colors then
@@ -7852,7 +9851,7 @@ local function watch(player: Player)
 	player.CharacterAdded:Connect(function(character)
 		apply(player, character)
 	end)
-	player:GetAttributeChangedSignal("TrailTier"):Connect(function()
+	player:GetAttributeChangedSignal("Trail"):Connect(function()
 		if player.Character then
 			task.spawn(apply, player, player.Character)
 		end
@@ -7873,7 +9872,7 @@ return TrailController
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="46">
+        <Item class="ModuleScript" referent="54">
           <Properties>
             <string name="Name">UIController</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -7912,6 +9911,8 @@ local stageLabel: TextLabel
 local worldLabel: TextLabel
 local timerLabel: TextLabel
 local prestigeLabel: TextLabel
+local progressFill: Frame
+local fragmentLabel: TextLabel
 local sideList: Frame
 
 local MAX_TOASTS = 4
@@ -8042,7 +10043,17 @@ local function buildHUD()
 	UIKit.Stroke(stagePill, UIKit.Ink, 3)
 	UIKit.Lip(stagePill, UIKit.Colors.Info:Lerp(Color3.new(0, 0, 0), 0.4), 4)
 	stageLabel = bigText(stagePill, { Position = UDim2.fromOffset(0, 4), Size = UDim2.new(1, 0, 0, 40), TextSize = 34, TextColor3 = Color3.fromRGB(255, 230, 90), Text = "STAGE 1" })
-	worldLabel = bigText(stagePill, { Position = UDim2.fromOffset(0, 44), Size = UDim2.new(1, 0, 0, 26), Font = UIKit.Fonts.Title, TextSize = 17, TextColor3 = UIKit.Colors.Muted, TextStrokeTransparency = 0.5, Text = "" })
+	worldLabel = bigText(stagePill, { Position = UDim2.fromOffset(0, 42), Size = UDim2.new(1, 0, 0, 22), Font = UIKit.Fonts.Title, TextSize = 16, TextColor3 = UIKit.Colors.Muted, TextStrokeTransparency = 0.5, Text = "" })
+	local progressBar = UIKit.Frame({ Position = UDim2.new(0, 14, 1, -11), Size = UDim2.new(1, -28, 0, 6), BackgroundColor3 = UIKit.Colors.PanelLight, Parent = stagePill })
+	UIKit.Corner(progressBar, 3)
+	progressFill = UIKit.Frame({ Size = UDim2.fromScale(0, 1), BackgroundColor3 = Color3.fromRGB(255, 230, 90), Parent = progressBar })
+	UIKit.Corner(progressFill, 3)
+
+	local fragmentPill = pill(root, "Fragments", UIKit.Colors.Purple, 170, 1)
+	fragmentPill.AnchorPoint = Vector2.new(1, 0)
+	fragmentPill.Position = UDim2.new(1, -16, 0, 12 + 54)
+	fragmentPill.Size = UDim2.fromOffset(170, 36)
+	fragmentLabel = bigText(fragmentPill, { TextSize = 16, Font = UIKit.Fonts.Title, TextColor3 = Color3.fromRGB(220, 150, 255), Text = "FRAGMENTS 0/12" })
 
 	local timerPill = pill(root, "Timer", UIKit.Colors.Info, 190, 1)
 	timerPill.AnchorPoint = Vector2.new(0.5, 0)
@@ -8116,6 +10127,13 @@ local function refreshHUD()
 	local world, worldIndex = Config.GetWorld(stage)
 	worldLabel.Text = string.format("World %d: %s", worldIndex, world.Name)
 	prestigeLabel.Text = "PRESTIGE " .. tostring(State.Get("Prestige", 0))
+	local _, inWorld = Config.GetWorldForStage(stage)
+	UIKit.Tween(progressFill, { Size = UDim2.fromScale(math.clamp((inWorld - 1) / math.max(world.Stages - 1, 1), 0, 1), 1) }, 0.3)
+	local found = 0
+	for _ in pairs(State.Get("Fragments", {})) do
+		found += 1
+	end
+	fragmentLabel.Text = string.format("FRAGMENTS %d/%d", found, Config.Fragments.Count)
 end
 
 local function refreshTimer()
@@ -8153,6 +10171,8 @@ local SIDE_ICONS = {
 	Stages = "🚩",
 	Rewards = "🎁",
 	Settings = "⚙️",
+	Quests = "📜",
+	Stats = "📊",
 }
 
 function UIController.AddSideButton(name: string, label: string, color: Color3, order: number, onClick: () -> ())
@@ -8514,7 +10534,7 @@ function UIController.Init()
 		Name = "SideButtons",
 		AnchorPoint = Vector2.new(0, 0.5),
 		Position = UDim2.new(0, 16, 0.55, 0),
-		Size = UDim2.fromOffset(216, 240),
+		Size = UDim2.fromOffset(216, 310),
 		BackgroundTransparency = 1,
 		Parent = root,
 	})
@@ -8549,7 +10569,7 @@ function UIController.Init()
 	State.OnLoaded(refreshHUD)
 	State.OnLoaded(refreshTimer)
 	State.Changed:Connect(function(patch)
-		if patch.Coins ~= nil or patch.Multiplier ~= nil or patch.Stage ~= nil or patch.Prestige ~= nil then
+		if patch.Coins ~= nil or patch.Multiplier ~= nil or patch.Stage ~= nil or patch.Prestige ~= nil or patch.Fragments ~= nil then
 			refreshHUD()
 		end
 	end)
@@ -8586,11 +10606,11 @@ return UIController
           </Properties>
         </Item>
       </Item>
-      <Item class="Folder" referent="47">
+      <Item class="Folder" referent="55">
         <Properties>
           <string name="Name">Modules</string>
         </Properties>
-        <Item class="ModuleScript" referent="48">
+        <Item class="ModuleScript" referent="56">
           <Properties>
             <string name="Name">ClientState</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -8684,7 +10704,7 @@ return State
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="49">
+        <Item class="ModuleScript" referent="57">
           <Properties>
             <string name="Name">FloatingText</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -8754,7 +10774,7 @@ return FloatingText
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="50">
+        <Item class="ModuleScript" referent="58">
           <Properties>
             <string name="Name">RewardText</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -8792,7 +10812,7 @@ return RewardText
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="51">
+        <Item class="ModuleScript" referent="59">
           <Properties>
             <string name="Name">UIKit</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -9297,13 +11317,13 @@ return UIKit
       </Item>
     </Item>
   </Item>
-  <Item class="Workspace" referent="52">
+  <Item class="Workspace" referent="60">
     <Properties>
       <string name="Name">Workspace</string>
       <bool name="NeedsPivotMigration">false</bool>
       <bool name="StreamingEnabled">false</bool>
     </Properties>
-    <Item class="Terrain" referent="53">
+    <Item class="Terrain" referent="61">
       <Properties>
         <string name="Name">Terrain</string>
         <bool name="Decoration">true</bool>

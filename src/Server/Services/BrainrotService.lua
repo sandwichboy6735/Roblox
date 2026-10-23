@@ -105,12 +105,12 @@ function BrainrotService.ApplyCostume(player: Player)
 	humanoid.WalkSpeed = speed
 	humanoid.JumpPower = def.Jump
 	player:SetAttribute("Brainrot", name)
-	-- trail colour: prestige tier, or the galaxy trail from the gamepass
-	local tier = math.clamp(profile.Data.Prestige, 0, 5)
+	-- trail: the Rainbow Trail gamepass beats everything, else the equipped one
 	if GamepassService.Owns(player, "RainbowTrail") then
-		tier = 6
+		player:SetAttribute("Trail", "Rainbow")
+	else
+		player:SetAttribute("Trail", profile.Data.EquippedTrail or "None")
 	end
-	player:SetAttribute("TrailTier", tier)
 end
 
 --------------------------------------------------------------------------------
@@ -203,6 +203,30 @@ local function grantEarned(player: Player)
 end
 BrainrotService.GrantEarned = grantEarned
 
+--------------------------------------------------------------------------------
+-- Trails (coin cosmetics)
+--------------------------------------------------------------------------------
+
+function BrainrotService.BuyTrail(player: Player, key: string)
+	local profile = DataService:GetProfile(player)
+	local def = Config.Trails[key]
+	if not profile or not def then
+		return
+	end
+	local data = profile.Data
+	if not data.Trails[key] then
+		if def.Price > 0 and not EconomyService.SpendCoins(player, def.Price) then
+			notify(player, "You need " .. Util.FormatNumber(def.Price - data.Coins) .. " more coins for that trail.", "error")
+			return
+		end
+		data.Trails[key] = true
+		notify(player, "Unlocked the " .. def.Name .. " trail!", "reward")
+	end
+	data.EquippedTrail = key
+	DataService:Replicate(player, { Trails = data.Trails, EquippedTrail = key })
+	BrainrotService.ApplyCostume(player)
+end
+
 function BrainrotService.Init()
 	local function watch(player: Player)
 		player.CharacterAdded:Connect(function(character)
@@ -246,6 +270,13 @@ function BrainrotService.Init()
 			BrainrotService.Buy(player, name)
 		end
 	end)
+	local function trailRequest(player, key)
+		if type(key) == "string" and RateLimiter.Allow(player, "Trail", 3, 1) then
+			BrainrotService.BuyTrail(player, key)
+		end
+	end
+	Remotes.Get("BuyTrail").OnServerEvent:Connect(trailRequest)
+	Remotes.Get("EquipTrail").OnServerEvent:Connect(trailRequest)
 end
 
 return BrainrotService

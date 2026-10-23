@@ -15,6 +15,11 @@ local DEFINITIONS: { [string]: string } = {
 	-- Client -> Server
 	RequestData = "RemoteEvent",
 	CollectCoin = "RemoteEvent",
+	CollectFragment = "RemoteEvent",
+	FragmentTaken = "RemoteEvent",
+	ClaimQuest = "RemoteEvent",
+	BuyTrail = "RemoteEvent",
+	EquipTrail = "RemoteEvent",
 	EquipBrainrot = "RemoteEvent",
 	BuyBrainrot = "RemoteEvent",
 	TeleportStage = "RemoteEvent",

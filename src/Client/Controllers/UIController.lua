@@ -34,6 +34,8 @@ local stageLabel: TextLabel
 local worldLabel: TextLabel
 local timerLabel: TextLabel
 local prestigeLabel: TextLabel
+local progressFill: Frame
+local fragmentLabel: TextLabel
 local sideList: Frame
 
 local MAX_TOASTS = 4
@@ -164,7 +166,17 @@ local function buildHUD()
 	UIKit.Stroke(stagePill, UIKit.Ink, 3)
 	UIKit.Lip(stagePill, UIKit.Colors.Info:Lerp(Color3.new(0, 0, 0), 0.4), 4)
 	stageLabel = bigText(stagePill, { Position = UDim2.fromOffset(0, 4), Size = UDim2.new(1, 0, 0, 40), TextSize = 34, TextColor3 = Color3.fromRGB(255, 230, 90), Text = "STAGE 1" })
-	worldLabel = bigText(stagePill, { Position = UDim2.fromOffset(0, 44), Size = UDim2.new(1, 0, 0, 26), Font = UIKit.Fonts.Title, TextSize = 17, TextColor3 = UIKit.Colors.Muted, TextStrokeTransparency = 0.5, Text = "" })
+	worldLabel = bigText(stagePill, { Position = UDim2.fromOffset(0, 42), Size = UDim2.new(1, 0, 0, 22), Font = UIKit.Fonts.Title, TextSize = 16, TextColor3 = UIKit.Colors.Muted, TextStrokeTransparency = 0.5, Text = "" })
+	local progressBar = UIKit.Frame({ Position = UDim2.new(0, 14, 1, -11), Size = UDim2.new(1, -28, 0, 6), BackgroundColor3 = UIKit.Colors.PanelLight, Parent = stagePill })
+	UIKit.Corner(progressBar, 3)
+	progressFill = UIKit.Frame({ Size = UDim2.fromScale(0, 1), BackgroundColor3 = Color3.fromRGB(255, 230, 90), Parent = progressBar })
+	UIKit.Corner(progressFill, 3)
+
+	local fragmentPill = pill(root, "Fragments", UIKit.Colors.Purple, 170, 1)
+	fragmentPill.AnchorPoint = Vector2.new(1, 0)
+	fragmentPill.Position = UDim2.new(1, -16, 0, 12 + 54)
+	fragmentPill.Size = UDim2.fromOffset(170, 36)
+	fragmentLabel = bigText(fragmentPill, { TextSize = 16, Font = UIKit.Fonts.Title, TextColor3 = Color3.fromRGB(220, 150, 255), Text = "FRAGMENTS 0/12" })
 
 	local timerPill = pill(root, "Timer", UIKit.Colors.Info, 190, 1)
 	timerPill.AnchorPoint = Vector2.new(0.5, 0)
@@ -238,6 +250,13 @@ local function refreshHUD()
 	local world, worldIndex = Config.GetWorld(stage)
 	worldLabel.Text = string.format("World %d: %s", worldIndex, world.Name)
 	prestigeLabel.Text = "PRESTIGE " .. tostring(State.Get("Prestige", 0))
+	local _, inWorld = Config.GetWorldForStage(stage)
+	UIKit.Tween(progressFill, { Size = UDim2.fromScale(math.clamp((inWorld - 1) / math.max(world.Stages - 1, 1), 0, 1), 1) }, 0.3)
+	local found = 0
+	for _ in pairs(State.Get("Fragments", {})) do
+		found += 1
+	end
+	fragmentLabel.Text = string.format("FRAGMENTS %d/%d", found, Config.Fragments.Count)
 end
 
 local function refreshTimer()
@@ -275,6 +294,8 @@ local SIDE_ICONS = {
 	Stages = "🚩",
 	Rewards = "🎁",
 	Settings = "⚙️",
+	Quests = "📜",
+	Stats = "📊",
 }
 
 function UIController.AddSideButton(name: string, label: string, color: Color3, order: number, onClick: () -> ())
@@ -636,7 +657,7 @@ function UIController.Init()
 		Name = "SideButtons",
 		AnchorPoint = Vector2.new(0, 0.5),
 		Position = UDim2.new(0, 16, 0.55, 0),
-		Size = UDim2.fromOffset(216, 240),
+		Size = UDim2.fromOffset(216, 310),
 		BackgroundTransparency = 1,
 		Parent = root,
 	})
@@ -671,7 +692,7 @@ function UIController.Init()
 	State.OnLoaded(refreshHUD)
 	State.OnLoaded(refreshTimer)
 	State.Changed:Connect(function(patch)
-		if patch.Coins ~= nil or patch.Multiplier ~= nil or patch.Stage ~= nil or patch.Prestige ~= nil then
+		if patch.Coins ~= nil or patch.Multiplier ~= nil or patch.Stage ~= nil or patch.Prestige ~= nil or patch.Fragments ~= nil then
 			refreshHUD()
 		end
 	end)

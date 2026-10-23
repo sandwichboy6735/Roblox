@@ -88,7 +88,7 @@ function StagesUI.Init()
 		end
 	end)
 
-	UIController.AddSideButton("Stages", "STAGES", UIKit.Colors.Info, 3, function()
+	UIController.AddSideButton("Stages", "STAGES", UIKit.Colors.Info, 4, function()
 		UIController.Toggle("Stages")
 	end)
 end

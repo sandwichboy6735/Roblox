@@ -29,6 +29,7 @@ local canDoubleJump = false
 local jumpHeld = false
 local lastDash = -math.huge
 local lastPad: { [BasePart]: number } = {}
+local windZones: { BasePart } = {}
 local dashButton: TextButton
 local dashCooldownFill: Frame
 
@@ -116,8 +117,24 @@ local function onDashAction(_, inputState)
 	return Enum.ContextActionResult.Pass
 end
 
--- Glide: while holding jump in the air, fall slower.
-local function step()
+local function insideZone(zone: BasePart, position: Vector3): boolean
+	local rel = zone.CFrame:PointToObjectSpace(position)
+	local half = zone.Size / 2
+	return math.abs(rel.X) <= half.X and math.abs(rel.Y) <= half.Y and math.abs(rel.Z) <= half.Z
+end
+
+-- Glide: while holding jump in the air, fall slower. Wind zones push sideways.
+local function step(dt: number)
+	if root then
+		for _, zone in ipairs(windZones) do
+			if insideZone(zone, root.Position) then
+				local wind = zone:GetAttribute("Wind")
+				if typeof(wind) == "Vector3" then
+					root.AssemblyLinearVelocity += wind * dt * 2.2
+				end
+			end
+		end
+	end
 	local glide = State.GetPerk("Glide")
 	if glide and jumpHeld and humanoid and root and humanoid:GetState() == Enum.HumanoidStateType.Freefall then
 		local velocity = root.AssemblyLinearVelocity
@@ -165,7 +182,18 @@ function MovementController.Init()
 	ContextActionService:BindAction("BrainrotJump", onJumpAction, false, Enum.KeyCode.Space, Enum.KeyCode.ButtonA)
 	ContextActionService:BindAction("BrainrotDash", onDashAction, false, Enum.KeyCode.Q, Enum.KeyCode.ButtonX)
 	-- mobile jump button goes through the Humanoid.Jump property
-	RunService.RenderStepped:Connect(function()
+	task.spawn(function()
+		local course = Workspace:WaitForChild("Course", 30)
+		if course then
+			for _, part in ipairs(course:GetDescendants()) do
+				if part:IsA("BasePart") and part:GetAttribute("Wind") then
+					table.insert(windZones, part)
+				end
+			end
+		end
+	end)
+
+	RunService.RenderStepped:Connect(function(dt)
 		if humanoid then
 			local jumping = humanoid.Jump
 			if jumping and not jumpHeld then
@@ -175,7 +203,7 @@ function MovementController.Init()
 				jumpHeld = false
 			end
 		end
-		step()
+		step(dt)
 	end)
 
 	if player.Character then

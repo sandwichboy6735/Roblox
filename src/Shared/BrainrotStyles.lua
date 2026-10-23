@@ -56,6 +56,8 @@ local Characters = {
 	["Cloud Croissant"] = { Archetype = "Banana", Primary = rgb(235, 180, 110), Secondary = rgb(255, 235, 200), Accent = rgb(255, 255, 255), Extras = { "AngelWings" } },
 	["Prestige Pastaroni"] = { Archetype = "Blob", Primary = rgb(255, 200, 90), Secondary = rgb(230, 60, 60), Accent = rgb(255, 250, 230), Extras = { "Crown", "Sprinkles", "Glow" } },
 
+	["Fragment Phantom"] = { Archetype = "Squid", Primary = rgb(60, 20, 90), Secondary = rgb(170, 90, 255), Accent = rgb(120, 255, 240), Material = "Glass", Transparency = 0.25, Extras = { "Glow", "Halo", "Aurora" } },
+
 	["Golden Goatini"] = { Archetype = "Deer", Primary = GOLD, Secondary = rgb(255, 240, 190), Accent = rgb(200, 140, 20), Material = "Foil", Extras = { "Crown", "Glow" } },
 }
 

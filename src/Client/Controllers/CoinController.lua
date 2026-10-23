@@ -48,6 +48,28 @@ local function setHidden(coin: BasePart, hidden: boolean)
 	coin.Transparency = if hidden then 1 else 0
 end
 
+local fragments: { [BasePart]: { Id: string, Base: CFrame, Phase: number } } = {}
+
+local function trackFragment(shard: Instance)
+	if shard:IsA("BasePart") then
+		local id = shard:GetAttribute("FragmentId")
+		if type(id) == "string" then
+			fragments[shard] = { Id = id, Base = shard.CFrame, Phase = math.random() * 6 }
+		end
+	end
+end
+
+local function stepFragments(root: BasePart)
+	local found = State.Get("Fragments", {})
+	for shard, info in pairs(fragments) do
+		local taken = found[info.Id] == true
+		shard.Transparency = if taken then 1 else 0
+		if not taken and (shard.Position - root.Position).Magnitude <= Config.Coins.PickupRadius + 1 then
+			Remotes.Get("CollectFragment"):FireServer(info.Id)
+		end
+	end
+end
+
 local function step()
 	local character = player.Character
 	local root = character and character:FindFirstChild("HumanoidRootPart") :: BasePart?
@@ -56,6 +78,7 @@ local function step()
 	end
 	local radius = Config.Coins.PickupRadius + (State.GetPerk("Magnet") or 0)
 	local now = os.clock()
+	stepFragments(root)
 	for coin, info in pairs(coins) do
 		if info.HiddenUntil > 0 and now >= info.HiddenUntil then
 			info.HiddenUntil = 0
@@ -82,8 +105,27 @@ local function animate()
 			table.insert(cframes, info.Base * CFrame.new(0, math.sin(t * 2.5 + info.Phase) * 0.35, 0) * CFrame.Angles(t * 2 + info.Phase, 0, 0))
 		end
 	end
+	for shard, info in pairs(fragments) do
+		if shard.Transparency < 1 and (info.Base.Position - cameraPosition).Magnitude < ANIMATE_DISTANCE then
+			table.insert(parts, shard)
+			table.insert(cframes, info.Base * CFrame.new(0, math.sin(t * 2 + info.Phase) * 0.5, 0) * CFrame.Angles(0, t * 1.5, 0))
+		end
+	end
 	if #parts > 0 then
 		Workspace:BulkMoveTo(parts, cframes, Enum.BulkMoveMode.FireCFrameChanged)
+	end
+end
+
+local function onFragmentTaken(id: string, reward: number)
+	for shard, info in pairs(fragments) do
+		if info.Id == id then
+			burstPart.CFrame = CFrame.new(shard.Position)
+			burst.Color = ColorSequence.new(Color3.fromRGB(200, 120, 255), Color3.new(1, 1, 1))
+			burst:Emit(40)
+			burst.Color = ColorSequence.new(GOLD, Color3.new(1, 1, 1))
+			FloatingText.Show(shard.Position, "FRAGMENT! +" .. Util.FormatNumber(reward), Color3.fromRGB(220, 150, 255), Vector2.new(220, 56))
+			UIController.PlaySound("Checkpoint", 0.6)
+		end
 	end
 end
 
@@ -93,8 +135,9 @@ local function onTaken(coinId: string, amount: number)
 		return
 	end
 	burstPart.CFrame = CFrame.new(coin.Position)
-	burst:Emit(10)
-	FloatingText.Show(coin.Position, "+" .. Util.FormatNumber(amount), GOLD)
+	local lucky = coin:GetAttribute("Lucky") == true
+	burst:Emit(if lucky then 40 else 10)
+	FloatingText.Show(coin.Position, (if lucky then "LUCKY! +" else "+") .. Util.FormatNumber(amount), GOLD, if lucky then Vector2.new(220, 56) else nil)
 	UIController.PlaySound("Coin", 0.4)
 end
 
@@ -124,7 +167,11 @@ function CoinController.Init()
 	end
 	CollectionService:GetInstanceAddedSignal("Coin"):Connect(track)
 
+	for _, shard in ipairs(CollectionService:GetTagged("Fragment")) do
+		trackFragment(shard)
+	end
 	Remotes.Get("CoinTaken").OnClientEvent:Connect(onTaken)
+	Remotes.Get("FragmentTaken").OnClientEvent:Connect(onFragmentTaken)
 	RunService.Heartbeat:Connect(step)
 	RunService.RenderStepped:Connect(animate)
 end

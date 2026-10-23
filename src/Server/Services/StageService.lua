@@ -19,6 +19,7 @@ local EconomyService = require(script.Parent.EconomyService)
 local GamepassService = require(script.Parent.GamepassService)
 local CourseBuilder = require(script.Parent.CourseBuilder)
 local RateLimiter = require(script.Parent.RateLimiter)
+local EventService = require(script.Parent.EventService)
 
 local StageService = {}
 StageService.StageChanged = Signal.new() -- (player, stage)
@@ -136,8 +137,18 @@ function StageService.ReachStage(player: Player, stage: number, viaSkip: boolean
 		isNew = true
 	end
 	local reward = 0
+	data.Stats.CheckpointsTouched += 1
 	if isNew and not viaSkip then
-		reward = EconomyService.AddCoins(player, Config.GetStageReward(stage), true)
+		data.Stats.StagesCleared += 1
+		-- the stage you just finished (stage - 1) pays; boss stages pay 4x
+		local finished = stage - 1
+		local world, _ = Config.GetWorld(finished)
+		local _, inWorld = Config.GetWorldForStage(finished)
+		local amount = Config.GetStageReward(finished) * EventService.GetStageMultiplier()
+		if inWorld == world.Stages then
+			amount *= 4
+		end
+		reward = EconomyService.AddCoins(player, amount, true)
 	end
 	DataService:Replicate(player, { Stage = stage, Stats = data.Stats })
 	EconomyService.UpdateLeaderstats(player, data)

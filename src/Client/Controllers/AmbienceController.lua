@@ -78,6 +78,7 @@ local weatherPart: Part
 local emitter: ParticleEmitter
 local activeTweens: { Tween } = {}
 local worldStarts: { number } = {}
+local drifters: { { Part: BasePart, Base: CFrame, Phase: number, Kind: string } } = {}
 
 local function worldAt(x: number): number
 	local index = 1
@@ -159,6 +160,21 @@ function AmbienceController.Init()
 
 	task.spawn(function()
 		local course = Workspace:WaitForChild("Course")
+		-- clouds drift and planets turn (client-side, so no network cost)
+		local scenery = course:WaitForChild("Scenery", 30)
+		if scenery then
+			local rng = Random.new(7)
+			for _, folder in ipairs(scenery:GetChildren()) do
+				local name = folder.Name
+				if name:find("Sky") or name:find("Void") then
+					for _, part in ipairs(folder:GetChildren()) do
+						if part:IsA("BasePart") and part.Size.X > 25 and #drifters < 160 then
+							table.insert(drifters, { Part = part, Base = part.CFrame, Phase = rng:NextNumber(0, 6), Kind = if name:find("Void") then "Spin" else "Drift" })
+						end
+					end
+				end
+			end
+		end
 		for index in ipairs(Config.Worlds) do
 			local startX = course:GetAttribute("World" .. index .. "StartX")
 			worldStarts[index] = if type(startX) == "number" then startX else (index - 1) * 1000
@@ -176,6 +192,23 @@ function AmbienceController.Init()
 		end
 		local height = weatherPart:GetAttribute("Height")
 		weatherPart.CFrame = CFrame.new(focus + Vector3.new(0, if type(height) == "number" then height else 20, 0))
+		if #drifters > 0 then
+			local t = os.clock()
+			local parts, cframes = {}, {}
+			for _, drifter in ipairs(drifters) do
+				if (drifter.Base.Position - focus).Magnitude < 900 then
+					table.insert(parts, drifter.Part)
+					if drifter.Kind == "Spin" then
+						table.insert(cframes, drifter.Base * CFrame.Angles(0, t * 0.05 + drifter.Phase, 0))
+					else
+						table.insert(cframes, drifter.Base * CFrame.new(math.sin(t * 0.08 + drifter.Phase) * 18, math.sin(t * 0.15 + drifter.Phase) * 3, 0))
+					end
+				end
+			end
+			if #parts > 0 then
+				Workspace:BulkMoveTo(parts, cframes, Enum.BulkMoveMode.FireCFrameChanged)
+			end
+		end
 		accumulator += dt
 		if accumulator >= 0.5 and #worldStarts > 0 then
 			accumulator = 0

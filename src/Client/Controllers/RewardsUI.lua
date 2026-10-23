@@ -420,7 +420,7 @@ function RewardsUI.Init()
 		end
 	end)
 
-	UIController.AddSideButton("Rewards", "REWARDS", UIKit.Colors.Pink, 4, function()
+	UIController.AddSideButton("Rewards", "REWARDS", UIKit.Colors.Pink, 5, function()
 		UIController.Toggle("Rewards")
 	end)
 

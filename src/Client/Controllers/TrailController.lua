@@ -5,22 +5,30 @@
 --------------------------------------------------------------------------------
 
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared.Config)
 
 local TrailController = {}
 
 local rgb = Color3.fromRGB
-local TIERS = {
-	ColorSequence.new(rgb(230, 230, 240)), -- grey
-	ColorSequence.new(rgb(110, 235, 120)), -- green
-	ColorSequence.new(rgb(90, 180, 255)), -- blue
-	ColorSequence.new(rgb(185, 110, 255)), -- purple
-	ColorSequence.new(rgb(255, 215, 70), rgb(255, 160, 30)), -- golden
-	ColorSequence.new({ -- galaxy (max speed + a rebirth)
-		ColorSequenceKeypoint.new(0, rgb(120, 70, 255)),
-		ColorSequenceKeypoint.new(0.5, rgb(255, 110, 220)),
-		ColorSequenceKeypoint.new(1, rgb(80, 220, 255)),
-	}),
-}
+local RAINBOW = ColorSequence.new({
+	ColorSequenceKeypoint.new(0, rgb(120, 70, 255)),
+	ColorSequenceKeypoint.new(0.5, rgb(255, 110, 220)),
+	ColorSequenceKeypoint.new(1, rgb(80, 220, 255)),
+})
+
+local function colorsFor(key: any): ColorSequence?
+	if key == "Rainbow" then
+		return RAINBOW
+	end
+	local def = type(key) == "string" and Config.Trails[key]
+	if def and def.Color then
+		return ColorSequence.new(def.Color, def.Color:Lerp(Color3.new(1, 1, 1), 0.5))
+	end
+	return nil
+end
 
 local function apply(player: Player, character: Model)
 	local root = character:WaitForChild("HumanoidRootPart", 10)
@@ -50,8 +58,7 @@ local function apply(player: Player, character: Model)
 		newTrail.Parent = root
 		trail = newTrail
 	end
-	local tier = player:GetAttribute("TrailTier")
-	local colors = if type(tier) == "number" then TIERS[math.clamp(tier, 0, #TIERS)] else nil
+	local colors = colorsFor(player:GetAttribute("Trail"))
 	local t = trail :: Trail
 	t.Enabled = colors ~= nil
 	if colors then
@@ -63,7 +70,7 @@ local function watch(player: Player)
 	player.CharacterAdded:Connect(function(character)
 		apply(player, character)
 	end)
-	player:GetAttributeChangedSignal("TrailTier"):Connect(function()
+	player:GetAttributeChangedSignal("Trail"):Connect(function()
 		if player.Character then
 			task.spawn(apply, player, player.Character)
 		end

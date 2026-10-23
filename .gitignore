@@ -3,8 +3,10 @@
 *.rbxlx
 *.rbxm
 *.rbxmx
-!build/HatchLegends.rbxl
-!build/HatchLegends.rbxlx
+!build/BrainrotObby.rbxl
+!build/BrainrotObby.rbxlx
+!archive/HatchLegends.rbxl
+!archive/HatchLegends.rbxlx
 
 # Rojo / editor
 /sourcemap.json

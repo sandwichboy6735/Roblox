@@ -4,7 +4,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 LUAU="${LUAU:-luau}"
-BUNDLE="$(mktemp "${TMPDIR:-/tmp}/hatchlegends-tests.XXXXXX")"
+BUNDLE="$(mktemp "${TMPDIR:-/tmp}/brainrotobby-tests.XXXXXX")"
 trap 'rm -f "$BUNDLE"' EXIT
 {
 	cat tests/stubs.luau
@@ -14,8 +14,8 @@ trap 'rm -f "$BUNDLE"' EXIT
 	echo 'local Util = (function()'
 	cat src/Shared/Util.lua
 	echo 'end)()'
-	echo 'local PetStyles = (function()'
-	cat src/Shared/PetStyles.lua
+	echo 'local BrainrotStyles = (function()'
+	cat src/Shared/BrainrotStyles.lua
 	echo 'end)()'
 	echo 'local Codes = (function()'
 	cat src/Server/Codes.lua

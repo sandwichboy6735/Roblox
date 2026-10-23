@@ -105,6 +105,12 @@ function BrainrotService.ApplyCostume(player: Player)
 	humanoid.WalkSpeed = speed
 	humanoid.JumpPower = def.Jump
 	player:SetAttribute("Brainrot", name)
+	-- trail colour: prestige tier, or the galaxy trail from the gamepass
+	local tier = math.clamp(profile.Data.Prestige, 0, 5)
+	if GamepassService.Owns(player, "RainbowTrail") then
+		tier = 6
+	end
+	player:SetAttribute("TrailTier", tier)
 end
 
 --------------------------------------------------------------------------------
@@ -225,7 +231,7 @@ function BrainrotService.Init()
 	end)
 	GamepassService.Changed:Connect(function(player, passKey)
 		grantEarned(player)
-		if passKey == "SpeedBoost" then
+		if passKey == "SpeedBoost" or passKey == "RainbowTrail" then
 			BrainrotService.ApplyCostume(player)
 		end
 	end)

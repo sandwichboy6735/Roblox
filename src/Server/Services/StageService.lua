@@ -67,7 +67,11 @@ local function onCharacterAdded(player: Player, character: Model)
 	-- Wait for the root so PivotTo moves the whole rig.
 	character:WaitForChild("HumanoidRootPart", 10)
 	task.wait()
-	StageService.SendToCheckpoint(player)
+	-- Stage 1 players spawn in the lobby (the SpawnLocation), everyone else at
+	-- their checkpoint.
+	if profile.Data.Stage > 1 then
+		StageService.SendToCheckpoint(player)
+	end
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
 	if humanoid then
 		humanoid.Died:Connect(function()

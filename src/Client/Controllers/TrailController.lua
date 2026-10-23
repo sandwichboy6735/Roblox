@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------
--- TrailController - coloured speed trails behind players. The colour shows
--- how far a player has upgraded their speed (player attribute "TrailTier",
--- set by the server's UpgradeService), so progress is visible to everyone.
+-- TrailController - coloured trails behind players. The colour shows a
+-- player's prestige (player attribute "TrailTier", set by BrainrotService);
+-- the Rainbow Trail gamepass gives the galaxy one.
 --------------------------------------------------------------------------------
 
 local Players = game:GetService("Players")

@@ -3,19 +3,19 @@
     <Properties>
       <string name="Name">Lighting</string>
       <Color3 name="Ambient">
-        <R>0.45</R>
-        <G>0.45</G>
-        <B>0.5</B>
+        <R>0.4</R>
+        <G>0.4</G>
+        <B>0.44</B>
       </Color3>
-      <float name="Brightness">3</float>
+      <float name="Brightness">2.2</float>
       <float name="ClockTime">14</float>
       <float name="EnvironmentDiffuseScale">0.6</float>
       <float name="EnvironmentSpecularScale">0.6</float>
       <bool name="GlobalShadows">true</bool>
       <Color3 name="OutdoorAmbient">
-        <R>0.62</R>
-        <G>0.62</G>
-        <B>0.68</B>
+        <R>0.55</R>
+        <G>0.55</G>
+        <B>0.6</B>
       </Color3>
       <token name="Technology">4</token>
     </Properties>
@@ -1685,10 +1685,10 @@ Config.Worlds = {
 		Difficulty = { 0.05, 0.3 }, -- start / end of the world (0 = tutorial, 1 = extreme)
 		Boss = "Sneaker Shark",
 		Theme = {
-			Platform = Color3.fromRGB(120, 210, 90),
+			Platform = Color3.fromRGB(118, 192, 96),
 			Trim = Color3.fromRGB(70, 150, 60),
-			Accent = Color3.fromRGB(255, 220, 70),
-			Hazard = Color3.fromRGB(255, 80, 60),
+			Accent = Color3.fromRGB(250, 205, 80),
+			Hazard = Color3.fromRGB(240, 85, 70),
 			Sky = Color3.fromRGB(140, 205, 255),
 			Ground = "Grass",
 			Decor = "Meadow",
@@ -1702,7 +1702,7 @@ Config.Worlds = {
 		Difficulty = { 0.25, 0.45 },
 		Boss = "Croco Jet",
 		Theme = {
-			Platform = Color3.fromRGB(255, 225, 150),
+			Platform = Color3.fromRGB(245, 222, 160),
 			Trim = Color3.fromRGB(225, 170, 90),
 			Accent = Color3.fromRGB(70, 200, 255),
 			Hazard = Color3.fromRGB(40, 150, 255),
@@ -1719,7 +1719,7 @@ Config.Worlds = {
 		Difficulty = { 0.4, 0.6 },
 		Boss = "Timber Tapper",
 		Theme = {
-			Platform = Color3.fromRGB(70, 160, 80),
+			Platform = Color3.fromRGB(78, 150, 86),
 			Trim = Color3.fromRGB(120, 85, 50),
 			Accent = Color3.fromRGB(255, 150, 40),
 			Hazard = Color3.fromRGB(110, 200, 40),
@@ -1738,7 +1738,7 @@ Config.Worlds = {
 		Theme = {
 			Platform = Color3.fromRGB(120, 85, 65),
 			Trim = Color3.fromRGB(255, 235, 200),
-			Accent = Color3.fromRGB(255, 90, 200),
+			Accent = Color3.fromRGB(240, 120, 190),
 			Hazard = Color3.fromRGB(255, 160, 40),
 			Sky = Color3.fromRGB(255, 170, 120),
 			Ground = "Concrete",
@@ -1770,7 +1770,7 @@ Config.Worlds = {
 		Difficulty = { 0.82, 1 },
 		Boss = "Omega Brainrot",
 		Theme = {
-			Platform = Color3.fromRGB(90, 60, 170),
+			Platform = Color3.fromRGB(96, 70, 160),
 			Trim = Color3.fromRGB(200, 120, 255),
 			Accent = Color3.fromRGB(90, 255, 230),
 			Hazard = Color3.fromRGB(255, 50, 160),
@@ -2998,7 +2998,7 @@ local function platform(c: Ctx, cf: CFrame, size: Vector3, color: Color3?): Base
 	part({ Name = "Base", CFrame = cf * CFrame.new(0, -0.18, 0), Size = V(size.X + 0.3, size.Y - 0.36, size.Z + 0.3), Color = style.Side, CanCollide = false }, p)
 	local extra = style.Extra
 	if extra == "Neon" then
-		part({ Name = "Glow", CFrame = cf * CFrame.new(0, -size.Y / 2 + 0.1, 0), Size = V(size.X + 0.9, 0.2, size.Z + 0.9), Color = c.Theme.Accent, Material = Enum.Material.Neon, Transparency = 0.2, CanCollide = false, CastShadow = false }, p)
+		part({ Name = "Glow", CFrame = cf * CFrame.new(0, -size.Y / 2 + 0.1, 0), Size = V(size.X + 0.6, 0.2, size.Z + 0.6), Color = c.Theme.Accent, Material = Enum.Material.Neon, Transparency = 0.55, CanCollide = false, CastShadow = false }, p)
 	elseif extra == "Cloud" then
 		part({ Name = "Puff", Shape = Enum.PartType.Ball, Size = V(1, 1, 1) * math.min(size.X, size.Z) * 0.9, CFrame = cf * CFrame.new(0, -size.Y / 2 - 0.6, 0), Color = Color3.new(1, 1, 1), CanCollide = false, CastShadow = false }, p)
 	elseif extra == "Vines" and c.Rng:NextNumber() < 0.5 then
@@ -3036,9 +3036,9 @@ end
 -- Hazard pool: a glowing slab with floating crust blobs, a light and bubbles.
 local function lavaPool(c: Ctx, center: Vector3, size: Vector3)
 	local pool = kill(c, CFrame.new(center), size, "LavaPool")
-	pool.Transparency = 0.15
+	pool.Transparency = 0.3
 	local dark = c.Theme.Hazard:Lerp(Color3.new(0, 0, 0), 0.55)
-	local blobs = math.clamp(math.floor(size.X * size.Z / 120), 2, 6)
+	local blobs = math.clamp(math.floor(size.X * size.Z / 200), 1, 3)
 	for i = 1, blobs do
 		local bx = center.X + c.Rng:NextNumber(-size.X * 0.4, size.X * 0.4)
 		local bz = center.Z + c.Rng:NextNumber(-size.Z * 0.4, size.Z * 0.4)
@@ -3570,13 +3570,7 @@ local function buildCheckpoint(c: Ctx, cursor: Vector3, stage: number)
 	local ring = part({ Name = "Ring", Shape = Enum.PartType.Cylinder, Size = V(0.2, 7, 7), CFrame = CFrame.new(pad.Position + V(0, 0.6, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color = c.Theme.Accent, Material = Enum.Material.Neon, CanCollide = false, CastShadow = false }, c.Model)
 	ring.Name = "CheckpointRing"
 	part({ Name = "Inlay", Shape = Enum.PartType.Cylinder, Size = V(0.1, 9, 9), CFrame = CFrame.new(pad.Position + V(0, 0.52, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color = c.Theme.Trim, CanCollide = false, CastShadow = false }, c.Model)
-	for _, sx in ipairs({ -1, 1 }) do
-		for _, sz in ipairs({ -1, 1 }) do
-			if not (sx == -1 and sz == -1) then
-				flag(c, pad.Position + V(sx * (PAD_SIZE / 2 - 0.8), 0.5, sz * (PAD_SIZE / 2 - 0.8)))
-			end
-		end
-	end
+	flag(c, pad.Position + V(PAD_SIZE / 2 - 0.8, 0.5, PAD_SIZE / 2 - 0.8))
 	local trigger = part({ Name = "Checkpoint", CFrame = CFrame.new(pad.Position + V(0, 4, 0)), Size = V(PAD_SIZE, 7, PAD_SIZE), Transparency = 1, CanCollide = false, CastShadow = false }, c.Model)
 	trigger.CanQuery = false
 	trigger:SetAttribute("Stage", stage)
@@ -3842,9 +3836,10 @@ local function buildStage(stage: number, cursor: Vector3, parent: Instance): Vec
 			if pos.X < targetX - 18 then
 				local landing = platform(c, CFrame.new(pos.X + 3, pos.Y - 0.5, pos.Z), V(6, 1, 8))
 				landing.Name = "Landing"
-				if rng:NextNumber() < 0.5 then
+				local roll = rng:NextNumber()
+				if roll < 0.2 then
 					lamp(c, V(pos.X + 3, pos.Y, pos.Z + 3.6))
-				else
+				elseif roll < 0.4 then
 					flag(c, V(pos.X + 3, pos.Y, pos.Z - 3.6))
 				end
 				pos = V(pos.X + 6, pos.Y, pos.Z)
@@ -3988,12 +3983,9 @@ local function buildLobby(parent: Instance, theme)
 	local statues = Instance.new("Folder")
 	statues.Name = "Statues"
 	statues.Parent = lobby
-	buildStatue(statues, "Sneaker Shark", CFrame.new(x0 + 45, 0, 22), "Rare - 6,500 coins")
-	buildStatue(statues, "Tralala Titan", CFrame.new(x0 + 62, 0, 30), "Legendary")
-	buildStatue(statues, "Omega Brainrot", CFrame.new(x0 + 80, 0, 22), "Mythic - Prestige 1")
-	buildStatue(statues, "Ballerina Latte", CFrame.new(x0 + 45, 0, -22), "Epic")
-	buildStatue(statues, "Nuke Nonna", CFrame.new(x0 + 62, 0, -30), "Legendary")
-	buildStatue(statues, "Galaxy Gnocchi", CFrame.new(x0 + 80, 0, -22), "Legendary")
+	buildStatue(statues, "Sneaker Shark", CFrame.new(x0 + 45, 0, -24), "Rare - 6,500 coins")
+	buildStatue(statues, "Tralala Titan", CFrame.new(x0 + 62, 0, -30), "Legendary")
+	buildStatue(statues, "Omega Brainrot", CFrame.new(x0 + 80, 0, -24), "Mythic - Prestige 1")
 
 	-- arrow on the floor pointing at stage 1
 	for i = 0, 4 do
@@ -4048,22 +4040,22 @@ local function setupLighting()
 	atmosphere.Haze = 0.8
 	atmosphere.Parent = Lighting
 	local bloom = Instance.new("BloomEffect")
-	bloom.Intensity = 0.8
-	bloom.Size = 24
-	bloom.Threshold = 1.1
+	bloom.Intensity = 0.35
+	bloom.Size = 20
+	bloom.Threshold = 1.2
 	bloom.Parent = Lighting
 	local color = Instance.new("ColorCorrectionEffect")
 	color.Name = "WorldColor"
-	color.Saturation = 0.28
-	color.Contrast = 0.1
-	color.Brightness = 0.02
+	color.Saturation = 0.08
+	color.Contrast = 0.06
+	color.Brightness = 0
 	color.Parent = Lighting
 	local rays = Instance.new("SunRaysEffect")
-	rays.Intensity = 0.08
+	rays.Intensity = 0.04
 	rays.Spread = 0.7
 	rays.Parent = Lighting
-	Lighting.ClockTime = 14
-	Lighting.Brightness = 3
+	Lighting.ClockTime = 13.5
+	Lighting.Brightness = 2.2
 	Terrain:SetMaterialColor(Enum.Material.Grass, rgb(112, 202, 72))
 	Terrain:SetMaterialColor(Enum.Material.LeafyGrass, rgb(70, 150, 60))
 	Terrain:SetMaterialColor(Enum.Material.Sand, rgb(248, 225, 160))
@@ -4363,7 +4355,7 @@ function CourseDecor.Fill(themeName: string, parent: Instance, minX: number, max
 	local folder = Instance.new("Folder")
 	folder.Name = themeName
 	folder.Parent = parent
-	local count = math.floor((maxX - minX) * theme.Density) * 2
+	local count = math.floor((maxX - minX) * theme.Density)
 	for _ = 1, count do
 		local x = rng:NextNumber(minX, maxX)
 		local side = if rng:NextNumber() < 0.5 then -1 else 1
@@ -4393,7 +4385,7 @@ end
 --------------------------------------------------------------------------------
 
 local function mountains(folder, minX, maxX, groundY, rng, colors)
-	for x = minX, maxX, 90 do
+	for x = minX, maxX, 130 do
 		for _, side in ipairs({ -1, 1 }) do
 			local w = rng:NextNumber(90, 160)
 			local h = rng:NextNumber(60, 130)
@@ -4403,7 +4395,7 @@ local function mountains(folder, minX, maxX, groundY, rng, colors)
 end
 
 local function skyline(folder, minX, maxX, groundY, rng)
-	for x = minX, maxX, 22 do
+	for x = minX, maxX, 32 do
 		for _, side in ipairs({ -1, 1 }) do
 			local w = rng:NextNumber(14, 22)
 			local h = rng:NextNumber(50, 120)
@@ -5949,7 +5941,7 @@ function PlayerService.Init()
 				return
 			end
 			if profile.Data.Stats.Joins <= 1 then
-				Remotes.Get("Notify"):FireClient(player, "Welcome to " .. Config.GameName .. "! Follow the arrows and touch the glowing pads.", "info")
+				Remotes.Get("Notify"):FireClient(player, "Welcome to " .. Config.GameName .. "! Reach the glowing pad ahead.", "info")
 			else
 				Remotes.Get("Notify"):FireClient(player, "Welcome back, " .. player.DisplayName .. "! You're on stage " .. profile.Data.Stage .. ".", "info")
 			end
@@ -6901,6 +6893,7 @@ local START_ORDER = {
 	"AmbienceController",
 	"PlayerVisualsController",
 	"TrailController",
+	"LobbyShelfController",
 	"ChatController",
 	"IntroController",
 }
@@ -6967,50 +6960,50 @@ local BLEND = TweenInfo.new(2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut
 -- Keyed by Config.Worlds[i].Theme.Decor
 local PRESETS = {
 	Meadow = {
-		Lighting = { ClockTime = 14, Brightness = 3, Ambient = rgb(120, 120, 132), OutdoorAmbient = rgb(168, 168, 180), ExposureCompensation = 0.1 },
+		Lighting = { ClockTime = 14, Brightness = 2.30, Ambient = rgb(120, 120, 132), OutdoorAmbient = rgb(168, 168, 180), ExposureCompensation = 0.00 },
 		Atmosphere = { Density = 0.22, Color = rgb(205, 222, 245), Decay = rgb(120, 140, 170), Haze = 0.6, Glare = 0.15 },
-		Color = { TintColor = rgb(255, 255, 252), Saturation = 0.3, Contrast = 0.12 },
+		Color = { TintColor = rgb(255, 255, 252), Saturation = 0.16, Contrast = 0.12 },
 		Weather = "Pollen",
 	},
 	Beach = {
-		Lighting = { ClockTime = 13, Brightness = 3.2, Ambient = rgb(130, 130, 140), OutdoorAmbient = rgb(180, 180, 190), ExposureCompensation = 0.15 },
+		Lighting = { ClockTime = 13, Brightness = 2.50, Ambient = rgb(130, 130, 140), OutdoorAmbient = rgb(180, 180, 190), ExposureCompensation = 0.03 },
 		Atmosphere = { Density = 0.2, Color = rgb(215, 235, 255), Decay = rgb(130, 170, 210), Haze = 0.5, Glare = 0.3 },
-		Color = { TintColor = rgb(255, 252, 240), Saturation = 0.35, Contrast = 0.1 },
+		Color = { TintColor = rgb(255, 252, 240), Saturation = 0.21, Contrast = 0.1 },
 		Weather = "Sparkles",
 	},
 	Jungle = {
-		Lighting = { ClockTime = 15, Brightness = 2.6, Ambient = rgb(95, 125, 100), OutdoorAmbient = rgb(140, 170, 140), ExposureCompensation = 0.05 },
+		Lighting = { ClockTime = 15, Brightness = 1.90, Ambient = rgb(95, 125, 100), OutdoorAmbient = rgb(140, 170, 140), ExposureCompensation = 0.00 },
 		Atmosphere = { Density = 0.38, Color = rgb(170, 215, 190), Decay = rgb(70, 120, 90), Haze = 1.8, Glare = 0.1 },
-		Color = { TintColor = rgb(240, 255, 240), Saturation = 0.3, Contrast = 0.14 },
+		Color = { TintColor = rgb(240, 255, 240), Saturation = 0.16, Contrast = 0.14 },
 		Weather = "Leaves",
 	},
 	City = {
-		Lighting = { ClockTime = 18, Brightness = 2.4, Ambient = rgb(150, 110, 100), OutdoorAmbient = rgb(190, 140, 120), ExposureCompensation = 0.05 },
+		Lighting = { ClockTime = 18, Brightness = 1.70, Ambient = rgb(150, 110, 100), OutdoorAmbient = rgb(190, 140, 120), ExposureCompensation = 0.00 },
 		Atmosphere = { Density = 0.35, Color = rgb(255, 180, 130), Decay = rgb(150, 70, 60), Haze = 1.6, Glare = 0.4 },
-		Color = { TintColor = rgb(255, 236, 220), Saturation = 0.28, Contrast = 0.16 },
+		Color = { TintColor = rgb(255, 236, 220), Saturation = 0.14, Contrast = 0.16 },
 		Weather = "Steam",
 	},
 	Sky = {
-		Lighting = { ClockTime = 12, Brightness = 3.4, Ambient = rgb(150, 160, 185), OutdoorAmbient = rgb(195, 205, 230), ExposureCompensation = 0.2 },
+		Lighting = { ClockTime = 12, Brightness = 2.70, Ambient = rgb(150, 160, 185), OutdoorAmbient = rgb(195, 205, 230), ExposureCompensation = 0.08 },
 		Atmosphere = { Density = 0.3, Color = rgb(225, 238, 255), Decay = rgb(160, 190, 235), Haze = 1.2, Glare = 0.2 },
-		Color = { TintColor = rgb(245, 250, 255), Saturation = 0.2, Contrast = 0.12 },
+		Color = { TintColor = rgb(245, 250, 255), Saturation = 0.06, Contrast = 0.12 },
 		Weather = "Wind",
 	},
 	Void = {
-		Lighting = { ClockTime = 0, Brightness = 1.8, Ambient = rgb(118, 106, 168), OutdoorAmbient = rgb(140, 126, 192), ExposureCompensation = 0.3 },
+		Lighting = { ClockTime = 0, Brightness = 1.10, Ambient = rgb(118, 106, 168), OutdoorAmbient = rgb(140, 126, 192), ExposureCompensation = 0.18 },
 		Atmosphere = { Density = 0.2, Color = rgb(80, 58, 140), Decay = rgb(30, 15, 72), Haze = 0.6, Glare = 0 },
-		Color = { TintColor = rgb(236, 226, 255), Saturation = 0.32, Contrast = 0.14 },
+		Color = { TintColor = rgb(236, 226, 255), Saturation = 0.18, Contrast = 0.14 },
 		Weather = "Stars",
 	},
 }
 
 local WEATHER = {
-	Pollen = { Color = ColorSequence.new(rgb(255, 250, 200)), Size = 0.18, Rate = 25, Speed = NumberRange.new(0.3, 1), Accel = Vector3.new(0.6, -0.4, 0.3), Life = NumberRange.new(5, 8), Light = 0.6, Height = 12 },
-	Sparkles = { Color = ColorSequence.new(rgb(255, 255, 255), rgb(170, 230, 255)), Size = 0.25, Rate = 25, Speed = NumberRange.new(0.2, 0.8), Accel = Vector3.new(0, 0.3, 0), Life = NumberRange.new(4, 7), Light = 1, Height = 6 },
-	Leaves = { Color = ColorSequence.new(rgb(120, 200, 80), rgb(230, 170, 60)), Size = 0.4, Rate = 30, Speed = NumberRange.new(1, 3), Accel = Vector3.new(1.2, -2, 0.4), Life = NumberRange.new(5, 8), Light = 0.1, Height = 22 },
-	Steam = { Color = ColorSequence.new(rgb(255, 240, 230)), Size = 1.2, Rate = 12, Speed = NumberRange.new(1, 2), Accel = Vector3.new(0.3, 1.5, 0), Life = NumberRange.new(3, 5), Light = 0.2, Height = -6 },
-	Wind = { Color = ColorSequence.new(rgb(255, 255, 255)), Size = 0.3, Rate = 40, Speed = NumberRange.new(10, 16), Accel = Vector3.new(6, 0, 0), Life = NumberRange.new(2, 3), Light = 0.5, Height = 4 },
-	Stars = { Color = ColorSequence.new(rgb(200, 220, 255), rgb(220, 160, 255)), Size = 0.22, Rate = 40, Speed = NumberRange.new(0, 0.4), Accel = Vector3.new(0, 0, 0), Life = NumberRange.new(2, 4), Light = 1, Height = 8 },
+	Pollen = { Color = ColorSequence.new(rgb(255, 250, 200)), Size = 0.18, Rate = 13, Speed = NumberRange.new(0.3, 1), Accel = Vector3.new(0.6, -0.4, 0.3), Life = NumberRange.new(5, 8), Light = 0.6, Height = 12 },
+	Sparkles = { Color = ColorSequence.new(rgb(255, 255, 255), rgb(170, 230, 255)), Size = 0.25, Rate = 13, Speed = NumberRange.new(0.2, 0.8), Accel = Vector3.new(0, 0.3, 0), Life = NumberRange.new(4, 7), Light = 1, Height = 6 },
+	Leaves = { Color = ColorSequence.new(rgb(120, 200, 80), rgb(230, 170, 60)), Size = 0.4, Rate = 16, Speed = NumberRange.new(1, 3), Accel = Vector3.new(1.2, -2, 0.4), Life = NumberRange.new(5, 8), Light = 0.1, Height = 22 },
+	Steam = { Color = ColorSequence.new(rgb(255, 240, 230)), Size = 1.2, Rate = 6, Speed = NumberRange.new(1, 2), Accel = Vector3.new(0.3, 1.5, 0), Life = NumberRange.new(3, 5), Light = 0.2, Height = -6 },
+	Wind = { Color = ColorSequence.new(rgb(255, 255, 255)), Size = 0.3, Rate = 22, Speed = NumberRange.new(10, 16), Accel = Vector3.new(6, 0, 0), Life = NumberRange.new(2, 3), Light = 0.5, Height = 4 },
+	Stars = { Color = ColorSequence.new(rgb(200, 220, 255), rgb(220, 160, 255)), Size = 0.22, Rate = 22, Speed = NumberRange.new(0, 0.4), Accel = Vector3.new(0, 0, 0), Life = NumberRange.new(2, 4), Light = 1, Height = 8 },
 }
 
 local currentTheme: string? = nil
@@ -7704,15 +7697,7 @@ local function refresh()
 		stroke.Color = event.Color
 		chip.Visible = true
 	else
-		local nextAt = ReplicatedStorage:GetAttribute("NextEventAt")
-		if type(nextAt) == "number" then
-			label.Text = "Next event in " .. Util.FormatTime(math.max(0, nextAt - now))
-			label.TextColor3 = UIKit.Colors.Muted
-			stroke.Color = UIKit.Colors.Stroke
-			chip.Visible = true
-		else
-			chip.Visible = false
-		end
+		chip.Visible = false
 	end
 end
 
@@ -7720,7 +7705,7 @@ function EventUI.Init()
 	chip = UIKit.Frame({
 		Name = "EventChip",
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -16, 0, 66),
+		Position = UDim2.new(1, -16, 0, 12),
 		Size = UDim2.fromOffset(250, 30),
 		BackgroundColor3 = UIKit.Colors.Background,
 		BackgroundTransparency = 0.2,
@@ -7776,7 +7761,7 @@ local player = Players.LocalPlayer
 
 local IntroController = {}
 
-local DURATION = 4.5
+local DURATION = 3
 
 local function play()
 	local camera = Workspace.CurrentCamera
@@ -7839,6 +7824,193 @@ return IntroController
           </Properties>
         </Item>
         <Item class="ModuleScript" referent="44">
+          <Properties>
+            <string name="Name">LobbyShelfController</string>
+            <string name="Source"><![CDATA[--------------------------------------------------------------------------------
+-- LobbyShelfController - your own brainrots on display in the lobby, each on
+-- a pedestal with a name card (like a base full of brainrots). Built on the
+-- client, so it only shows your collection and costs the server nothing.
+--------------------------------------------------------------------------------
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+
+local Shared = ReplicatedStorage:WaitForChild("Shared")
+local Config = require(Shared.Config)
+local BrainrotBuilder = require(Shared.BrainrotBuilder)
+
+local Modules = script.Parent.Parent:WaitForChild("Modules")
+local State = require(Modules.ClientState)
+
+local LobbyShelfController = {}
+
+local MAX_SHOWN = 8
+local INK = Color3.fromRGB(28, 22, 40)
+
+local folder: Folder
+local shown: { [string]: { Model: Model, Base: CFrame, Phase: number } } = {}
+local slots: { CFrame } = {}
+
+local function pedestal(cf: CFrame)
+	local base = Instance.new("Part")
+	base.Anchored = true
+	base.Shape = Enum.PartType.Cylinder
+	base.Size = Vector3.new(1, 5.5, 5.5)
+	base.CFrame = cf * CFrame.new(0, 0.5, 0) * CFrame.Angles(0, 0, math.rad(90))
+	base.Color = Color3.fromRGB(235, 235, 245)
+	base.Material = Enum.Material.SmoothPlastic
+	base.TopSurface = Enum.SurfaceType.Smooth
+	base.Parent = folder
+	local trim = base:Clone()
+	trim.Size = Vector3.new(0.25, 5.9, 5.9)
+	trim.CFrame = cf * CFrame.new(0, 0.12, 0) * CFrame.Angles(0, 0, math.rad(90))
+	trim.Color = Color3.fromRGB(255, 205, 60)
+	trim.Material = Enum.Material.Neon
+	trim.CanCollide = false
+	trim.CastShadow = false
+	trim.Parent = folder
+end
+
+local function card(model: Model, name: string)
+	local def = Config.Brainrots[name]
+	if not def then
+		return
+	end
+	local gui = Instance.new("BillboardGui")
+	gui.Size = UDim2.new(6, 0, 1.6, 0)
+	gui.StudsOffsetWorldSpace = Vector3.new(0, 1.2, 0)
+	gui.MaxDistance = 90
+	gui.LightInfluence = 0
+	gui.Adornee = model.PrimaryPart
+	local label = Instance.new("TextLabel")
+	label.BackgroundTransparency = 1
+	label.Size = UDim2.fromScale(1, 0.6)
+	label.Font = Enum.Font.FredokaOne
+	label.TextScaled = true
+	label.Text = name
+	label.TextColor3 = Config.Rarities[def.Rarity].Color:Lerp(Color3.new(1, 1, 1), 0.3)
+	label.TextStrokeTransparency = 0
+	label.TextStrokeColor3 = INK
+	label.Parent = gui
+	local rarity = Instance.new("TextLabel")
+	rarity.BackgroundTransparency = 1
+	rarity.Position = UDim2.fromScale(0, 0.6)
+	rarity.Size = UDim2.fromScale(1, 0.4)
+	rarity.Font = Enum.Font.LuckiestGuy
+	rarity.TextScaled = true
+	rarity.Text = string.upper(def.Rarity)
+	rarity.TextColor3 = Config.Rarities[def.Rarity].Color
+	rarity.TextStrokeTransparency = 0
+	rarity.TextStrokeColor3 = INK
+	rarity.Parent = gui
+	gui.Parent = model.PrimaryPart
+	if model.PrimaryPart then
+		gui.StudsOffsetWorldSpace = Vector3.new(0, 0, 0)
+		gui.StudsOffset = Vector3.new(0, 0, 0)
+		-- sit the card above the character's head
+		local _, size = model:GetBoundingBox()
+		gui.StudsOffsetWorldSpace = Vector3.new(0, size.Y + 1, 0)
+	end
+end
+
+local function rebuild()
+	if not State.Loaded or #slots == 0 then
+		return
+	end
+	local owned = State.Get("Owned", {})
+	-- newest / rarest first: sort by Order descending
+	local list = {}
+	for name in pairs(owned) do
+		if Config.Brainrots[name] then
+			table.insert(list, name)
+		end
+	end
+	table.sort(list, function(a, b)
+		return (Config.Brainrots[a].Order or 0) > (Config.Brainrots[b].Order or 0)
+	end)
+	local wanted = {}
+	for index = 1, math.min(#list, MAX_SHOWN) do
+		wanted[list[index]] = index
+	end
+	for name, entry in pairs(shown) do
+		if not wanted[name] then
+			entry.Model:Destroy()
+			shown[name] = nil
+		end
+	end
+	for name, index in pairs(wanted) do
+		local cf = slots[index]
+		local entry = shown[name]
+		if not entry then
+			local ok, built = pcall(BrainrotBuilder.Build, name, { Effects = true, Weld = false, Scale = 1.5 })
+			if ok and built then
+				built.Model.Name = "Shelf_" .. name
+				built.Model.Parent = folder
+				card(built.Model, name)
+				entry = { Model = built.Model, Base = cf * CFrame.new(0, 1, 0), Phase = index }
+				shown[name] = entry
+			end
+		else
+			entry.Base = cf * CFrame.new(0, 1, 0)
+		end
+	end
+end
+
+function LobbyShelfController.Init()
+	folder = Instance.new("Folder")
+	folder.Name = "MyBrainrotShelf"
+	folder.Parent = Workspace
+	-- pedestals along the back edge of the lobby, facing the path
+	local x0 = -Config.Course.LobbyLength
+	for index = 1, MAX_SHOWN do
+		local cf = CFrame.new(x0 + 18 + (index - 1) * 11, 0, 38) * CFrame.Angles(0, math.rad(180), 0)
+		slots[index] = cf
+		pedestal(cf)
+	end
+	local sign = Instance.new("Part")
+	sign.Anchored = true
+	sign.Size = Vector3.new(26, 3, 0.5)
+	sign.CFrame = CFrame.new(x0 + 56, 9, 43)
+	sign.Color = INK
+	sign.Parent = folder
+	local gui = Instance.new("BillboardGui")
+	gui.Size = UDim2.fromOffset(420, 70)
+	gui.MaxDistance = 120
+	gui.LightInfluence = 0
+	gui.Adornee = sign
+	local label = Instance.new("TextLabel")
+	label.BackgroundTransparency = 1
+	label.Size = UDim2.fromScale(1, 1)
+	label.Font = Enum.Font.LuckiestGuy
+	label.TextScaled = true
+	label.Text = "MY BRAINROTS"
+	label.TextColor3 = Color3.fromRGB(255, 215, 60)
+	label.TextStrokeTransparency = 0
+	label.TextStrokeColor3 = INK
+	label.Parent = gui
+	gui.Parent = sign
+
+	State.OnLoaded(rebuild)
+	State.Changed:Connect(function(patch)
+		if patch.Owned ~= nil then
+			rebuild()
+		end
+	end)
+	-- idle bob + slow turn
+	RunService.RenderStepped:Connect(function()
+		local t = os.clock()
+		for _, entry in pairs(shown) do
+			entry.Model:PivotTo(entry.Base * CFrame.new(0, math.sin(t * 1.5 + entry.Phase) * 0.2, 0) * CFrame.Angles(0, math.sin(t * 0.5 + entry.Phase) * 0.5, 0))
+		end
+	end)
+end
+
+return LobbyShelfController
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="45">
           <Properties>
             <string name="Name">MovementController</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -8066,7 +8238,7 @@ return MovementController
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="45">
+        <Item class="ModuleScript" referent="46">
           <Properties>
             <string name="Name">ObbyFxController</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -8292,7 +8464,7 @@ return ObbyFxController
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="46">
+        <Item class="ModuleScript" referent="47">
           <Properties>
             <string name="Name">PlayerVisualsController</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -8557,7 +8729,7 @@ return PlayerVisualsController
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="47">
+        <Item class="ModuleScript" referent="48">
           <Properties>
             <string name="Name">QuestsUI</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -8654,7 +8826,7 @@ local function refresh()
 	local nextReset = (Util.DayNumber(now) + 1) * 86400
 	resetLabel.Text = "New quests in " .. Util.FormatTime(nextReset - now)
 	UIController.SetBadge("Quests", claimable)
-	tracker.Visible = State.Loaded and #list > 0
+	tracker.Visible = State.Loaded and #list > 0 and (State.Get("Stage", 1) >= 5 or State.Get("Prestige", 0) > 0)
 end
 
 local function buildRow(parent: Instance, order: number): Row
@@ -8679,7 +8851,7 @@ local function buildTracker()
 	tracker = UIKit.Frame({
 		Name = "QuestTracker",
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -16, 0, 120),
+		Position = UDim2.new(1, -16, 0, 110),
 		Size = UDim2.fromOffset(250, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundColor3 = UIKit.Colors.Background,
@@ -8749,7 +8921,7 @@ return QuestsUI
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="48">
+        <Item class="ModuleScript" referent="49">
           <Properties>
             <string name="Name">RewardsUI</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -9195,7 +9367,7 @@ return RewardsUI
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="49">
+        <Item class="ModuleScript" referent="50">
           <Properties>
             <string name="Name">SettingsUI</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -9262,7 +9434,7 @@ local function refresh()
 end
 
 function SettingsUI.Init()
-	window = UIController.CreateWindow("Settings", "SETTINGS", UDim2.fromOffset(420, 240), UIKit.Colors.Stroke)
+	window = UIController.CreateWindow("Settings", "SETTINGS", UDim2.fromOffset(420, 300), UIKit.Colors.Stroke)
 	local list = UIKit.Frame({ Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Parent = window.Content })
 	UIKit.Create("UIListLayout", { Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder, Parent = list })
 
@@ -9298,6 +9470,11 @@ function SettingsUI.Init()
 		toggles[setting.Key] = button
 	end
 
+	local statsButton = UIKit.Button({ Size = UDim2.new(1, 0, 0, 44), Color = UIKit.Colors.Purple, Text = "MY STATS", TextSize = 18, LayoutOrder = 10 }, function()
+		UIController.Open("Stats")
+	end)
+	statsButton.Parent = list
+
 	window.OnOpen = refresh
 	State.Changed:Connect(function(patch)
 		if patch.Settings ~= nil then
@@ -9306,7 +9483,7 @@ function SettingsUI.Init()
 		end
 	end)
 
-	UIController.AddSideButton("Settings", "SETTINGS", UIKit.Colors.Stroke, 7, function()
+	UIController.AddSideButton("Settings", "SETTINGS", UIKit.Colors.Stroke, 6, function()
 		UIController.Toggle("Settings")
 	end)
 end
@@ -9315,7 +9492,7 @@ return SettingsUI
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="50">
+        <Item class="ModuleScript" referent="51">
           <Properties>
             <string name="Name">ShopUI</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -9581,7 +9758,7 @@ return ShopUI
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="51">
+        <Item class="ModuleScript" referent="52">
           <Properties>
             <string name="Name">StagesUI</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -9683,7 +9860,7 @@ return StagesUI
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="52">
+        <Item class="ModuleScript" referent="53">
           <Properties>
             <string name="Name">StatsUI</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -9767,16 +9944,14 @@ function StatsUI.Init()
 	end
 	window.OnOpen = refresh
 	State.Changed:Connect(refresh)
-	UIController.AddSideButton("Stats", "STATS", UIKit.Colors.Purple, 6, function()
-		UIController.Toggle("Stats")
-	end)
+	-- opened from the Settings window (keeps the side menu short)
 end
 
 return StatsUI
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="53">
+        <Item class="ModuleScript" referent="54">
           <Properties>
             <string name="Name">TrailController</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -9872,7 +10047,7 @@ return TrailController
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="54">
+        <Item class="ModuleScript" referent="55">
           <Properties>
             <string name="Name">UIController</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -9911,8 +10086,11 @@ local stageLabel: TextLabel
 local worldLabel: TextLabel
 local timerLabel: TextLabel
 local prestigeLabel: TextLabel
+local prestigePill: Frame
 local progressFill: Frame
 local fragmentLabel: TextLabel
+local fragmentPill: Frame
+local hintLabel: TextLabel
 local sideList: Frame
 
 local MAX_TOASTS = 4
@@ -10026,8 +10204,7 @@ local function buildHUD()
 	end)
 	plus.Parent = coinPill
 
-	local multPill = pill(column, "Multiplier", UIKit.Colors.Purple, 230, 2)
-	multLabel = bigText(multPill, { TextSize = 20, TextColor3 = UIKit.Colors.Purple:Lerp(Color3.new(1, 1, 1), 0.3), Text = "x1.00 Coins" })
+	multLabel = bigText(column, { Name = "Multiplier", Size = UDim2.fromOffset(230, 24), Font = UIKit.Fonts.Title, TextSize = 16, TextColor3 = UIKit.Colors.Purple:Lerp(Color3.new(1, 1, 1), 0.4), TextStrokeTransparency = 0.4, TextXAlignment = Enum.TextXAlignment.Left, Text = "", LayoutOrder = 2 })
 
 	-- Top-centre: stage + world + timer
 	local stagePill = UIKit.Frame({
@@ -10043,28 +10220,27 @@ local function buildHUD()
 	UIKit.Stroke(stagePill, UIKit.Ink, 3)
 	UIKit.Lip(stagePill, UIKit.Colors.Info:Lerp(Color3.new(0, 0, 0), 0.4), 4)
 	stageLabel = bigText(stagePill, { Position = UDim2.fromOffset(0, 4), Size = UDim2.new(1, 0, 0, 40), TextSize = 34, TextColor3 = Color3.fromRGB(255, 230, 90), Text = "STAGE 1" })
-	worldLabel = bigText(stagePill, { Position = UDim2.fromOffset(0, 42), Size = UDim2.new(1, 0, 0, 22), Font = UIKit.Fonts.Title, TextSize = 16, TextColor3 = UIKit.Colors.Muted, TextStrokeTransparency = 0.5, Text = "" })
+	worldLabel = bigText(stagePill, { Position = UDim2.fromOffset(14, 42), Size = UDim2.new(1, -110, 0, 22), Font = UIKit.Fonts.Title, TextSize = 15, TextColor3 = UIKit.Colors.Muted, TextStrokeTransparency = 0.5, TextXAlignment = Enum.TextXAlignment.Left, Text = "" })
 	local progressBar = UIKit.Frame({ Position = UDim2.new(0, 14, 1, -11), Size = UDim2.new(1, -28, 0, 6), BackgroundColor3 = UIKit.Colors.PanelLight, Parent = stagePill })
 	UIKit.Corner(progressBar, 3)
 	progressFill = UIKit.Frame({ Size = UDim2.fromScale(0, 1), BackgroundColor3 = Color3.fromRGB(255, 230, 90), Parent = progressBar })
 	UIKit.Corner(progressFill, 3)
 
-	local fragmentPill = pill(root, "Fragments", UIKit.Colors.Purple, 170, 1)
+	fragmentPill = pill(root, "Fragments", UIKit.Colors.Purple, 170, 1)
 	fragmentPill.AnchorPoint = Vector2.new(1, 0)
 	fragmentPill.Position = UDim2.new(1, -16, 0, 12 + 54)
 	fragmentPill.Size = UDim2.fromOffset(170, 36)
+	fragmentPill.Visible = false
 	fragmentLabel = bigText(fragmentPill, { TextSize = 16, Font = UIKit.Fonts.Title, TextColor3 = Color3.fromRGB(220, 150, 255), Text = "FRAGMENTS 0/12" })
 
-	local timerPill = pill(root, "Timer", UIKit.Colors.Info, 190, 1)
-	timerPill.AnchorPoint = Vector2.new(0.5, 0)
-	timerPill.Position = UDim2.new(0.5, 0, 0, 96)
-	timerPill.Size = UDim2.fromOffset(190, 36)
-	timerLabel = bigText(timerPill, { TextSize = 18, Font = UIKit.Fonts.Title, Text = "RUN 0:00" })
+	timerLabel = bigText(stagePill, { Position = UDim2.new(1, -14, 0, 44), AnchorPoint = Vector2.new(1, 0), Size = UDim2.fromOffset(90, 20), Font = UIKit.Fonts.Title, TextSize = 14, TextColor3 = UIKit.Colors.Muted, TextStrokeTransparency = 0.5, TextXAlignment = Enum.TextXAlignment.Right, Text = "0:00" })
+	hintLabel = bigText(root, { Name = "Hint", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 94), Size = UDim2.fromOffset(420, 26), Font = UIKit.Fonts.Title, TextSize = 17, TextColor3 = Color3.fromRGB(255, 240, 180), TextStrokeTransparency = 0.2, Text = "" })
 
 	-- Top-right: prestige
-	local prestigePill = pill(root, "Prestige", UIKit.Colors.Pink, 170, 1)
+	prestigePill = pill(root, "Prestige", UIKit.Colors.Pink, 170, 1)
 	prestigePill.AnchorPoint = Vector2.new(1, 0)
 	prestigePill.Position = UDim2.new(1, -16, 0, 12)
+	prestigePill.Visible = false
 	prestigeLabel = bigText(prestigePill, { TextSize = 20, TextColor3 = UIKit.Colors.Pink:Lerp(Color3.new(1, 1, 1), 0.3), Text = "PRESTIGE 0" })
 
 	-- Bottom-centre: SKIP STAGE (Robux) and RESET
@@ -10118,15 +10294,19 @@ local function refreshHUD()
 	end
 	lastCoins = coins
 	local info = State.Get("Multiplier")
-	if info then
-		multLabel.Text = string.format("x%.2f Coins", info.Total)
+	if info and info.Total > 1.001 then
+		multLabel.Text = string.format("x%.2f coins", info.Total)
+	elseif info then
+		multLabel.Text = ""
 	end
 	local stage = State.Get("Stage", 1)
 	local total = Config.TotalStages()
 	stageLabel.Text = string.format("STAGE %d / %d", stage, total)
 	local world, worldIndex = Config.GetWorld(stage)
 	worldLabel.Text = string.format("World %d: %s", worldIndex, world.Name)
-	prestigeLabel.Text = "PRESTIGE " .. tostring(State.Get("Prestige", 0))
+	local prestige = State.Get("Prestige", 0)
+	prestigeLabel.Text = "PRESTIGE " .. tostring(prestige)
+	prestigePill.Visible = prestige > 0
 	local _, inWorld = Config.GetWorldForStage(stage)
 	UIKit.Tween(progressFill, { Size = UDim2.fromScale(math.clamp((inWorld - 1) / math.max(world.Stages - 1, 1), 0, 1), 1) }, 0.3)
 	local found = 0
@@ -10134,13 +10314,20 @@ local function refreshHUD()
 		found += 1
 	end
 	fragmentLabel.Text = string.format("FRAGMENTS %d/%d", found, Config.Fragments.Count)
+	fragmentPill.Visible = found > 0
+	-- one plain hint for brand-new players
+	if stage <= 2 and prestige == 0 then
+		hintLabel.Text = if stage == 1 then "Follow the arrows and touch the glowing pad to save your spot" else "Nice! Collect coins to buy better brainrots"
+	else
+		hintLabel.Text = ""
+	end
 end
 
 local function refreshTimer()
 	local stats = State.Get("Stats", {})
 	local start = stats.RunStart or 0
 	local elapsed = if start > 0 then math.max(0, State.Now() - start) else 0
-	timerLabel.Text = string.format("RUN %d:%02d", elapsed // 60, elapsed % 60)
+	timerLabel.Text = string.format("%d:%02d", elapsed // 60, elapsed % 60)
 end
 
 -- The SKIP STAGE button: prompts the skip product, or explains when it's unset.
@@ -10172,7 +10359,6 @@ local SIDE_ICONS = {
 	Rewards = "🎁",
 	Settings = "⚙️",
 	Quests = "📜",
-	Stats = "📊",
 }
 
 function UIController.AddSideButton(name: string, label: string, color: Color3, order: number, onClick: () -> ())
@@ -10534,7 +10720,7 @@ function UIController.Init()
 		Name = "SideButtons",
 		AnchorPoint = Vector2.new(0, 0.5),
 		Position = UDim2.new(0, 16, 0.55, 0),
-		Size = UDim2.fromOffset(216, 310),
+		Size = UDim2.fromOffset(216, 240),
 		BackgroundTransparency = 1,
 		Parent = root,
 	})
@@ -10606,11 +10792,11 @@ return UIController
           </Properties>
         </Item>
       </Item>
-      <Item class="Folder" referent="55">
+      <Item class="Folder" referent="56">
         <Properties>
           <string name="Name">Modules</string>
         </Properties>
-        <Item class="ModuleScript" referent="56">
+        <Item class="ModuleScript" referent="57">
           <Properties>
             <string name="Name">ClientState</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -10704,7 +10890,7 @@ return State
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="57">
+        <Item class="ModuleScript" referent="58">
           <Properties>
             <string name="Name">FloatingText</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -10774,7 +10960,7 @@ return FloatingText
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="58">
+        <Item class="ModuleScript" referent="59">
           <Properties>
             <string name="Name">RewardText</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -10812,7 +10998,7 @@ return RewardText
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="59">
+        <Item class="ModuleScript" referent="60">
           <Properties>
             <string name="Name">UIKit</string>
             <string name="Source"><![CDATA[--------------------------------------------------------------------------------
@@ -11317,13 +11503,13 @@ return UIKit
       </Item>
     </Item>
   </Item>
-  <Item class="Workspace" referent="60">
+  <Item class="Workspace" referent="61">
     <Properties>
       <string name="Name">Workspace</string>
       <bool name="NeedsPivotMigration">false</bool>
       <bool name="StreamingEnabled">false</bool>
     </Properties>
-    <Item class="Terrain" referent="61">
+    <Item class="Terrain" referent="62">
       <Properties>
         <string name="Name">Terrain</string>
         <bool name="Decoration">true</bool>

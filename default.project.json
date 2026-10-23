@@ -50,9 +50,9 @@
       "$properties": {
         "Technology": "Future",
         "ClockTime": 14,
-        "Brightness": 3,
-        "Ambient": [0.45, 0.45, 0.5],
-        "OutdoorAmbient": [0.62, 0.62, 0.68],
+        "Brightness": 2.2,
+        "Ambient": [0.4, 0.4, 0.44],
+        "OutdoorAmbient": [0.55, 0.55, 0.6],
         "GlobalShadows": true,
         "EnvironmentDiffuseScale": 0.6,
         "EnvironmentSpecularScale": 0.6

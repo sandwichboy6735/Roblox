@@ -205,7 +205,7 @@ function CourseDecor.Fill(themeName: string, parent: Instance, minX: number, max
 	local folder = Instance.new("Folder")
 	folder.Name = themeName
 	folder.Parent = parent
-	local count = math.floor((maxX - minX) * theme.Density) * 2
+	local count = math.floor((maxX - minX) * theme.Density)
 	for _ = 1, count do
 		local x = rng:NextNumber(minX, maxX)
 		local side = if rng:NextNumber() < 0.5 then -1 else 1
@@ -235,7 +235,7 @@ end
 --------------------------------------------------------------------------------
 
 local function mountains(folder, minX, maxX, groundY, rng, colors)
-	for x = minX, maxX, 90 do
+	for x = minX, maxX, 130 do
 		for _, side in ipairs({ -1, 1 }) do
 			local w = rng:NextNumber(90, 160)
 			local h = rng:NextNumber(60, 130)
@@ -245,7 +245,7 @@ local function mountains(folder, minX, maxX, groundY, rng, colors)
 end
 
 local function skyline(folder, minX, maxX, groundY, rng)
-	for x = minX, maxX, 22 do
+	for x = minX, maxX, 32 do
 		for _, side in ipairs({ -1, 1 }) do
 			local w = rng:NextNumber(14, 22)
 			local h = rng:NextNumber(50, 120)

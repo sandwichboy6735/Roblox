@@ -20,7 +20,7 @@ Open it in Roblox Studio and press Play.
 | **Daily quests** | Three quests a day (collect coins, beat stages, touch checkpoints...) plus a bonus for all three. |
 | **Server events** | Every 10 minutes a 2-minute Coin Rush or Lucky Stages event for the whole server, with a countdown on screen. |
 | **Trails** | Six trail colours bought with coins, plus the Rainbow Trail gamepass. |
-| **Stats** | A stats window: best stage, fastest run, deaths, coins, fragments, time played. |
+| **Stats** | A stats window (opened from Settings): best stage, fastest run, deaths, coins, fragments, time played. |
 | **Perks** | Double Jump, Dash (Q key or a touch button), Glide (hold jump), Coin Magnet and Coin Boost. Better brainrots make the hard stages possible. |
 | **Coins** | Floating coins on every stage and a reward for each new stage. Coins come back after 90 seconds. |
 | **Checkpoints** | Glowing pads save your spot. Fall or touch lava and you're back on the pad in a second. A RESET button and a STAGES menu let you jump back to any pad you've reached. |
@@ -32,8 +32,8 @@ Open it in Roblox Studio and press Play.
 | **Promo codes** | Hand out codes on social media and YouTube. |
 | **Group bonus** | +10% coins and free coins for joining your Roblox group. |
 | **Leaderboards** | Top stage, top prestige and fastest run on 3D boards in the lobby. |
-| **Lobby and intro** | A camera sweep over the lobby with the title when you join. Spawn plaza with statues of the best brainrots, a how-to sign and arrows to stage 1. |
-| **Looks** | Themed platforms per world (grass tops on dirt, neon underglow in the city, cloud puffs in the sky), flags and lamps along the path, bubbling hazard pools, mountains, skylines, giant trees, planets and nebulas on the horizon, drifting clouds, a light column over your next checkpoint, name tags over players, death explosions and landing dust. |
+| **Lobby and intro** | A short camera sweep with the title when you join, then a hint telling you to reach the glowing pad. Spawn plaza with a how-to sign, arrows to stage 1 and a **MY BRAINROTS** shelf: every brainrot you own stands on its own pedestal with a name card, so your collection is on show for everyone who walks past. |
+| **Looks** | A calm, soft-lit style with muted pastel colours so the course is easy to read at a glance. Themed platforms per world (grass tops on dirt, neon underglow in the city, cloud puffs in the sky), flags and lamps along the path, bubbling hazard pools, mountains, skylines, giant trees, planets and nebulas on the horizon, drifting clouds, a light column over your next checkpoint, name tags over players, death explosions and landing dust. |
 | **Safe saving** | DataStore saving with session locking, retries, autosave and shutdown saves. |
 | **Anti-exploit** | Checkpoints must be touched in order, near the pad, no faster than the brainrot can run. Coins are checked for distance. Skips come only from real purchases. |
 
@@ -52,6 +52,7 @@ Six **gamepasses** and six **developer products** are built in. Stage skips are 
 
 Developer products: Skip Stage (R$29), Skip 5 (R$119), Skip 10 (R$199), and coin packs of 1,000 / 5,000 / 25,000.
 The big green **SKIP STAGE** button sits on the HUD the whole time, and the **+** next to the coin counter opens the shop.
+The HUD stays minimal: the prestige, fragment, quest and event panels only appear once they matter to that player.
 
 ---
 

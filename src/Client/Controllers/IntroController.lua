@@ -19,7 +19,7 @@ local player = Players.LocalPlayer
 
 local IntroController = {}
 
-local DURATION = 4.5
+local DURATION = 3
 
 local function play()
 	local camera = Workspace.CurrentCamera

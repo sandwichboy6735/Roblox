@@ -33,15 +33,7 @@ local function refresh()
 		stroke.Color = event.Color
 		chip.Visible = true
 	else
-		local nextAt = ReplicatedStorage:GetAttribute("NextEventAt")
-		if type(nextAt) == "number" then
-			label.Text = "Next event in " .. Util.FormatTime(math.max(0, nextAt - now))
-			label.TextColor3 = UIKit.Colors.Muted
-			stroke.Color = UIKit.Colors.Stroke
-			chip.Visible = true
-		else
-			chip.Visible = false
-		end
+		chip.Visible = false
 	end
 end
 
@@ -49,7 +41,7 @@ function EventUI.Init()
 	chip = UIKit.Frame({
 		Name = "EventChip",
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -16, 0, 66),
+		Position = UDim2.new(1, -16, 0, 12),
 		Size = UDim2.fromOffset(250, 30),
 		BackgroundColor3 = UIKit.Colors.Background,
 		BackgroundTransparency = 0.2,

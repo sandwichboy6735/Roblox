@@ -47,7 +47,7 @@ function PlayerService.Init()
 				return
 			end
 			if profile.Data.Stats.Joins <= 1 then
-				Remotes.Get("Notify"):FireClient(player, "Welcome to " .. Config.GameName .. "! Follow the arrows and touch the glowing pads.", "info")
+				Remotes.Get("Notify"):FireClient(player, "Welcome to " .. Config.GameName .. "! Reach the glowing pad ahead.", "info")
 			else
 				Remotes.Get("Notify"):FireClient(player, "Welcome back, " .. player.DisplayName .. "! You're on stage " .. profile.Data.Stage .. ".", "info")
 			end

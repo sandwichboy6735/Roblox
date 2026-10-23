@@ -92,7 +92,7 @@ local function refresh()
 	local nextReset = (Util.DayNumber(now) + 1) * 86400
 	resetLabel.Text = "New quests in " .. Util.FormatTime(nextReset - now)
 	UIController.SetBadge("Quests", claimable)
-	tracker.Visible = State.Loaded and #list > 0
+	tracker.Visible = State.Loaded and #list > 0 and (State.Get("Stage", 1) >= 5 or State.Get("Prestige", 0) > 0)
 end
 
 local function buildRow(parent: Instance, order: number): Row
@@ -117,7 +117,7 @@ local function buildTracker()
 	tracker = UIKit.Frame({
 		Name = "QuestTracker",
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -16, 0, 120),
+		Position = UDim2.new(1, -16, 0, 110),
 		Size = UDim2.fromOffset(250, 0),
 		AutomaticSize = Enum.AutomaticSize.Y,
 		BackgroundColor3 = UIKit.Colors.Background,

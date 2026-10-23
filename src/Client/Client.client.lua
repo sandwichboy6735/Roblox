@@ -40,6 +40,7 @@ local START_ORDER = {
 	"AmbienceController",
 	"PlayerVisualsController",
 	"TrailController",
+	"LobbyShelfController",
 	"ChatController",
 	"IntroController",
 }

@@ -34,8 +34,11 @@ local stageLabel: TextLabel
 local worldLabel: TextLabel
 local timerLabel: TextLabel
 local prestigeLabel: TextLabel
+local prestigePill: Frame
 local progressFill: Frame
 local fragmentLabel: TextLabel
+local fragmentPill: Frame
+local hintLabel: TextLabel
 local sideList: Frame
 
 local MAX_TOASTS = 4
@@ -149,8 +152,7 @@ local function buildHUD()
 	end)
 	plus.Parent = coinPill
 
-	local multPill = pill(column, "Multiplier", UIKit.Colors.Purple, 230, 2)
-	multLabel = bigText(multPill, { TextSize = 20, TextColor3 = UIKit.Colors.Purple:Lerp(Color3.new(1, 1, 1), 0.3), Text = "x1.00 Coins" })
+	multLabel = bigText(column, { Name = "Multiplier", Size = UDim2.fromOffset(230, 24), Font = UIKit.Fonts.Title, TextSize = 16, TextColor3 = UIKit.Colors.Purple:Lerp(Color3.new(1, 1, 1), 0.4), TextStrokeTransparency = 0.4, TextXAlignment = Enum.TextXAlignment.Left, Text = "", LayoutOrder = 2 })
 
 	-- Top-centre: stage + world + timer
 	local stagePill = UIKit.Frame({
@@ -166,28 +168,27 @@ local function buildHUD()
 	UIKit.Stroke(stagePill, UIKit.Ink, 3)
 	UIKit.Lip(stagePill, UIKit.Colors.Info:Lerp(Color3.new(0, 0, 0), 0.4), 4)
 	stageLabel = bigText(stagePill, { Position = UDim2.fromOffset(0, 4), Size = UDim2.new(1, 0, 0, 40), TextSize = 34, TextColor3 = Color3.fromRGB(255, 230, 90), Text = "STAGE 1" })
-	worldLabel = bigText(stagePill, { Position = UDim2.fromOffset(0, 42), Size = UDim2.new(1, 0, 0, 22), Font = UIKit.Fonts.Title, TextSize = 16, TextColor3 = UIKit.Colors.Muted, TextStrokeTransparency = 0.5, Text = "" })
+	worldLabel = bigText(stagePill, { Position = UDim2.fromOffset(14, 42), Size = UDim2.new(1, -110, 0, 22), Font = UIKit.Fonts.Title, TextSize = 15, TextColor3 = UIKit.Colors.Muted, TextStrokeTransparency = 0.5, TextXAlignment = Enum.TextXAlignment.Left, Text = "" })
 	local progressBar = UIKit.Frame({ Position = UDim2.new(0, 14, 1, -11), Size = UDim2.new(1, -28, 0, 6), BackgroundColor3 = UIKit.Colors.PanelLight, Parent = stagePill })
 	UIKit.Corner(progressBar, 3)
 	progressFill = UIKit.Frame({ Size = UDim2.fromScale(0, 1), BackgroundColor3 = Color3.fromRGB(255, 230, 90), Parent = progressBar })
 	UIKit.Corner(progressFill, 3)
 
-	local fragmentPill = pill(root, "Fragments", UIKit.Colors.Purple, 170, 1)
+	fragmentPill = pill(root, "Fragments", UIKit.Colors.Purple, 170, 1)
 	fragmentPill.AnchorPoint = Vector2.new(1, 0)
 	fragmentPill.Position = UDim2.new(1, -16, 0, 12 + 54)
 	fragmentPill.Size = UDim2.fromOffset(170, 36)
+	fragmentPill.Visible = false
 	fragmentLabel = bigText(fragmentPill, { TextSize = 16, Font = UIKit.Fonts.Title, TextColor3 = Color3.fromRGB(220, 150, 255), Text = "FRAGMENTS 0/12" })
 
-	local timerPill = pill(root, "Timer", UIKit.Colors.Info, 190, 1)
-	timerPill.AnchorPoint = Vector2.new(0.5, 0)
-	timerPill.Position = UDim2.new(0.5, 0, 0, 96)
-	timerPill.Size = UDim2.fromOffset(190, 36)
-	timerLabel = bigText(timerPill, { TextSize = 18, Font = UIKit.Fonts.Title, Text = "RUN 0:00" })
+	timerLabel = bigText(stagePill, { Position = UDim2.new(1, -14, 0, 44), AnchorPoint = Vector2.new(1, 0), Size = UDim2.fromOffset(90, 20), Font = UIKit.Fonts.Title, TextSize = 14, TextColor3 = UIKit.Colors.Muted, TextStrokeTransparency = 0.5, TextXAlignment = Enum.TextXAlignment.Right, Text = "0:00" })
+	hintLabel = bigText(root, { Name = "Hint", AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 94), Size = UDim2.fromOffset(420, 26), Font = UIKit.Fonts.Title, TextSize = 17, TextColor3 = Color3.fromRGB(255, 240, 180), TextStrokeTransparency = 0.2, Text = "" })
 
 	-- Top-right: prestige
-	local prestigePill = pill(root, "Prestige", UIKit.Colors.Pink, 170, 1)
+	prestigePill = pill(root, "Prestige", UIKit.Colors.Pink, 170, 1)
 	prestigePill.AnchorPoint = Vector2.new(1, 0)
 	prestigePill.Position = UDim2.new(1, -16, 0, 12)
+	prestigePill.Visible = false
 	prestigeLabel = bigText(prestigePill, { TextSize = 20, TextColor3 = UIKit.Colors.Pink:Lerp(Color3.new(1, 1, 1), 0.3), Text = "PRESTIGE 0" })
 
 	-- Bottom-centre: SKIP STAGE (Robux) and RESET
@@ -241,15 +242,19 @@ local function refreshHUD()
 	end
 	lastCoins = coins
 	local info = State.Get("Multiplier")
-	if info then
-		multLabel.Text = string.format("x%.2f Coins", info.Total)
+	if info and info.Total > 1.001 then
+		multLabel.Text = string.format("x%.2f coins", info.Total)
+	elseif info then
+		multLabel.Text = ""
 	end
 	local stage = State.Get("Stage", 1)
 	local total = Config.TotalStages()
 	stageLabel.Text = string.format("STAGE %d / %d", stage, total)
 	local world, worldIndex = Config.GetWorld(stage)
 	worldLabel.Text = string.format("World %d: %s", worldIndex, world.Name)
-	prestigeLabel.Text = "PRESTIGE " .. tostring(State.Get("Prestige", 0))
+	local prestige = State.Get("Prestige", 0)
+	prestigeLabel.Text = "PRESTIGE " .. tostring(prestige)
+	prestigePill.Visible = prestige > 0
 	local _, inWorld = Config.GetWorldForStage(stage)
 	UIKit.Tween(progressFill, { Size = UDim2.fromScale(math.clamp((inWorld - 1) / math.max(world.Stages - 1, 1), 0, 1), 1) }, 0.3)
 	local found = 0
@@ -257,13 +262,20 @@ local function refreshHUD()
 		found += 1
 	end
 	fragmentLabel.Text = string.format("FRAGMENTS %d/%d", found, Config.Fragments.Count)
+	fragmentPill.Visible = found > 0
+	-- one plain hint for brand-new players
+	if stage <= 2 and prestige == 0 then
+		hintLabel.Text = if stage == 1 then "Follow the arrows and touch the glowing pad to save your spot" else "Nice! Collect coins to buy better brainrots"
+	else
+		hintLabel.Text = ""
+	end
 end
 
 local function refreshTimer()
 	local stats = State.Get("Stats", {})
 	local start = stats.RunStart or 0
 	local elapsed = if start > 0 then math.max(0, State.Now() - start) else 0
-	timerLabel.Text = string.format("RUN %d:%02d", elapsed // 60, elapsed % 60)
+	timerLabel.Text = string.format("%d:%02d", elapsed // 60, elapsed % 60)
 end
 
 -- The SKIP STAGE button: prompts the skip product, or explains when it's unset.
@@ -295,7 +307,6 @@ local SIDE_ICONS = {
 	Rewards = "🎁",
 	Settings = "⚙️",
 	Quests = "📜",
-	Stats = "📊",
 }
 
 function UIController.AddSideButton(name: string, label: string, color: Color3, order: number, onClick: () -> ())
@@ -657,7 +668,7 @@ function UIController.Init()
 		Name = "SideButtons",
 		AnchorPoint = Vector2.new(0, 0.5),
 		Position = UDim2.new(0, 16, 0.55, 0),
-		Size = UDim2.fromOffset(216, 310),
+		Size = UDim2.fromOffset(216, 240),
 		BackgroundTransparency = 1,
 		Parent = root,
 	})

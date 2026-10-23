@@ -62,7 +62,7 @@ local function refresh()
 end
 
 function SettingsUI.Init()
-	window = UIController.CreateWindow("Settings", "SETTINGS", UDim2.fromOffset(420, 240), UIKit.Colors.Stroke)
+	window = UIController.CreateWindow("Settings", "SETTINGS", UDim2.fromOffset(420, 300), UIKit.Colors.Stroke)
 	local list = UIKit.Frame({ Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Parent = window.Content })
 	UIKit.Create("UIListLayout", { Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder, Parent = list })
 
@@ -98,6 +98,11 @@ function SettingsUI.Init()
 		toggles[setting.Key] = button
 	end
 
+	local statsButton = UIKit.Button({ Size = UDim2.new(1, 0, 0, 44), Color = UIKit.Colors.Purple, Text = "MY STATS", TextSize = 18, LayoutOrder = 10 }, function()
+		UIController.Open("Stats")
+	end)
+	statsButton.Parent = list
+
 	window.OnOpen = refresh
 	State.Changed:Connect(function(patch)
 		if patch.Settings ~= nil then
@@ -106,7 +111,7 @@ function SettingsUI.Init()
 		end
 	end)
 
-	UIController.AddSideButton("Settings", "SETTINGS", UIKit.Colors.Stroke, 7, function()
+	UIController.AddSideButton("Settings", "SETTINGS", UIKit.Colors.Stroke, 6, function()
 		UIController.Toggle("Settings")
 	end)
 end

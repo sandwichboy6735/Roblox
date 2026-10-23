@@ -79,9 +79,7 @@ function StatsUI.Init()
 	end
 	window.OnOpen = refresh
 	State.Changed:Connect(refresh)
-	UIController.AddSideButton("Stats", "STATS", UIKit.Colors.Purple, 6, function()
-		UIController.Toggle("Stats")
-	end)
+	-- opened from the Settings window (keeps the side menu short)
 end
 
 return StatsUI

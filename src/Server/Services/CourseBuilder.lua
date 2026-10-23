@@ -111,7 +111,7 @@ local function platform(c: Ctx, cf: CFrame, size: Vector3, color: Color3?): Base
 	part({ Name = "Base", CFrame = cf * CFrame.new(0, -0.18, 0), Size = V(size.X + 0.3, size.Y - 0.36, size.Z + 0.3), Color = style.Side, CanCollide = false }, p)
 	local extra = style.Extra
 	if extra == "Neon" then
-		part({ Name = "Glow", CFrame = cf * CFrame.new(0, -size.Y / 2 + 0.1, 0), Size = V(size.X + 0.9, 0.2, size.Z + 0.9), Color = c.Theme.Accent, Material = Enum.Material.Neon, Transparency = 0.2, CanCollide = false, CastShadow = false }, p)
+		part({ Name = "Glow", CFrame = cf * CFrame.new(0, -size.Y / 2 + 0.1, 0), Size = V(size.X + 0.6, 0.2, size.Z + 0.6), Color = c.Theme.Accent, Material = Enum.Material.Neon, Transparency = 0.55, CanCollide = false, CastShadow = false }, p)
 	elseif extra == "Cloud" then
 		part({ Name = "Puff", Shape = Enum.PartType.Ball, Size = V(1, 1, 1) * math.min(size.X, size.Z) * 0.9, CFrame = cf * CFrame.new(0, -size.Y / 2 - 0.6, 0), Color = Color3.new(1, 1, 1), CanCollide = false, CastShadow = false }, p)
 	elseif extra == "Vines" and c.Rng:NextNumber() < 0.5 then
@@ -149,9 +149,9 @@ end
 -- Hazard pool: a glowing slab with floating crust blobs, a light and bubbles.
 local function lavaPool(c: Ctx, center: Vector3, size: Vector3)
 	local pool = kill(c, CFrame.new(center), size, "LavaPool")
-	pool.Transparency = 0.15
+	pool.Transparency = 0.3
 	local dark = c.Theme.Hazard:Lerp(Color3.new(0, 0, 0), 0.55)
-	local blobs = math.clamp(math.floor(size.X * size.Z / 120), 2, 6)
+	local blobs = math.clamp(math.floor(size.X * size.Z / 200), 1, 3)
 	for i = 1, blobs do
 		local bx = center.X + c.Rng:NextNumber(-size.X * 0.4, size.X * 0.4)
 		local bz = center.Z + c.Rng:NextNumber(-size.Z * 0.4, size.Z * 0.4)
@@ -683,13 +683,7 @@ local function buildCheckpoint(c: Ctx, cursor: Vector3, stage: number)
 	local ring = part({ Name = "Ring", Shape = Enum.PartType.Cylinder, Size = V(0.2, 7, 7), CFrame = CFrame.new(pad.Position + V(0, 0.6, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color = c.Theme.Accent, Material = Enum.Material.Neon, CanCollide = false, CastShadow = false }, c.Model)
 	ring.Name = "CheckpointRing"
 	part({ Name = "Inlay", Shape = Enum.PartType.Cylinder, Size = V(0.1, 9, 9), CFrame = CFrame.new(pad.Position + V(0, 0.52, 0)) * CFrame.Angles(0, 0, math.rad(90)), Color = c.Theme.Trim, CanCollide = false, CastShadow = false }, c.Model)
-	for _, sx in ipairs({ -1, 1 }) do
-		for _, sz in ipairs({ -1, 1 }) do
-			if not (sx == -1 and sz == -1) then
-				flag(c, pad.Position + V(sx * (PAD_SIZE / 2 - 0.8), 0.5, sz * (PAD_SIZE / 2 - 0.8)))
-			end
-		end
-	end
+	flag(c, pad.Position + V(PAD_SIZE / 2 - 0.8, 0.5, PAD_SIZE / 2 - 0.8))
 	local trigger = part({ Name = "Checkpoint", CFrame = CFrame.new(pad.Position + V(0, 4, 0)), Size = V(PAD_SIZE, 7, PAD_SIZE), Transparency = 1, CanCollide = false, CastShadow = false }, c.Model)
 	trigger.CanQuery = false
 	trigger:SetAttribute("Stage", stage)
@@ -955,9 +949,10 @@ local function buildStage(stage: number, cursor: Vector3, parent: Instance): Vec
 			if pos.X < targetX - 18 then
 				local landing = platform(c, CFrame.new(pos.X + 3, pos.Y - 0.5, pos.Z), V(6, 1, 8))
 				landing.Name = "Landing"
-				if rng:NextNumber() < 0.5 then
+				local roll = rng:NextNumber()
+				if roll < 0.2 then
 					lamp(c, V(pos.X + 3, pos.Y, pos.Z + 3.6))
-				else
+				elseif roll < 0.4 then
 					flag(c, V(pos.X + 3, pos.Y, pos.Z - 3.6))
 				end
 				pos = V(pos.X + 6, pos.Y, pos.Z)
@@ -1101,12 +1096,9 @@ local function buildLobby(parent: Instance, theme)
 	local statues = Instance.new("Folder")
 	statues.Name = "Statues"
 	statues.Parent = lobby
-	buildStatue(statues, "Sneaker Shark", CFrame.new(x0 + 45, 0, 22), "Rare - 6,500 coins")
-	buildStatue(statues, "Tralala Titan", CFrame.new(x0 + 62, 0, 30), "Legendary")
-	buildStatue(statues, "Omega Brainrot", CFrame.new(x0 + 80, 0, 22), "Mythic - Prestige 1")
-	buildStatue(statues, "Ballerina Latte", CFrame.new(x0 + 45, 0, -22), "Epic")
-	buildStatue(statues, "Nuke Nonna", CFrame.new(x0 + 62, 0, -30), "Legendary")
-	buildStatue(statues, "Galaxy Gnocchi", CFrame.new(x0 + 80, 0, -22), "Legendary")
+	buildStatue(statues, "Sneaker Shark", CFrame.new(x0 + 45, 0, -24), "Rare - 6,500 coins")
+	buildStatue(statues, "Tralala Titan", CFrame.new(x0 + 62, 0, -30), "Legendary")
+	buildStatue(statues, "Omega Brainrot", CFrame.new(x0 + 80, 0, -24), "Mythic - Prestige 1")
 
 	-- arrow on the floor pointing at stage 1
 	for i = 0, 4 do
@@ -1161,22 +1153,22 @@ local function setupLighting()
 	atmosphere.Haze = 0.8
 	atmosphere.Parent = Lighting
 	local bloom = Instance.new("BloomEffect")
-	bloom.Intensity = 0.8
-	bloom.Size = 24
-	bloom.Threshold = 1.1
+	bloom.Intensity = 0.35
+	bloom.Size = 20
+	bloom.Threshold = 1.2
 	bloom.Parent = Lighting
 	local color = Instance.new("ColorCorrectionEffect")
 	color.Name = "WorldColor"
-	color.Saturation = 0.28
-	color.Contrast = 0.1
-	color.Brightness = 0.02
+	color.Saturation = 0.08
+	color.Contrast = 0.06
+	color.Brightness = 0
 	color.Parent = Lighting
 	local rays = Instance.new("SunRaysEffect")
-	rays.Intensity = 0.08
+	rays.Intensity = 0.04
 	rays.Spread = 0.7
 	rays.Parent = Lighting
-	Lighting.ClockTime = 14
-	Lighting.Brightness = 3
+	Lighting.ClockTime = 13.5
+	Lighting.Brightness = 2.2
 	Terrain:SetMaterialColor(Enum.Material.Grass, rgb(112, 202, 72))
 	Terrain:SetMaterialColor(Enum.Material.LeafyGrass, rgb(70, 150, 60))
 	Terrain:SetMaterialColor(Enum.Material.Sand, rgb(248, 225, 160))

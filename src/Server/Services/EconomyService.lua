@@ -1,5 +1,6 @@
 --------------------------------------------------------------------------------
--- EconomyService - coins, gems, multipliers and timed boosts.
+-- EconomyService - coins and the coin multiplier.
+-- Multiplier = prestige x gamepasses x group x equipped brainrot's Coin Boost.
 --------------------------------------------------------------------------------
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -24,105 +25,29 @@ local function updateLeaderstats(player: Player, data)
 	if not leaderstats then
 		return
 	end
+	local stage = leaderstats:FindFirstChild("Stage")
+	if stage then
+		stage.Value = data.Stage
+	end
 	local coins = leaderstats:FindFirstChild("Coins")
 	if coins then
 		coins.Value = Util.FormatNumber(data.Coins)
 	end
-	local rebirths = leaderstats:FindFirstChild("Rebirths")
-	if rebirths then
-		rebirths.Value = data.Rebirths
+	local prestige = leaderstats:FindFirstChild("Prestige")
+	if prestige then
+		prestige.Value = data.Prestige
 	end
 end
 EconomyService.UpdateLeaderstats = updateLeaderstats
 
---------------------------------------------------------------------------------
--- Boosts
---------------------------------------------------------------------------------
-
-function EconomyService.GetBoost(player: Player, boostType: string): number
-	local profile = DataService:GetProfile(player)
-	if not profile then
-		return 1
-	end
-	local boost = profile.Data.Boosts[boostType]
-	if boost and (boost.ExpiresAt or 0) > os.time() then
-		return boost.Mult or 1
-	end
-	return 1
-end
-
-function EconomyService.ApplyBoost(player: Player, boostType: string, mult: number, duration: number)
-	local profile = DataService:GetProfile(player)
-	if not profile then
-		return
-	end
-	local boosts = profile.Data.Boosts
-	local existing = boosts[boostType]
-	local base = os.time()
-	if existing and (existing.ExpiresAt or 0) > base and (existing.Mult or 1) >= mult then
-		base = existing.ExpiresAt -- extend instead of overwrite
-	end
-	boosts[boostType] = { Mult = mult, ExpiresAt = base + duration }
-	DataService:Replicate(player, { Boosts = boosts })
-	EconomyService.RefreshMultiplier(player)
-
-	task.delay(boosts[boostType].ExpiresAt - os.time() + 1, function()
-		if DataService:GetProfile(player) == profile then
-			EconomyService.RefreshMultiplier(player)
-			DataService:Replicate(player, { Boosts = profile.Data.Boosts })
-		end
-	end)
-end
-
---------------------------------------------------------------------------------
--- Multipliers
---------------------------------------------------------------------------------
-
--- Injected by EventService / UpgradeService (they require this module, so
--- requiring them here would create a cycle).
-local eventMultiplier: () -> number = function()
-	return 1
-end
-local upgradeMultiplier: (Player) -> number = function()
-	return 1
-end
-
-function EconomyService.SetEventMultiplierSource(source: () -> number)
-	eventMultiplier = source
-end
-
-function EconomyService.SetUpgradeMultiplierSource(source: (Player) -> number)
-	upgradeMultiplier = source
-end
-
 function EconomyService.GetMultiplierInfo(player: Player)
-	local info = { Pets = 1, Rebirth = 1, Gamepass = 1, Group = 1, Upgrade = 1, Boost = 1, Event = 1, Total = 1 }
+	local info = { Prestige = 1, Gamepass = 1, Group = 1, Brainrot = 1, Total = 1 }
 	local profile = DataService:GetProfile(player)
 	if not profile then
 		return info
 	end
 	local data = profile.Data
-
-	-- Only the best `slots` equipped pets count, even if saved data says more.
-	local equippedMults = {}
-	for _, petData in ipairs(data.Pets) do
-		if petData.Equipped then
-			if Config.Pets[petData.Type] then
-				table.insert(equippedMults, Config.GetPetMultiplier(petData.Type, petData.Tier))
-			end
-		end
-	end
-	table.sort(equippedMults, function(a, b)
-		return a > b
-	end)
-	local slots = profile.Runtime.PetSlots or Config.BasePetSlots
-	local petMult = 1
-	for index = 1, math.min(#equippedMults, slots) do
-		petMult += equippedMults[index] - 1
-	end
-	info.Pets = petMult
-	info.Rebirth = 1 + data.Rebirths * Config.Rebirth.MultiplierPerRebirth
-
+	info.Prestige = 1 + data.Prestige * Config.Prestige.CoinMultiplierPerPrestige
 	local passMult = 1
 	if GamepassService.Owns(player, "DoubleCoins") then
 		passMult *= 2
@@ -132,10 +57,11 @@ function EconomyService.GetMultiplierInfo(player: Player)
 	end
 	info.Gamepass = passMult
 	info.Group = profile.Runtime.InGroup and Config.GroupReward.Multiplier or 1
-	info.Upgrade = upgradeMultiplier(player)
-	info.Boost = EconomyService.GetBoost(player, "Coins")
-	info.Event = eventMultiplier()
-	info.Total = info.Pets * info.Rebirth * info.Gamepass * info.Group * info.Upgrade * info.Boost * info.Event
+	local brainrot = Config.Brainrots[data.Equipped]
+	if brainrot and brainrot.Perk == "CoinBoost" then
+		info.Brainrot = 1 + brainrot.Value
+	end
+	info.Total = info.Prestige * info.Gamepass * info.Group * info.Brainrot
 	return info
 end
 
@@ -153,34 +79,7 @@ function EconomyService.RefreshMultiplier(player: Player)
 	DataService:Replicate(player, { Multiplier = info })
 end
 
-function EconomyService.GetLuckMultiplier(player: Player): number
-	local luck = 1
-	if GamepassService.Owns(player, "Lucky") then
-		luck *= Config.Gamepasses.Lucky.LuckMultiplier
-	end
-	luck *= EconomyService.GetBoost(player, "Luck")
-	return luck
-end
-
--- Pets x rebirth x gamepasses x group x upgrades (timed boosts and events excluded).
-function EconomyService.GetPermanentMultiplier(player: Player): number
-	local info = EconomyService.GetMultiplierInfo(player)
-	return info.Pets * info.Rebirth * info.Gamepass * info.Group * info.Upgrade
-end
-
--- Coins worth `minutes` of this player's current income (rewards, coin packs).
-function EconomyService.CoinsForMinutes(player: Player, minutes: number): number
-	local profile = DataService:GetProfile(player)
-	if not profile then
-		return 0
-	end
-	return Config.CoinsForMinutes(minutes, profile.Data.ZonesUnlocked, EconomyService.GetPermanentMultiplier(player))
-end
-
---------------------------------------------------------------------------------
--- Currency
---------------------------------------------------------------------------------
-
+-- Adds coins; with applyMultiplier the amount is scaled by the player's multiplier.
 function EconomyService.AddCoins(player: Player, amount: number, applyMultiplier: boolean?): number
 	local profile = DataService:GetProfile(player)
 	if not profile or amount <= 0 then
@@ -190,7 +89,6 @@ function EconomyService.AddCoins(player: Player, amount: number, applyMultiplier
 		amount *= EconomyService.GetMultiplier(player)
 	end
 	amount = math.max(1, math.floor(amount))
-
 	local data = profile.Data
 	data.Coins = clampCurrency(data.Coins + amount)
 	data.Stats.TotalCoins = clampCurrency(data.Stats.TotalCoins + amount)
@@ -214,46 +112,9 @@ function EconomyService.SpendCoins(player: Player, amount: number): boolean
 	return true
 end
 
-function EconomyService.AddGems(player: Player, amount: number): number
-	local profile = DataService:GetProfile(player)
-	if not profile or amount <= 0 then
-		return 0
-	end
-	amount = math.floor(amount)
-	profile.Data.Gems = clampCurrency(profile.Data.Gems + amount)
-	DataService:Replicate(player, { Gems = profile.Data.Gems })
-	return amount
-end
-
-function EconomyService.SpendGems(player: Player, amount: number): boolean
-	local profile = DataService:GetProfile(player)
-	if not profile or amount < 0 then
-		return false
-	end
-	if profile.Data.Gems < amount then
-		return false
-	end
-	profile.Data.Gems = clampCurrency(profile.Data.Gems - amount)
-	DataService:Replicate(player, { Gems = profile.Data.Gems })
-	return true
-end
-
 function EconomyService.Init()
-	DataService.ProfileLoaded:Connect(function(player, profile)
+	DataService.ProfileLoaded:Connect(function(player)
 		EconomyService.RefreshMultiplier(player)
-		-- Boosts bought in an earlier session: refresh the UI when they run out.
-		local now = os.time()
-		for _, boost in pairs(profile.Data.Boosts) do
-			local remaining = (boost.ExpiresAt or 0) - now
-			if remaining > 0 then
-				task.delay(remaining + 1, function()
-					if DataService:GetProfile(player) == profile then
-						EconomyService.RefreshMultiplier(player)
-						DataService:Replicate(player, { Boosts = profile.Data.Boosts })
-					end
-				end)
-			end
-		end
 	end)
 	GamepassService.Changed:Connect(function(player)
 		EconomyService.RefreshMultiplier(player)

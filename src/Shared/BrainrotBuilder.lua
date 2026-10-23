@@ -1,21 +1,22 @@
 --------------------------------------------------------------------------------
--- PetBuilder - builds detailed pet models from PetStyles, entirely from parts
--- (no uploaded assets needed). Used for pets in the world and 3D UI previews.
+-- BrainrotBuilder - builds every brainrot character from parts (no uploaded
+-- assets). Used for the costume players wear, lobby statues and 3D menus.
 --
---   PetBuilder.Build(petName, tier, { Effects = bool, Weld = bool, Scale = n })
---     -> { Model, Root, Height, Flappers, RainbowParts }
---   PetBuilder.CreateViewport(petName, tier, props) -> ViewportFrame, Model
+--   BrainrotBuilder.Build(name, { Effects = bool, Weld = bool, Scale = n })
+--     -> { Model, Root, Height, Flappers }
+--   BrainrotBuilder.CreateViewport(name, props) -> ViewportFrame, Model
 --
--- Model pivot (Root) sits on the ground under the pet; the pet faces -Z.
+-- Model pivot (Root) sits on the ground under the character; it faces -Z.
+-- Runs on both the server (costumes) and the client (menus).
 --------------------------------------------------------------------------------
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
 local Config = require(Shared.Config)
-local PetStyles = require(Shared.PetStyles)
+local BrainrotStyles = require(Shared.BrainrotStyles)
 
-local PetBuilder = {}
+local BrainrotBuilder = {}
 
 local V = Vector3.new
 local GOLD = Color3.fromRGB(255, 212, 70)
@@ -24,14 +25,12 @@ local WHITE = Color3.new(1, 1, 1)
 
 local RARITY_SCALE = {
 	Common = 1,
-	Uncommon = 1.05,
-	Rare = 1.1,
-	Epic = 1.18,
-	Legendary = 1.28,
-	Mythic = 1.4,
+	Uncommon = 1.03,
+	Rare = 1.06,
+	Epic = 1.1,
+	Legendary = 1.16,
+	Mythic = 1.24,
 }
-
-PetBuilder.TierNames = { [0] = "", [1] = "Golden", [2] = "Rainbow" }
 
 export type Flapper = { Part: BasePart, Hinge: CFrame, Side: number, Amount: number, Speed: number, Joint: Motor6D? }
 export type Built = {
@@ -39,7 +38,6 @@ export type Built = {
 	Root: BasePart,
 	Height: number,
 	Flappers: { Flapper },
-	RainbowParts: { BasePart },
 }
 
 --------------------------------------------------------------------------------
@@ -572,6 +570,220 @@ Archetypes.Capybara = function(c)
 	c.TailTip = V(0, 1.1, 1.3)
 end
 
+
+--------------------------------------------------------------------------------
+-- Brainrot body plans (on top of the animal ones above)
+--------------------------------------------------------------------------------
+
+-- A curved banana standing on two stubby legs.
+Archetypes.Banana = function(c)
+	local segments = { V(0, 0.5, 0.55), V(0, 1.25, 0.25), V(0, 2.0, 0.05), V(0, 2.75, 0.05), V(0, 3.4, 0.3) }
+	for i, p in ipairs(segments) do
+		local w = if i == 1 or i == 5 then 0.6 else 0.9
+		local part = c:add("Ellipsoid", V(w, 1.05, w * 0.9), p, V(if i < 3 then 25 elseif i > 3 then -25 else 0, 0, 0), "Primary", { Shadow = i == 3, Name = if i == 3 then "Body" else "Peel" })
+		if i == 3 then
+			c.BodyPart = part
+		end
+	end
+	c:add("Ellipsoid", V(0.3, 0.5, 0.3), V(0, 3.95, 0.45), V(-20, 0, 0), "Accent")
+	c:pair("Ellipsoid", V(0.3, 0.9, 0.3), V(0.35, 0.45, 0.3), nil, "Secondary")
+	c:pair("Ellipsoid", V(0.42, 0.22, 0.6), V(0.35, 0.1, 0.2), nil, "Accent")
+	c:eyes(V(0, 2.25, -0.4), 0.3, 0.3)
+	c:add("Ellipsoid", V(0.5, 0.18, 0.2), V(0, 1.85, -0.42), nil, DARK, { Role = "Eye" })
+	c.TailPart = c.BodyPart
+	c.BodyCenter, c.BodySize = V(0, 2.0, 0.1), V(0.9, 2.6, 0.9)
+	c.HeadCenter, c.HeadSize, c.HeadTop = V(0, 2.4, 0), 0.9, V(0, 3.9, 0.3)
+	c.TailTip = V(0, 1.0, 0.6)
+end
+
+-- Squat frog with bulging eyes on top.
+Archetypes.Frog = function(c)
+	c.BodyPart = c:add("Ellipsoid", V(1.9, 1.2, 1.8), V(0, 0.75, 0), nil, "Primary", { Shadow = true, Name = "Body" })
+	c:add("Ellipsoid", V(1.4, 0.8, 1.2), V(0, 0.6, -0.3), nil, "Secondary")
+	c:add("Ellipsoid", V(1.3, 0.3, 0.3), V(0, 0.75, -0.85), nil, DARK, { Role = "Eye" }) -- wide mouth
+	c:pair("Ball", V(0.62, 0, 0), V(0.5, 1.45, -0.35), nil, "Primary")
+	c:pair("Ball", V(0.42, 0, 0), V(0.5, 1.5, -0.55), nil, WHITE, { Role = "Eye" })
+	c:pair("Ball", V(0.22, 0, 0), V(0.5, 1.52, -0.7), nil, DARK, { Role = "Eye" })
+	c:pair("Ball", V(0.08, 0, 0), V(0.45, 1.6, -0.78), nil, WHITE, { Role = "Eye", Material = "Neon" })
+	c:pair("Ellipsoid", V(0.55, 0.45, 1.1), V(0.95, 0.35, 0.45), V(0, 30, 0), "Primary") -- back legs
+	c:pair("Ellipsoid", V(0.3, 0.5, 0.3), V(0.6, 0.3, -0.7), nil, "Primary")
+	c:pair("Ellipsoid", V(0.5, 0.15, 0.6), V(0.65, 0.08, -0.85), nil, "Accent")
+	c.TailPart = c.BodyPart
+	c.BodyCenter, c.BodySize = V(0, 0.75, 0), V(1.9, 1.2, 1.8)
+	c.HeadCenter, c.HeadSize, c.HeadTop = V(0, 1.1, -0.3), 1.3, V(0, 1.75, -0.35)
+	c.TailTip = V(0, 0.7, 0.9)
+end
+
+-- Dome head with dangling tentacles.
+Archetypes.Squid = function(c)
+	c.BodyPart = c:add("Ellipsoid", V(1.8, 2.1, 1.8), V(0, 2.1, 0), nil, "Primary", { Shadow = true, Name = "Body" })
+	c:add("Ellipsoid", V(1.3, 1.1, 0.5), V(0, 1.75, -0.7), nil, "Secondary")
+	c:eyes(V(0, 2.1, -0.75), 0.4, 0.36)
+	for i = 1, 8 do
+		local angle = i * (math.pi * 2 / 8)
+		local base = V(math.cos(angle) * 0.6, 1.2, math.sin(angle) * 0.6)
+		local tip = V(math.cos(angle) * 0.95, 0.15, math.sin(angle) * 0.95)
+		c:segment("Ellipsoid", base, tip, 0.34, if i % 2 == 0 then "Primary" else "Secondary")
+		c:add("Ball", V(0.3, 0, 0), tip, nil, "Accent")
+	end
+	c.TailPart = c.BodyPart
+	c.BodyCenter, c.BodySize = V(0, 2.1, 0), V(1.8, 2.1, 1.8)
+	c.HeadCenter, c.HeadSize, c.HeadTop = V(0, 2.4, -0.2), 1.6, V(0, 3.15, 0)
+	c.TailTip = V(0, 1.0, 0.9)
+end
+
+-- Turtle with a big domed shell.
+Archetypes.Turtle = function(c)
+	c:add("Ellipsoid", V(2.2, 0.5, 2.4), V(0, 0.75, 0.2), nil, "Secondary")
+	c.BodyPart = c:add("Ellipsoid", V(1.9, 1.5, 2.1), V(0, 1.2, 0.2), nil, "Accent", { Shadow = true, Name = "Body" })
+	for i = 1, 6 do
+		local angle = i * (math.pi * 2 / 6)
+		c:add("Ellipsoid", V(0.55, 0.14, 0.55), V(math.cos(angle) * 0.65, 1.82, 0.2 + math.sin(angle) * 0.72), V(-math.sin(angle) * 35, 0, math.cos(angle) * 35), "Primary")
+	end
+	c:add("Ellipsoid", V(0.6, 0.14, 0.6), V(0, 1.95, 0.2), nil, "Primary")
+	local head = V(0, 1.15, -1.35)
+	c:add("Ellipsoid", V(0.9, 0.85, 1.0), head, nil, "Primary", { Name = "Head" })
+	c:eyes(head + V(0, 0.15, -0.38), 0.28, 0.28)
+	c:add("Ellipsoid", V(0.5, 0.12, 0.15), head + V(0, -0.18, -0.48), nil, DARK, { Role = "Eye" })
+	c:pair("Ellipsoid", V(0.45, 0.4, 0.75), V(0.85, 0.35, -0.6), V(0, 25, 0), "Primary")
+	c:pair("Ellipsoid", V(0.45, 0.4, 0.75), V(0.85, 0.35, 0.95), V(0, -25, 0), "Primary")
+	c.TailPart = c:add("Ellipsoid", V(0.25, 0.2, 0.5), V(0, 0.7, 1.4), nil, "Primary")
+	c.BodyCenter, c.BodySize = V(0, 1.2, 0.2), V(1.9, 1.5, 2.1)
+	c.HeadCenter, c.HeadSize, c.HeadTop = head, 1.0, head + V(0, 0.45, 0)
+	c.TailTip = V(0, 0.7, 1.6)
+end
+
+-- Upright shark (the body stands on its tail, so legs go on the bottom).
+Archetypes.Shark = function(c)
+	c.BodyPart = c:add("Ellipsoid", V(1.4, 2.9, 1.5), V(0, 1.75, 0), nil, "Primary", { Shadow = true, Name = "Body" })
+	c:add("Ellipsoid", V(1.0, 2.2, 0.7), V(0, 1.6, -0.55), nil, "Secondary")
+	c:add("Ellipsoid", V(0.95, 0.5, 0.95), V(0, 2.75, -0.6), V(20, 0, 0), "Primary") -- snout
+	c:add("Ellipsoid", V(0.85, 0.12, 0.3), V(0, 2.35, -0.85), nil, WHITE) -- teeth row
+	c:add("Ellipsoid", V(0.9, 0.2, 0.25), V(0, 2.22, -0.8), nil, DARK, { Role = "Eye" })
+	c:eyes(V(0, 2.75, -0.45), 0.42, 0.26)
+	c:triangle(V(0, 3.45, 0.35), 0.5, 1.0, 0.16, 0, "Primary", 90) -- dorsal fin
+	c:pair("Ellipsoid", V(0.22, 0.4, 1.1), V(0.85, 1.9, 0.1), V(0, 0, -35), "Primary") -- side fins
+	c:pair("Ellipsoid", V(0.35, 1.0, 0.35), V(0.38, 0.45, 0.05), nil, "Secondary") -- legs
+	c:pair("Ellipsoid", V(0.5, 0.25, 0.7), V(0.38, 0.12, -0.1), nil, "Accent") -- feet
+	c:add("Ellipsoid", V(0.3, 0.9, 0.5), V(0, 1.0, 0.95), V(-35, 0, 0), "Primary") -- tail
+	c.TailPart = c.BodyPart
+	c.BodyCenter, c.BodySize = V(0, 1.75, 0), V(1.4, 2.9, 1.5)
+	c.HeadCenter, c.HeadSize, c.HeadTop = V(0, 2.6, -0.3), 1.2, V(0, 3.25, -0.2)
+	c.TailTip = V(0, 0.9, 1.3)
+end
+
+-- A tall wooden log with a face and little arms.
+Archetypes.Log = function(c)
+	c.BodyPart = c:add("Cylinder", V(3.4, 1.4, 1.4), V(0, 2.1, 0), V(0, 0, 90), "Primary", { Shadow = true, Name = "Body" })
+	c:add("Cylinder", V(0.12, 1.3, 1.3), V(0, 3.85, 0), V(0, 0, 90), "Secondary") -- cut top rings
+	c:add("Cylinder", V(0.14, 0.8, 0.8), V(0, 3.88, 0), V(0, 0, 90), "Primary")
+	c:add("Cylinder", V(0.16, 0.35, 0.35), V(0, 3.9, 0), V(0, 0, 90), "Secondary")
+	c:add("Ellipsoid", V(0.95, 1.3, 0.3), V(0, 2.8, -0.68), nil, "Secondary") -- pale face patch
+	c:eyes(V(0, 3.05, -0.72), 0.26, 0.3)
+	c:add("Ellipsoid", V(0.45, 0.42, 0.2), V(0, 2.4, -0.8), nil, DARK, { Role = "Eye" }) -- open mouth
+	c:pair("Ellipsoid", V(0.32, 0.9, 0.32), V(0.85, 2.0, -0.1), V(0, 0, 25), "Primary") -- arms
+	c:pair("Ball", V(0.4, 0, 0), V(1.05, 1.6, -0.15), nil, "Secondary")
+	c:pair("Ellipsoid", V(0.5, 0.45, 0.5), V(0.4, 0.3, 0), nil, "Primary") -- stubby legs
+	c:pair("Ellipsoid", V(0.55, 0.2, 0.8), V(0.4, 0.1, -0.1), nil, "Accent")
+	c.TailPart = c.BodyPart
+	c.BodyCenter, c.BodySize = V(0, 2.1, 0), V(1.4, 3.4, 1.4)
+	c.HeadCenter, c.HeadSize, c.HeadTop = V(0, 3.0, -0.2), 1.3, V(0, 3.95, 0)
+	c.TailTip = V(0, 1.0, 0.7)
+end
+
+-- A coffee cup with a face, arms and dancer's legs.
+Archetypes.Cup = function(c)
+	c.BodyPart = c:add("Cylinder", V(1.9, 1.6, 1.6), V(0, 1.95, 0), V(0, 0, 90), "Primary", { Shadow = true, Name = "Body" })
+	c:add("Cylinder", V(0.2, 1.75, 1.75), V(0, 2.9, 0), V(0, 0, 90), "Secondary") -- rim
+	c:add("Cylinder", V(0.12, 1.5, 1.5), V(0, 3.0, 0), V(0, 0, 90), "Accent") -- coffee / foam
+	c:add("Ellipsoid", V(0.5, 0.4, 0.3), V(0, 3.15, -0.2), nil, WHITE) -- foam heart
+	c:add("Cylinder", V(0.25, 0.9, 0.9), V(1.05, 2.1, 0), V(90, 0, 0), "Primary") -- handle
+	c:eyes(V(0, 2.3, -0.75), 0.3, 0.3)
+	c:add("Ellipsoid", V(0.35, 0.18, 0.15), V(0, 1.85, -0.82), nil, DARK, { Role = "Eye" })
+	c:pair("Ellipsoid", V(0.22, 0.8, 0.22), V(1.1, 2.5, -0.1), V(0, 0, -40), "Secondary") -- arms up
+	c:pair("Ellipsoid", V(0.3, 1.1, 0.3), V(0.35, 0.6, 0), nil, "Secondary") -- legs
+	c:pair("Ellipsoid", V(0.35, 0.2, 0.55), V(0.35, 0.1, -0.1), nil, "Accent")
+	c.TailPart = c.BodyPart
+	c.BodyCenter, c.BodySize = V(0, 1.95, 0), V(1.6, 1.9, 1.6)
+	c.HeadCenter, c.HeadSize, c.HeadTop = V(0, 2.4, -0.1), 1.4, V(0, 3.1, 0)
+	c.TailTip = V(0, 1.5, 0.8)
+end
+
+-- Elephant with big ears and a trunk.
+Archetypes.Elephant = function(c)
+	c.BodyPart = c:add("Ellipsoid", V(2.0, 1.7, 2.4), V(0, 1.45, 0.3), nil, "Primary", { Shadow = true, Name = "Body" })
+	c:add("Ellipsoid", V(1.4, 1.0, 1.9), V(0, 1.15, 0.2), nil, "Secondary")
+	legs4(c, -0.5, 1.05, 0.62, 0.95, 0.6)
+	local head = V(0, 2.35, -1.0)
+	c:add("Ellipsoid", V(1.5, 1.35, 1.35), head, nil, "Primary", { Name = "Head" })
+	c:pair("Ellipsoid", V(0.2, 1.1, 1.1), head + V(0.9, 0.05, 0.1), V(0, 0, 15), "Primary") -- ears
+	c:pair("Ellipsoid", V(0.14, 0.75, 0.75), head + V(0.95, 0.05, 0.08), V(0, 0, 15), "Secondary")
+	c:eyes(head + V(0, 0.2, -0.55), 0.35, 0.28)
+	c:segment("Ellipsoid", head + V(0, -0.2, -0.6), head + V(0, -1.1, -0.9), 0.45, "Primary") -- trunk
+	c:add("Ellipsoid", V(0.4, 0.5, 0.4), head + V(0, -1.3, -1.0), V(40, 0, 0), "Primary")
+	c:pair("Ellipsoid", V(0.14, 0.14, 0.6), head + V(0.4, -0.35, -0.8), V(-15, 0, 0), WHITE) -- tusks
+	c.TailPart = c:add("Ellipsoid", V(0.14, 0.14, 0.8), V(0, 1.5, 1.6), V(-30, 0, 0), "Primary")
+	c.BodyCenter, c.BodySize = V(0, 1.45, 0.3), V(2.0, 1.7, 2.4)
+	c.HeadCenter, c.HeadSize, c.HeadTop = head, 1.5, head + V(0, 0.65, 0)
+	c.TailTip = V(0, 1.3, 2.0)
+end
+
+-- Giraffe: boxy fridge body on legs with a very long neck.
+Archetypes.Giraffe = function(c)
+	c.BodyPart = c:add("Block", V(1.6, 1.8, 2.0), V(0, 1.75, 0.2), nil, "Primary", { Shadow = true, Name = "Body" })
+	c:add("Block", V(1.66, 0.08, 2.04), V(0, 1.95, 0.2), nil, "Secondary") -- fridge door split
+	c:add("Block", V(0.1, 0.5, 0.12), V(0.86, 2.3, -0.5), nil, "Accent") -- handles
+	c:add("Block", V(0.1, 0.5, 0.12), V(0.86, 1.4, -0.5), nil, "Accent")
+	legs4(c, -0.55, 0.95, 0.5, 0.9, 0.4)
+	c:segment("Ellipsoid", V(0, 2.5, -0.6), V(0, 4.6, -1.0), 0.55, "Primary") -- neck
+	for i = 1, 4 do
+		c:add("Ellipsoid", V(0.3, 0.12, 0.3), V((i % 2 == 0 and 0.2 or -0.2), 2.7 + i * 0.4, -0.65 - i * 0.08), nil, "Accent")
+	end
+	local head = V(0, 4.95, -1.3)
+	c:add("Ellipsoid", V(0.8, 0.7, 1.15), head, nil, "Primary", { Name = "Head" })
+	c:add("Ellipsoid", V(0.6, 0.45, 0.5), head + V(0, -0.1, -0.5), nil, "Secondary")
+	c:eyes(head + V(0, 0.15, -0.3), 0.3, 0.26)
+	c:pair("Ellipsoid", V(0.12, 0.45, 0.12), head + V(0.22, 0.5, 0.1), nil, "Primary") -- ossicones
+	c:pair("Ball", V(0.2, 0, 0), head + V(0.22, 0.75, 0.1), nil, "Accent")
+	c:pair("Ellipsoid", V(0.18, 0.35, 0.12), head + V(0.4, 0.25, 0.2), V(0, 0, -40), "Primary")
+	c.TailPart = c:add("Ellipsoid", V(0.12, 0.12, 0.7), V(0, 1.9, 1.5), V(-40, 0, 0), "Primary")
+	c.BodyCenter, c.BodySize = V(0, 1.75, 0.2), V(1.6, 1.8, 2.0)
+	c.HeadCenter, c.HeadSize, c.HeadTop = head, 0.9, head + V(0, 0.4, 0)
+	c.TailTip = V(0, 1.7, 1.8)
+end
+
+-- Dolphin balanced on its tail, like it's standing up.
+Archetypes.Dolphin = function(c)
+	c.BodyPart = c:add("Ellipsoid", V(1.2, 2.8, 1.3), V(0, 1.9, 0), V(12, 0, 0), "Primary", { Shadow = true, Name = "Body" })
+	c:add("Ellipsoid", V(0.85, 2.1, 0.6), V(0, 1.75, -0.5), V(12, 0, 0), "Secondary")
+	c:add("Ellipsoid", V(0.6, 0.45, 0.9), V(0, 2.95, -0.75), V(25, 0, 0), "Primary") -- beak
+	c:add("Ellipsoid", V(0.55, 0.12, 0.6), V(0, 2.8, -0.85), V(25, 0, 0), DARK, { Role = "Eye" }) -- smile
+	c:eyes(V(0, 3.1, -0.45), 0.36, 0.26)
+	c:triangle(V(0, 3.3, 0.45), 0.45, 0.7, 0.14, 0, "Primary", 90)
+	c:pair("Ellipsoid", V(0.2, 0.35, 0.95), V(0.75, 1.9, -0.05), V(0, 0, -30), "Primary")
+	c:add("Ellipsoid", V(1.3, 0.18, 0.6), V(0, 0.15, 0.5), nil, "Primary") -- tail flukes
+	c.TailPart = c.BodyPart
+	c.BodyCenter, c.BodySize = V(0, 1.9, 0), V(1.2, 2.8, 1.3)
+	c.HeadCenter, c.HeadSize, c.HeadTop = V(0, 2.9, -0.3), 1.1, V(0, 3.45, -0.2)
+	c.TailTip = V(0, 0.2, 0.8)
+end
+
+-- A round potato / dumpling with a face and tiny limbs.
+Archetypes.Blob = function(c)
+	c.BodyPart = c:add("Ellipsoid", V(2.3, 2.0, 2.1), V(0, 1.5, 0), nil, "Primary", { Shadow = true, Name = "Body" })
+	c:add("Ellipsoid", V(1.5, 1.2, 0.6), V(0, 1.3, -0.85), nil, "Secondary")
+	c:eyes(V(0, 1.75, -0.95), 0.4, 0.36)
+	c:add("Ellipsoid", V(0.6, 0.3, 0.2), V(0, 1.15, -1.02), nil, DARK, { Role = "Eye" })
+	c:pair("Ellipsoid", V(0.3, 0.3, 0.9), V(1.05, 1.3, -0.3), V(0, 25, 0), "Primary") -- arms
+	c:pair("Ellipsoid", V(0.5, 0.45, 0.5), V(0.5, 0.3, 0), nil, "Primary") -- feet
+	c:pair("Ellipsoid", V(0.55, 0.2, 0.75), V(0.5, 0.1, -0.1), nil, "Accent")
+	c:add("Ball", V(0.35, 0, 0), V(0.4, 2.45, 0.2), nil, "Accent") -- little tuft
+	c.TailPart = c.BodyPart
+	c.BodyCenter, c.BodySize = V(0, 1.5, 0), V(2.3, 2.0, 2.1)
+	c.HeadCenter, c.HeadSize, c.HeadTop = V(0, 1.7, -0.4), 1.5, V(0, 2.5, 0)
+	c.TailTip = V(0, 1.2, 1.0)
+end
+
 --------------------------------------------------------------------------------
 -- Extras
 --------------------------------------------------------------------------------
@@ -648,7 +860,100 @@ local function addExtras(c, extras: { string })
 		c:add("Cylinder", V(0.14, 0.8, 0.8), b + V(0.8, 1.7, 0.62), V(0, 90, 0), "Accent", { Role = "Detail" })
 		c:add("Cylinder", V(0.16, 0.45, 0.45), b + V(0.8, 1.7, 0.6), V(0, 90, 0), WHITE, { Role = "Detail", KeepColor = true })
 	end
+	if set.Sneakers then
+		-- chunky white sneakers on every foot-level accent part
+		for _, part in ipairs(c.Model:GetChildren()) do
+			if part:IsA("BasePart") and part ~= c.Root and part:GetAttribute("Role") == "Detail" and part.Position.Y < 0.3 * c.S and part.Size.Y < 0.4 * c.S then
+				part.Color = WHITE
+				part.Size = part.Size * V(1.25, 1.7, 1.3)
+				part.Position = part.Position + V(0, 0.1 * c.S, 0)
+				c:addCF("Block", V(part.Size.X / c.S * 0.7, 0.08, part.Size.Z / c.S * 0.5), CFrame.new(part.Position / c.S + V(0, part.Size.Y / c.S * 0.5, -0.05)), "Accent", { Role = "Detail" })
+			end
+		end
+	end
+	if set.Bongos then
+		local b = c.BodyCenter
+		for _, x in ipairs({ -0.55, 0.55 }) do
+			c:add("Cylinder", V(0.7, 0.75, 0.75), b + V(x, -0.2, -0.95), V(0, 0, 90), Color3.fromRGB(200, 120, 60), { Role = "Detail", KeepColor = true })
+			c:add("Cylinder", V(0.08, 0.65, 0.65), b + V(x, 0.16, -0.95), V(0, 0, 90), Color3.fromRGB(245, 225, 190), { Role = "Detail", KeepColor = true })
+		end
+	end
+	if set.CupHeld then
+		local b = c.BodyCenter
+		c:add("Cylinder", V(0.55, 0.42, 0.42), b + V(0.75, 0.1, -0.7), V(0, 0, 90), WHITE, { Role = "Detail", KeepColor = true })
+		c:add("Cylinder", V(0.08, 0.36, 0.36), b + V(0.75, 0.4, -0.7), V(0, 0, 90), Color3.fromRGB(110, 70, 40), { Role = "Detail", KeepColor = true })
+	end
+	if set.Pizza then
+		local b = c.BodyCenter
+		c:triangle(b + V(0.8, 0.1, -0.6), 0.9, 1.0, 0.12, 0, Color3.fromRGB(240, 200, 90), 0, { Role = "Detail", KeepColor = true })
+		c:add("Ball", V(0.2, 0, 0), b + V(0.8, 0.2, -0.72), nil, Color3.fromRGB(200, 40, 40), { Role = "Detail", KeepColor = true })
+		c:add("Ball", V(0.2, 0, 0), b + V(0.65, -0.1, -0.72), nil, Color3.fromRGB(200, 40, 40), { Role = "Detail", KeepColor = true })
+	end
+	if set.Cone then
+		local top = c.HeadTop
+		c:add("Ellipsoid", V(0.5, 0.75, 0.5), top + V(0, 0.3, 0), nil, Color3.fromRGB(230, 180, 110), { Role = "Detail", KeepColor = true })
+		c:add("Ball", V(0.55, 0, 0), top + V(0, 0.8, 0), nil, Color3.fromRGB(255, 150, 200), { Role = "Detail", KeepColor = true })
+		c:add("Ball", V(0.45, 0, 0), top + V(0, 1.2, 0), nil, Color3.fromRGB(255, 240, 220), { Role = "Detail", KeepColor = true })
+		c:add("Ball", V(0.16, 0, 0), top + V(0, 1.45, 0), nil, Color3.fromRGB(220, 30, 50), { Role = "Detail", KeepColor = true })
+	end
+	if set.Tube then
+		local b, sz = c.BodyCenter, c.BodySize
+		c:add("Cylinder", V(1.6, 0.55, 0.55), b + V(0, sz.Y * 0.55, 0.1), V(0, 0, 0), Color3.fromRGB(225, 180, 120), { Role = "Detail", KeepColor = true })
+		for _, x in ipairs({ -0.82, 0.82 }) do
+			c:add("Cylinder", V(0.06, 0.4, 0.4), b + V(x, sz.Y * 0.55, 0.1), nil, WHITE, { Role = "Detail", KeepColor = true })
+		end
+	end
+	if set.Jet then
+		local b, sz = c.BodyCenter, c.BodySize
+		c:pair("Block", V(1.6, 0.1, 0.8), b + V(1.1, sz.Y * 0.2, 0.1), V(0, 0, 0), Color3.fromRGB(190, 195, 205), { Role = "Detail", KeepColor = true })
+		c:pair("Cylinder", V(0.9, 0.45, 0.45), b + V(1.3, sz.Y * 0.2 - 0.25, 0.3), V(0, 90, 0), Color3.fromRGB(90, 95, 110), { Role = "Detail", KeepColor = true })
+		c:pair("Cylinder", V(0.1, 0.36, 0.36), b + V(1.3, sz.Y * 0.2 - 0.25, 0.78), V(0, 90, 0), Color3.fromRGB(255, 140, 40), { Role = "Detail", KeepColor = true, Material = "Neon" })
+	end
+	if set.Bat then
+		local b = c.BodyCenter
+		c:segment("Cylinder", b + V(0.95, -0.3, -0.3), b + V(1.25, 1.4, -0.6), 0.14, Color3.fromRGB(150, 100, 55), { Role = "Detail", KeepColor = true })
+		c:add("Ellipsoid", V(0.3, 0.75, 0.3), b + V(1.3, 1.65, -0.65), V(0, 0, -10), Color3.fromRGB(150, 100, 55), { Role = "Detail", KeepColor = true })
+	end
+	if set.Tutu then
+		local b, sz = c.BodyCenter, c.BodySize
+		for i = 0, 9 do
+			local angle = i * (math.pi * 2 / 10)
+			c:add("Ellipsoid", V(0.55, 0.12, 0.7), b + V(math.cos(angle) * sz.X * 0.62, -sz.Y * 0.4, math.sin(angle) * sz.Z * 0.62), V(0, -math.deg(angle), 0), Color3.fromRGB(255, 190, 225), { Role = "Detail", KeepColor = true })
+		end
+	end
+	if set.Spikes then
+		local b, sz = c.BodyCenter, c.BodySize
+		for i = 1, 10 do
+			local angle = i * 2.1
+			local p = b + V(math.cos(angle) * sz.X * 0.42, sz.Y * 0.35 + (i % 3) * 0.12, math.sin(angle) * sz.Z * 0.42)
+			c:add("Ellipsoid", V(0.1, 0.4, 0.1), p, V(0, 0, math.deg(angle)), Color3.fromRGB(240, 230, 150), { Role = "Detail", KeepColor = true })
+		end
+	end
+	if set.Propeller then
+		local top = c.HeadTop
+		c:segment("Cylinder", top, top + V(0, 0.45, 0), 0.1, DARK, { Role = "Detail", KeepColor = true })
+		local blade = c:add("Block", V(1.6, 0.06, 0.22), top + V(0, 0.5, 0), nil, Color3.fromRGB(230, 230, 240), { Role = "Detail", KeepColor = true, Name = "Propeller" })
+		blade:SetAttribute("Spin", true)
+	end
+	if set.Glasses then
+		local head = c.HeadCenter
+		for _, x in ipairs({ -0.33, 0.33 }) do
+			c:add("Cylinder", V(0.1, 0.42, 0.42), head + V(x, 0.15, -c.HeadSize * 0.52), V(0, 90, 0), DARK, { Role = "Detail", KeepColor = true })
+		end
+		c:add("Block", V(0.2, 0.06, 0.06), head + V(0, 0.15, -c.HeadSize * 0.52), nil, DARK, { Role = "Detail", KeepColor = true })
+	end
+	if set.Bomb then
+		local b, sz = c.BodyCenter, c.BodySize
+		c:add("Ball", V(0.85, 0, 0), b + V(-0.95, sz.Y * 0.1, -0.5), nil, DARK, { Role = "Detail", KeepColor = true })
+		c:segment("Cylinder", b + V(-0.95, sz.Y * 0.1 + 0.4, -0.5), b + V(-0.8, sz.Y * 0.1 + 0.75, -0.6), 0.08, Color3.fromRGB(200, 170, 120), { Role = "Detail", KeepColor = true })
+		c:add("Ball", V(0.2, 0, 0), b + V(-0.8, sz.Y * 0.1 + 0.8, -0.6), nil, Color3.fromRGB(255, 160, 40), { Role = "Detail", KeepColor = true, Material = "Neon" })
+	end
+	if set.Scarf then
+		local head = c.HeadCenter
+		c:add("Cylinder", V(0.5, c.HeadSize * 0.95, c.HeadSize * 0.95), head + V(0, -c.HeadSize * 0.55, 0), V(0, 0, 90), Color3.fromRGB(220, 60, 70), { Role = "Detail", KeepColor = true })
+	end
 end
+
 
 -- Cute "chibi" proportions: grow the head (and everything on it) and lift it a
 -- little. Only for body plans with a separate head; owls, penguins and crabs
@@ -817,17 +1122,16 @@ local function weld(built: Built)
 	end
 end
 
--- opts: Effects (particles/lights/fire), Weld (for moving pets), Scale
-function PetBuilder.Build(petName: string, tier: number?, opts: { [string]: any }?): Built
+-- opts: Effects (particles/lights/fire), Weld (for a moving character), Scale
+function BrainrotBuilder.Build(name: string, opts: { [string]: any }?): Built
 	local o = opts or {}
-	local tierValue = tier or 0
-	local def = Config.Pets[petName]
-	local style = PetStyles.Pets[petName]
+	local def = Config.Brainrots[name]
+	local style = BrainrotStyles.Characters[name]
 	local rarityScale = def and RARITY_SCALE[def.Rarity] or 1
-	local scale = (o.Scale or 1) * rarityScale
+	local scale = (o.Scale or 1) * rarityScale * (style and style.Scale or 1)
 
 	local model = Instance.new("Model")
-	model.Name = petName
+	model.Name = name
 
 	local root = Instance.new("Part")
 	root.Name = "Root"
@@ -837,20 +1141,21 @@ function PetBuilder.Build(petName: string, tier: number?, opts: { [string]: any 
 	root.CanCollide = false
 	root.CanTouch = false
 	root.CanQuery = false
+	root.Massless = true
 	root.CFrame = CFrame.new()
 	root.Parent = model
 	model.PrimaryPart = root
 
-	local built: Built = { Model = model, Root = root, Height = 3 * scale, Flappers = {}, RainbowParts = {} }
+	local built: Built = { Model = model, Root = root, Height = 3 * scale, Flappers = {} }
 
+	-- Want real art? A Model named like the brainrot in ReplicatedStorage.BrainrotModels wins.
 	if not customModels then
-		customModels = ReplicatedStorage:FindFirstChild("PetModels")
+		customModels = ReplicatedStorage:FindFirstChild("BrainrotModels")
 	end
-	local custom = customModels and customModels:FindFirstChild(petName)
+	local custom = customModels and customModels:FindFirstChild(name)
 	if custom and custom:IsA("Model") then
 		local clone = custom:Clone()
 		prepareCustom(clone)
-		-- Move the model so its bounding box sits on the ground at the origin.
 		local cf, size = clone:GetBoundingBox()
 		local target = CFrame.new(0, size.Y / 2, 0) * cf.Rotation
 		clone:PivotTo(target * cf:Inverse() * clone:GetPivot())
@@ -865,10 +1170,9 @@ function PetBuilder.Build(petName: string, tier: number?, opts: { [string]: any 
 		return built
 	end
 
-	local fallbackColor = def and def.Color or Color3.fromRGB(200, 200, 200)
-	local resolvedStyle = style or { Archetype = "Dog", Primary = fallbackColor, Secondary = fallbackColor:Lerp(WHITE, 0.5), Accent = fallbackColor:Lerp(DARK, 0.4) }
-	local c = newCtx(model, root, scale, resolvedStyle, tierValue)
-	local archetype = Archetypes[resolvedStyle.Archetype] or Archetypes.Dog
+	local resolvedStyle = style or { Archetype = "Blob", Primary = Color3.fromRGB(200, 200, 200), Secondary = Color3.fromRGB(240, 240, 240), Accent = Color3.fromRGB(120, 120, 120) }
+	local c = newCtx(model, root, scale, resolvedStyle, 0)
+	local archetype = Archetypes[resolvedStyle.Archetype] or Archetypes.Blob
 	archetype(c)
 	local extras = resolvedStyle.Extras or {}
 	addExtras(c, extras)
@@ -878,33 +1182,20 @@ function PetBuilder.Build(petName: string, tier: number?, opts: { [string]: any 
 	end
 
 	built.Flappers = c.Flappers
-	built.RainbowParts = c.Rainbow
 	local _, size = model:GetBoundingBox()
 	built.Height = size.Y
-	if tierValue >= 2 then
-		model:SetAttribute("Rainbow", true)
-	end
 	if o.Weld then
 		weld(built)
 	end
 	return built
 end
 
--- Animates flapping wings and rainbow colours. Call every frame (or less).
-function PetBuilder.Animate(built: Built, t: number, phase: number)
+-- Animates flapping wings. Call every frame (or less).
+function BrainrotBuilder.Animate(built: Built, t: number, phase: number)
 	for _, flapper in ipairs(built.Flappers) do
 		if flapper.Joint then
 			local angle = math.sin(t * flapper.Speed + phase) * flapper.Amount * flapper.Side
 			flapper.Joint.C0 = flapper.Hinge * CFrame.Angles(0, 0, angle)
-		end
-	end
-	for index, part in ipairs(built.RainbowParts) do
-		local aurora = part:GetAttribute("AuroraPhase")
-		if typeof(aurora) == "number" then
-			local hue = 0.38 + math.sin(t * 0.8 + aurora * 6) * 0.17
-			part.Color = Color3.fromHSV(hue, 0.7, 1)
-		else
-			part.Color = Color3.fromHSV((t * 0.25 + index * 0.13) % 1, 0.6, 1)
 		end
 	end
 end
@@ -914,7 +1205,7 @@ end
 --------------------------------------------------------------------------------
 
 -- Frames a camera so the whole model is visible from the front-left.
-function PetBuilder.FrameCamera(viewport: ViewportFrame, model: Model, zoom: number?)
+function BrainrotBuilder.FrameCamera(viewport: ViewportFrame, model: Model, zoom: number?)
 	local camera = viewport.CurrentCamera
 	if not camera then
 		local newCamera = Instance.new("Camera")
@@ -934,15 +1225,15 @@ end
 local VIEW_AMBIENT = Color3.fromRGB(170, 170, 185)
 local VIEW_LIGHT = Color3.fromRGB(255, 250, 240)
 
--- Shows the pet as a black shape (undiscovered pets in the Index).
-function PetBuilder.SetSilhouette(viewport: ViewportFrame, silhouette: boolean)
+-- Shows the character as a black shape (locked brainrots).
+function BrainrotBuilder.SetSilhouette(viewport: ViewportFrame, silhouette: boolean)
 	viewport.ImageColor3 = if silhouette then Color3.new(0, 0, 0) else Color3.new(1, 1, 1)
 	viewport.Ambient = if silhouette then Color3.new(0, 0, 0) else VIEW_AMBIENT
 	viewport.LightColor = if silhouette then Color3.new(0, 0, 0) else VIEW_LIGHT
 end
 
--- props: any ViewportFrame properties, plus Silhouette = true for "???" pets.
-function PetBuilder.CreateViewport(petName: string, tier: number?, props: { [string]: any }?): (ViewportFrame, Model)
+-- props: any ViewportFrame properties, plus Silhouette = true, Zoom, Parent.
+function BrainrotBuilder.CreateViewport(name: string, props: { [string]: any }?): (ViewportFrame, Model)
 	local p = props or {}
 	local viewport = Instance.new("ViewportFrame")
 	viewport.BackgroundTransparency = 1
@@ -954,11 +1245,11 @@ function PetBuilder.CreateViewport(petName: string, tier: number?, props: { [str
 			(viewport :: any)[key] = value
 		end
 	end
-	local built = PetBuilder.Build(petName, tier, { Effects = false, Weld = false })
+	local built = BrainrotBuilder.Build(name, { Effects = false, Weld = false })
 	built.Model.Parent = viewport
-	PetBuilder.FrameCamera(viewport, built.Model, p.Zoom)
+	BrainrotBuilder.FrameCamera(viewport, built.Model, p.Zoom)
 	if p.Silhouette then
-		PetBuilder.SetSilhouette(viewport, true)
+		BrainrotBuilder.SetSilhouette(viewport, true)
 	end
 	if p.Parent then
 		viewport.Parent = p.Parent
@@ -966,13 +1257,4 @@ function PetBuilder.CreateViewport(petName: string, tier: number?, props: { [str
 	return viewport, built.Model
 end
 
--- Display name including tier, e.g. "Golden Dog".
-function PetBuilder.DisplayName(petName: string, tier: number?): string
-	local prefix = PetBuilder.TierNames[tier or 0] or ""
-	if prefix == "" then
-		return petName
-	end
-	return prefix .. " " .. petName
-end
-
-return PetBuilder
+return BrainrotBuilder

@@ -16,7 +16,7 @@ local DataService = require(script.Parent.DataService)
 local RateLimiter = require(script.Parent.RateLimiter)
 local GamepassService = require(script.Parent.GamepassService)
 local EconomyService = require(script.Parent.EconomyService)
-local PetService = require(script.Parent.PetService)
+local BrainrotService = require(script.Parent.BrainrotService)
 
 local RewardService = {}
 
@@ -24,35 +24,21 @@ local function notify(player: Player, message: string, kind: string?)
 	Remotes.Get("Notify"):FireClient(player, message, kind or "info")
 end
 
--- Grants a reward table { CoinMinutes?, Gems?, Pet?, Boost? } and returns a description.
+-- Grants a reward table { Coins?, Brainrot?, BrainrotCoins? } and returns a description.
 local function grant(player: Player, reward, multiplier: number): string
 	local parts = {}
-	if reward.CoinMinutes then
-		local amount = EconomyService.AddCoins(player, EconomyService.CoinsForMinutes(player, reward.CoinMinutes) * multiplier, false)
+	if reward.Coins then
+		local amount = EconomyService.AddCoins(player, reward.Coins * multiplier, false)
 		table.insert(parts, Util.FormatNumber(amount) .. " Coins")
 	end
-	if reward.Gems then
-		local amount = EconomyService.AddGems(player, reward.Gems * multiplier)
-		table.insert(parts, amount .. " Gems")
-	end
-	local profile = DataService:GetProfile(player)
-	local alreadyHasOncePet = reward.PetOnce and profile ~= nil and profile.Data.Discovered[reward.Pet] == true
-	if reward.Pet and alreadyHasOncePet then
-		local amount = EconomyService.AddGems(player, (reward.PetGems or 100) * multiplier)
-		table.insert(parts, amount .. " bonus Gems")
-	elseif reward.Pet then
-		local petData = PetService.AddPet(player, reward.Pet)
-		if petData then
-			table.insert(parts, reward.Pet .. " pet")
+	if reward.Brainrot then
+		if BrainrotService.Owns(player, reward.Brainrot) then
+			local amount = EconomyService.AddCoins(player, (reward.BrainrotCoins or 500) * multiplier, false)
+			table.insert(parts, Util.FormatNumber(amount) .. " bonus Coins")
 		else
-			-- Storage full: convert to gems so the player never loses value.
-			EconomyService.AddGems(player, 100)
-			table.insert(parts, "100 Gems (pet storage full)")
+			BrainrotService.Give(player, reward.Brainrot, true)
+			table.insert(parts, reward.Brainrot .. " brainrot")
 		end
-	end
-	if reward.Boost then
-		EconomyService.ApplyBoost(player, reward.Boost.Type, reward.Boost.Mult, reward.Boost.Duration)
-		table.insert(parts, string.format("x%s %s boost (%s)", tostring(reward.Boost.Mult), reward.Boost.Type, Util.FormatTime(reward.Boost.Duration)))
 	end
 	return table.concat(parts, " + ")
 end
@@ -165,9 +151,9 @@ function RewardService.ClaimGroup(player: Player)
 		return
 	end
 	profile.Data.GroupClaimed = true
-	EconomyService.AddGems(player, Config.GroupReward.Gems)
+	EconomyService.AddCoins(player, Config.GroupReward.Coins, false)
 	DataService:Replicate(player, { GroupClaimed = true })
-	notify(player, "Thanks for joining the group! +" .. Config.GroupReward.Gems .. " Gems and +10% coins forever", "reward")
+	notify(player, "Thanks for joining the group! +" .. Config.GroupReward.Coins .. " Coins and +10% coins forever", "reward")
 end
 
 --------------------------------------------------------------------------------

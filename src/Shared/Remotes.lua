@@ -9,28 +9,22 @@ local DEFINITIONS: { [string]: string } = {
 	DataLoaded = "RemoteEvent",
 	DataChanged = "RemoteEvent",
 	Notify = "RemoteEvent",
-	BreakableBroken = "RemoteEvent",
+	StageReached = "RemoteEvent", -- (stage, isNew, reward)
+	CoinTaken = "RemoteEvent", -- (coinId, amount)
 
 	-- Client -> Server
 	RequestData = "RemoteEvent",
-	CollectOrb = "RemoteEvent",
-	HatchEgg = "RemoteFunction",
-	EquipPet = "RemoteEvent",
-	UnequipPet = "RemoteEvent",
-	EquipBest = "RemoteEvent",
-	UnequipAll = "RemoteEvent",
-	DeletePet = "RemoteEvent",
-	CraftPet = "RemoteEvent",
-	UnlockZone = "RemoteEvent",
-	TeleportZone = "RemoteEvent",
-	Rebirth = "RemoteEvent",
+	CollectCoin = "RemoteEvent",
+	EquipBrainrot = "RemoteEvent",
+	BuyBrainrot = "RemoteEvent",
+	TeleportStage = "RemoteEvent",
+	ResetCharacter = "RemoteEvent",
+	Prestige = "RemoteEvent",
 	ClaimDaily = "RemoteEvent",
 	ClaimPlaytime = "RemoteEvent",
 	ClaimGroup = "RemoteEvent",
 	UpdateSetting = "RemoteEvent",
 	RedeemCode = "RemoteFunction",
-	ClaimQuest = "RemoteEvent",
-	BuyUpgrade = "RemoteEvent",
 }
 
 local Remotes = {}

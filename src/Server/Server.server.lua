@@ -1,5 +1,5 @@
 --------------------------------------------------------------------------------
--- Hatch Legends - server bootstrap
+-- Brainrot Obby - server bootstrap
 --------------------------------------------------------------------------------
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -12,25 +12,20 @@ local Services = script.Parent:WaitForChild("Services")
 
 Remotes.Init()
 
--- Build the world first so services can reference zone positions.
-local MapBuilder = require(Services.MapBuilder)
-MapBuilder.Build()
+-- Build the course first so services can reference checkpoints.
+local CourseBuilder = require(Services.CourseBuilder)
+CourseBuilder.Build()
 
 local START_ORDER = {
 	"DataService",
 	"GamepassService",
-	"ComplianceService",
 	"EconomyService",
-	"PetService",
-	"ZoneService",
-	"RebirthService",
+	"MoverService",
+	"StageService",
+	"CoinService",
+	"BrainrotService",
 	"RewardService",
-	"QuestService",
-	"EventService",
-	"UpgradeService",
 	"ShopService",
-	"CollectibleService",
-	"BreakableService",
 	"LeaderboardService",
 	"PlayerService",
 }
@@ -50,16 +45,8 @@ for _, serviceName in ipairs(START_ORDER) do
 	end
 end
 
-print(string.format("[%s] Server ready (v%d). %d zones, %d pets, %d eggs.", Config.GameName, Config.Version, #Config.Zones, (function()
-	local count = 0
-	for _ in pairs(Config.Pets) do
-		count += 1
-	end
-	return count
-end)(), (function()
-	local count = 0
-	for _ in pairs(Config.Eggs) do
-		count += 1
-	end
-	return count
-end)()))
+local brainrots = 0
+for _ in pairs(Config.Brainrots) do
+	brainrots += 1
+end
+print(string.format("[%s] Server ready (v%d). %d stages, %d worlds, %d brainrots.", Config.GameName, Config.Version, Config.TotalStages(), #Config.Worlds, brainrots))

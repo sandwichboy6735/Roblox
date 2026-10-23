@@ -11,7 +11,7 @@ local Config = require(Shared.Config)
 local Util = require(Shared.Util)
 
 local DataService = require(script.Parent.DataService)
-local MapBuilder = require(script.Parent.MapBuilder)
+local CourseBuilder = require(script.Parent.CourseBuilder)
 
 local LeaderboardService = {}
 
@@ -20,10 +20,11 @@ local REFRESH_INTERVAL = 90
 local TOP_COUNT = 10 -- rows that fit on a board
 local MAX_ORDERED_VALUE = 9007199254740991
 
+-- Ascending boards (fastest time) store the value as-is and sort low to high.
 local BOARDS = {
-	{ Key = "TotalCoins", Get = function(data) return data.Stats.TotalCoins end },
-	{ Key = "Rebirths", Get = function(data) return data.Rebirths end },
-	{ Key = "PetsHatched", Get = function(data) return data.Stats.PetsHatched end },
+	{ Key = "BestStage", Get = function(data) return data.Stats.BestStage end, Format = function(value) return "Stage " .. tostring(value) end },
+	{ Key = "Prestige", Get = function(data) return data.Prestige end, Format = function(value) return "Prestige " .. tostring(value) end },
+	{ Key = "BestTime", Get = function(data) return data.Stats.BestTime end, Ascending = true, Format = function(value) return Util.FormatTime(value) end },
 }
 
 local stores = {}
@@ -96,7 +97,7 @@ local function pushScores()
 	end
 end
 
-local function renderBoard(boardPart: Part, entries)
+local function renderBoard(boardPart: Part, entries, format)
 	local gui = boardPart:FindFirstChild("Board")
 	local rows = gui and gui:FindFirstChild("Rows")
 	if not rows then
@@ -143,7 +144,7 @@ local function renderBoard(boardPart: Part, entries)
 		local rankLabel = Instance.new("TextLabel")
 		rankLabel.BackgroundTransparency = 1
 		rankLabel.Size = UDim2.new(0, 60, 1, 0)
-		rankLabel.Font = Enum.Font.GothamBlack
+		rankLabel.Font = Enum.Font.LuckiestGuy
 		rankLabel.Text = "#" .. rank
 		rankLabel.TextColor3 = rankColor
 		rankLabel.TextScaled = true
@@ -153,7 +154,7 @@ local function renderBoard(boardPart: Part, entries)
 		nameLabel.BackgroundTransparency = 1
 		nameLabel.Position = UDim2.new(0, 66, 0, 0)
 		nameLabel.Size = UDim2.new(1, -300, 1, 0)
-		nameLabel.Font = Enum.Font.GothamBold
+		nameLabel.Font = Enum.Font.FredokaOne
 		nameLabel.Text = entry.Name
 		nameLabel.TextColor3 = Color3.fromRGB(240, 240, 250)
 		nameLabel.TextScaled = true
@@ -164,8 +165,8 @@ local function renderBoard(boardPart: Part, entries)
 		valueLabel.BackgroundTransparency = 1
 		valueLabel.Position = UDim2.new(1, -230, 0, 0)
 		valueLabel.Size = UDim2.new(0, 220, 1, 0)
-		valueLabel.Font = Enum.Font.GothamBold
-		valueLabel.Text = Util.FormatNumber(entry.Value)
+		valueLabel.Font = Enum.Font.FredokaOne
+		valueLabel.Text = format(entry.Value)
 		valueLabel.TextColor3 = Color3.fromRGB(255, 220, 90)
 		valueLabel.TextScaled = true
 		valueLabel.TextXAlignment = Enum.TextXAlignment.Right
@@ -176,12 +177,12 @@ local function renderBoard(boardPart: Part, entries)
 end
 
 local function refreshBoards()
-	local boards = MapBuilder.GetLeaderboardBoards()
+	local boards = CourseBuilder.GetLeaderboardBoards()
 	for _, board in ipairs(BOARDS) do
 		local boardPart = boards[board.Key]
 		if boardPart then
 			local ok, page = pcall(function()
-				return stores[board.Key]:GetSortedAsync(false, TOP_COUNT):GetCurrentPage()
+				return stores[board.Key]:GetSortedAsync(board.Ascending == true, TOP_COUNT):GetCurrentPage()
 			end)
 			if ok and page then
 				local entries = {}
@@ -191,7 +192,7 @@ local function refreshBoards()
 						table.insert(entries, { Name = getName(userId), Value = item.value })
 					end
 				end
-				renderBoard(boardPart, entries)
+				renderBoard(boardPart, entries, board.Format)
 			end
 		end
 	end

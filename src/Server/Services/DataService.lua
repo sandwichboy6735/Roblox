@@ -209,9 +209,8 @@ local function loadProfile(player: Player)
 			Gamepasses = {},
 			PlaytimeClaimed = {},
 			InGroup = false,
-			PetSlots = Config.BasePetSlots,
-			PaidRandomRestricted = true, -- until PolicyService confirms otherwise
 			Multiplier = nil,
+			Skips = 0, -- stage skips bought but not yet used (used immediately)
 		},
 		Loaded = true,
 		Saving = false,

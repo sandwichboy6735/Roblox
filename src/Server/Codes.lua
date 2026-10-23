@@ -4,12 +4,12 @@
 --
 -- Codes are case-insensitive. Post them on social media / YouTube descriptions
 -- to drive traffic. Optional Expires = unix timestamp (https://www.epochconverter.com).
--- Reward keys: CoinMinutes (minutes of the player's income), Gems, Pet, Boost.
+-- Reward keys: Coins, Brainrot (given once; BrainrotCoins instead if owned).
 --------------------------------------------------------------------------------
 
 return {
-	RELEASE = { Gems = 50 },
-	HATCH = { CoinMinutes = 5 },
-	LUCKY = { Boost = { Type = "Luck", Mult = 2, Duration = 10 * 60 } },
-	-- EXAMPLE = { Gems = 100, Expires = 1767225600 },
+	RELEASE = { Coins = 500 },
+	BRAINROT = { Coins = 250 },
+	SAHUR = { Brainrot = "Bongo Banana", BrainrotCoins = 300 },
+	-- EXAMPLE = { Coins = 1000, Expires = 1767225600 },
 }

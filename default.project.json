@@ -1,5 +1,5 @@
 {
-  "name": "HatchLegends",
+  "name": "BrainrotObby",
   "tree": {
     "$className": "DataModel",
     "ReplicatedStorage": {
@@ -7,7 +7,7 @@
       "Shared": {
         "$path": "src/Shared"
       },
-      "PetModels": {
+      "BrainrotModels": {
         "$className": "Folder"
       }
     },
@@ -18,11 +18,20 @@
     "StarterPlayer": {
       "$className": "StarterPlayer",
       "$properties": {
-        "CharacterWalkSpeed": 20
+        "CharacterWalkSpeed": 16,
+        "CharacterJumpPower": 50,
+        "CharacterUseJumpPower": true,
+        "EnableMouseLockOption": true
       },
       "StarterPlayerScripts": {
         "$className": "StarterPlayerScripts",
         "$path": "src/Client"
+      }
+    },
+    "Players": {
+      "$className": "Players",
+      "$properties": {
+        "RespawnTime": 1.2
       }
     },
     "Workspace": {
@@ -42,16 +51,8 @@
         "Technology": "Future",
         "ClockTime": 14,
         "Brightness": 3,
-        "Ambient": [
-          0.35,
-          0.35,
-          0.4
-        ],
-        "OutdoorAmbient": [
-          0.5,
-          0.5,
-          0.55
-        ],
+        "Ambient": [0.45, 0.45, 0.5],
+        "OutdoorAmbient": [0.62, 0.62, 0.68],
         "GlobalShadows": true,
         "EnvironmentDiffuseScale": 0.6,
         "EnvironmentSpecularScale": 0.6

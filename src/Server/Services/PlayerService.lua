@@ -14,7 +14,7 @@ local EconomyService = require(script.Parent.EconomyService)
 
 local PlayerService = {}
 
-local ALLOWED_SETTINGS = { Music = true, SkipHatchAnimation = true, ShowGuide = true }
+local ALLOWED_SETTINGS = { Music = true, Effects = true, ShowOthers = true }
 
 local function setupLeaderstats(player: Player, data)
 	if player:FindFirstChild("leaderstats") then
@@ -23,13 +23,17 @@ local function setupLeaderstats(player: Player, data)
 	local leaderstats = Instance.new("Folder")
 	leaderstats.Name = "leaderstats"
 
+	local stage = Instance.new("IntValue")
+	stage.Name = "Stage"
+	stage.Parent = leaderstats
+
 	local coins = Instance.new("StringValue")
 	coins.Name = "Coins"
 	coins.Parent = leaderstats
 
-	local rebirths = Instance.new("IntValue")
-	rebirths.Name = "Rebirths"
-	rebirths.Parent = leaderstats
+	local prestige = Instance.new("IntValue")
+	prestige.Name = "Prestige"
+	prestige.Parent = leaderstats
 
 	leaderstats.Parent = player
 	EconomyService.UpdateLeaderstats(player, data)
@@ -38,15 +42,14 @@ end
 function PlayerService.Init()
 	DataService.ProfileLoaded:Connect(function(player, profile)
 		setupLeaderstats(player, profile.Data)
-
 		task.delay(2, function()
 			if not player:IsDescendantOf(Players) then
 				return
 			end
 			if profile.Data.Stats.Joins <= 1 then
-				Remotes.Get("Notify"):FireClient(player, "Welcome to " .. Config.GameName .. "! Follow the glowing arrows to get started.", "info")
+				Remotes.Get("Notify"):FireClient(player, "Welcome to " .. Config.GameName .. "! Follow the arrows and touch the glowing pads.", "info")
 			else
-				Remotes.Get("Notify"):FireClient(player, "Welcome back, " .. player.DisplayName .. "!", "info")
+				Remotes.Get("Notify"):FireClient(player, "Welcome back, " .. player.DisplayName .. "! You're on stage " .. profile.Data.Stage .. ".", "info")
 			end
 		end)
 	end)
@@ -61,7 +64,6 @@ function PlayerService.Init()
 		end
 	end)
 
-	-- Playtime tracking (also drives the "play for N minutes" quest).
 	task.spawn(function()
 		while true do
 			task.wait(10)

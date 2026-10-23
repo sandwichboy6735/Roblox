@@ -15,8 +15,7 @@ local Remotes = require(Shared.Remotes)
 
 local DataService = require(script.Parent.DataService)
 local EconomyService = require(script.Parent.EconomyService)
-local RebirthService = require(script.Parent.RebirthService)
-local ComplianceService = require(script.Parent.ComplianceService)
+local StageService = require(script.Parent.StageService)
 
 local ShopService = {}
 
@@ -26,28 +25,15 @@ local function notify(player: Player, message: string, kind: string?)
 	Remotes.Get("Notify"):FireClient(player, message, kind or "info")
 end
 
-local function grantProduct(player: Player, productKey: string, product)
+local function grantProduct(player: Player, product)
 	local grantInfo = product.Grant
-	local summary = {}
-
-	if grantInfo.CoinMinutes then
-		local amount = EconomyService.AddCoins(player, EconomyService.CoinsForMinutes(player, grantInfo.CoinMinutes), false)
-		table.insert(summary, Util.FormatNumber(amount) .. " Coins")
+	if grantInfo.Coins then
+		local amount = EconomyService.AddCoins(player, grantInfo.Coins, false)
+		notify(player, "Purchased " .. product.Name .. ": +" .. Util.FormatNumber(amount) .. " Coins", "success")
 	end
-	if grantInfo.Gems then
-		EconomyService.AddGems(player, grantInfo.Gems)
-		table.insert(summary, grantInfo.Gems .. " Gems")
+	if grantInfo.Skips then
+		StageService.Skip(player, grantInfo.Skips)
 	end
-	if grantInfo.Boost then
-		EconomyService.ApplyBoost(player, grantInfo.Boost.Type, grantInfo.Boost.Mult, grantInfo.Boost.Duration)
-		table.insert(summary, product.Name)
-	end
-	if grantInfo.Rebirths then
-		RebirthService.GrantRebirths(player, grantInfo.Rebirths)
-		table.insert(summary, "+" .. grantInfo.Rebirths .. " Rebirth")
-	end
-
-	notify(player, "Purchased " .. product.Name .. ": " .. table.concat(summary, ", "), "success")
 end
 
 local function processReceipt(receiptInfo)
@@ -58,8 +44,6 @@ local function processReceipt(receiptInfo)
 	if DataService.UsingMock and not RunService:IsStudio() then
 		return Enum.ProductPurchaseDecision.NotProcessedYet -- never confirm into a fake store
 	end
-	-- Receipts are often redelivered right as the player joins, while their data
-	-- is still loading, so wait for it rather than bouncing the receipt.
 	local profile = DataService:WaitForProfile(player, 60)
 	if not profile or not profile.Loaded then
 		return Enum.ProductPurchaseDecision.NotProcessedYet
@@ -69,7 +53,6 @@ local function processReceipt(receiptInfo)
 	for _, id in ipairs(purchases) do
 		if id == receiptInfo.PurchaseId then
 			if profile.UnsavedReceipts[receiptInfo.PurchaseId] then
-				-- Granted earlier but the save failed: only confirm once it's saved.
 				if DataService:Save(player) then
 					return Enum.ProductPurchaseDecision.PurchaseGranted
 				end
@@ -84,13 +67,8 @@ local function processReceipt(receiptInfo)
 		warn("[ShopService] Receipt for unknown ProductId " .. tostring(receiptInfo.ProductId) .. " - add it to Config.Products")
 		return Enum.ProductPurchaseDecision.NotProcessedYet
 	end
-	if ComplianceService.IsPurchaseBlocked(player, productKey) then
-		-- The shop hides these for restricted regions. Robux were already charged,
-		-- so still deliver, but log it so other prompt paths can be found.
-		warn("[ShopService] Restricted product " .. productKey .. " purchased by " .. player.Name .. " outside the shop")
-	end
 
-	local ok, err = pcall(grantProduct, player, productKey, product)
+	local ok, err = pcall(grantProduct, player, product)
 	if not ok then
 		warn("[ShopService] Failed to grant " .. productKey .. ": " .. tostring(err))
 		return Enum.ProductPurchaseDecision.NotProcessedYet
@@ -102,11 +80,9 @@ local function processReceipt(receiptInfo)
 	end
 	profile.Data.Stats.RobuxSpent += receiptInfo.CurrencySpent or 0
 
-	-- Persist before confirming so the receipt is never granted twice.
 	profile.UnsavedReceipts[receiptInfo.PurchaseId] = true
 	local saved = DataService:Save(player)
 	if not saved then
-		-- Grant is in memory; a retry hits the dedupe list above and re-saves.
 		return Enum.ProductPurchaseDecision.NotProcessedYet
 	end
 	return Enum.ProductPurchaseDecision.PurchaseGranted
